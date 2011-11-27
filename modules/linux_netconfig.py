@@ -195,19 +195,25 @@ def link(name):
     if match:
         return _structured_link(LINK_MATCHER.match(output))
 
+def addresses_with_options(options):
+    """
+    Return information about addresses for a given "ip addr show" set of options
+    eg netconfig.addresses_with_options 'scope host'
+    """
+    output = __salt__['cmd.run']('ip -o addr show {0}'.format(options))
+    return _structured_addresses_output(output)
+
 def addresses():
     """
     Return information about addresses for all network links on the system
     """
-    output = __salt__['cmd.run']('ip -o addr show')
-    return _structured_addresses_output(output)
+    return addresses_with_options('')
 
 def addresses_for(name):
     """
     Return information about addresses for a given network link on the system
     """
-    output = __salt__['cmd.run']('ip -o addr show {0}'.format(name))
-    parsed = _structured_addresses_output(output)
+    parsed = addresses_with_options('dev {0}'.format(name))
     if parsed.has_key(name):
         return parsed[name]
 
