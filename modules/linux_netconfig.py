@@ -11,6 +11,7 @@ def __virtual__():
     """
     return 'netconfig' if __grains__['kernel'] == 'Linux' else False
 
+# num name flags extra link addr brd
 LINK_MATCHER = re.compile(r"""
     ^
             (?P<num>   [0-9]     +?) :
@@ -25,6 +26,7 @@ LINK_MATCHER = re.compile(r"""
     """, re.X | re.M)
 
 
+# num name type addr brd? scope alias? extra?
 ADDR_MATCHER = re.compile(r"""
     ^
              (?P<num>   [0-9]     +?) :
@@ -46,6 +48,7 @@ ADDR_MATCHER = re.compile(r"""
     $
     """, re.X | re.M)
 
+# addr dev lladdr? state?
 NEIGH_MATCHER = re.compile(r"""
     ^
                 (?P<addr> [^ ] +)
