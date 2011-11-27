@@ -119,6 +119,7 @@ def _structured_links_output(output):
         if link_match:
             name, infos = _structured_link(link_match)
             res[name] = infos
+
     return res
 
 def _structured_addresses_output(output):
@@ -136,7 +137,7 @@ def _structured_addresses_output(output):
 
     return res
 
-def all_links():
+def links():
     """
     Return information about all network links on the system
     """
@@ -152,21 +153,21 @@ def link(name):
     if match:
         return _structured_link(LINK_MATCHER.match(output))
 
-def all_addresses():
+def addresses():
     """
     Return information about addresses for all network links on the system
     """
     output = __salt__['cmd.run']('ip -o addr show')
     return _structured_addresses_output(output)
 
-def addresses(name):
+def addresses_for(name):
     """
     Return information about addresses for a given network link on the system
     """
     output = __salt__['cmd.run']('ip -o addr show {0}'.format(name))
-    parsed = _structured_addresses_output(name)
+    parsed = _structured_addresses_output(output)
     if parsed.has_key(name):
-        return res[name]
+        return parsed[name]
 
 
 # TODO: ip addr show
