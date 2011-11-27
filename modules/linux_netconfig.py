@@ -46,6 +46,19 @@ ADDR_MATCHER = re.compile(r"""
     $
     """, re.X | re.M)
 
+NEIGH_MATCHER = re.compile(r"""
+    ^
+                (?P<addr> [^ ] +)
+    \      dev\ (?P<dev>  [^ ] +)
+    (?:
+      \ lladdr\ (?P<lladdr> [^ ]+)
+    )?
+    \           (?P<state> [A-Z]+)?
+    $
+    """, re.X | re.M)
+
+
+
 def _int_if_possible(string):
     """
     PRIVATE METHOD
@@ -108,6 +121,21 @@ def _structured_addr(match):
 
     return res
 
+def _structured_neigh(match):
+    """
+    PRIVATE METHOD
+    Turns a NEIGH_MATCHER match into structured data
+    """
+    identifier = (match.group('addr'), match.group('dev'))
+    infos = {}
+    state  = match.group('state')
+    lladdr = match.group('lladdr')
+    if state:
+        infos['state'] = state
+    if lladdr:
+        infos['lladdr'] = lladdr
+    return identifier, infos
+
 def _structured_links_output(output):
     """
     PRIVATE METHOD
@@ -134,6 +162,20 @@ def _structured_addresses_output(output):
             name, infos = _structured_addr(addr_match)
             res.setdefault(name, [])
             res[name].append(infos)
+
+    return res
+
+def _structured_neigh_output(output):
+    """
+    PRIVATE METHOD
+    Return a dictionary mapping address and device to neighborhood information from the ip output
+    """
+    res = {}
+    for line in iter(output.splitlines()):
+        neigh_match = NEIGH_MATCHER.match(line)
+        if neigh_match:
+            identifier, infos = _structured_neigh(neigh_match)
+            res[identifier] = infos
 
     return res
 
@@ -169,6 +211,31 @@ def addresses_for(name):
     if parsed.has_key(name):
         return parsed[name]
 
+def neighbours_with_options(options):
+    """
+    Return information about neighbours for a given "ip neigh show" set of options
+    eg netconfig.neighbours_with_options 'nud noarp'
+    """
+    output = __salt__['cmd.run']('ip -o neigh show {0}'.format(options))
+    return _structured_neigh_output(output)
+
+def neighbours():
+    """
+    Return information about all known neighbours
+    """
+    return neighbours_with_options('')
+
+def neighbours_for(name):
+    """
+    Return information about neighbours for a given network link on the system
+    """
+    return neighbours_with_options('dev {0}'.format(name))
+
+def all_neighbours():
+    """
+    Return information about all attempted neighboors, including failed ones
+    """
+    return neighbours_with_options('nud all')
 
 # TODO: ip addr show
 # TODO: ip link show
