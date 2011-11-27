@@ -246,13 +246,12 @@ def all_neighbours():
     """
     return neighbours_with_options('nud all')
 
-# TODO: ip addr show
-# TODO: ip link show
-# TODO: ip neigh show
-# TODO: ip tunnel show
-# TODO: ip route show table all
-# TODO: ip maddr show
-# TODO: ip mroute show
-# TODO: ifenslave -a
-# TODO: netstat -s
 # TODO: brctl show
+# TODO: ip maddr show
+# TODO: ifenslave -a (not sure how parseable this is)
+
+# For networking nerds:
+#   TODO: brctl showmacs name
+#   TODO: ip tunnel show
+#   TODO: ip route show table all (looks like hell)
+#   TODO: ip mroute show
