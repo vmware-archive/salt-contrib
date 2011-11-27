@@ -11,6 +11,7 @@ def __virtual__():
     """
     return 'netconfig' if __grains__['kernel'] == 'Linux' else False
 
+# num name flags extra link addr brd
 LINK_MATCHER = re.compile(r"""
     ^
             (?P<num>   [0-9]     +?) :
@@ -25,6 +26,7 @@ LINK_MATCHER = re.compile(r"""
     """, re.X | re.M)
 
 
+# num name type addr brd? scope alias? extra?
 ADDR_MATCHER = re.compile(r"""
     ^
              (?P<num>   [0-9]     +?) :
@@ -45,6 +47,20 @@ ADDR_MATCHER = re.compile(r"""
     )?
     $
     """, re.X | re.M)
+
+# addr dev lladdr? state?
+NEIGH_MATCHER = re.compile(r"""
+    ^
+                (?P<addr> [^ ] +)
+    \      dev\ (?P<dev>  [^ ] +)
+    (?:
+      \ lladdr\ (?P<lladdr> [^ ]+)
+    )?
+    \           (?P<state> [A-Z]+)?
+    $
+    """, re.X | re.M)
+
+
 
 def _int_if_possible(string):
     """
@@ -108,6 +124,21 @@ def _structured_addr(match):
 
     return res
 
+def _structured_neigh(match):
+    """
+    PRIVATE METHOD
+    Turns a NEIGH_MATCHER match into structured data
+    """
+    identifier = (match.group('addr'), match.group('dev'))
+    infos = {}
+    state  = match.group('state')
+    lladdr = match.group('lladdr')
+    if state:
+        infos['state'] = state
+    if lladdr:
+        infos['lladdr'] = lladdr
+    return identifier, infos
+
 def _structured_links_output(output):
     """
     PRIVATE METHOD
@@ -119,6 +150,7 @@ def _structured_links_output(output):
         if link_match:
             name, infos = _structured_link(link_match)
             res[name] = infos
+
     return res
 
 def _structured_addresses_output(output):
@@ -136,7 +168,21 @@ def _structured_addresses_output(output):
 
     return res
 
-def all_links():
+def _structured_neigh_output(output):
+    """
+    PRIVATE METHOD
+    Return a dictionary mapping address and device to neighborhood information from the ip output
+    """
+    res = {}
+    for line in iter(output.splitlines()):
+        neigh_match = NEIGH_MATCHER.match(line)
+        if neigh_match:
+            identifier, infos = _structured_neigh(neigh_match)
+            res[identifier] = infos
+
+    return res
+
+def links():
     """
     Return information about all network links on the system
     """
@@ -152,30 +198,60 @@ def link(name):
     if match:
         return _structured_link(LINK_MATCHER.match(output))
 
-def all_addresses():
+def addresses_with_options(options):
+    """
+    Return information about addresses for a given "ip addr show" set of options
+    eg netconfig.addresses_with_options 'scope host'
+    """
+    output = __salt__['cmd.run']('ip -o addr show {0}'.format(options))
+    return _structured_addresses_output(output)
+
+def addresses():
     """
     Return information about addresses for all network links on the system
     """
-    output = __salt__['cmd.run']('ip -o addr show')
-    return _structured_addresses_output(output)
+    return addresses_with_options('')
 
-def addresses(name):
+def addresses_for(name):
     """
     Return information about addresses for a given network link on the system
     """
-    output = __salt__['cmd.run']('ip -o addr show {0}'.format(name))
-    parsed = _structured_addresses_output(name)
+    parsed = addresses_with_options('dev {0}'.format(name))
     if parsed.has_key(name):
-        return res[name]
+        return parsed[name]
 
+def neighbours_with_options(options):
+    """
+    Return information about neighbours for a given "ip neigh show" set of options
+    eg netconfig.neighbours_with_options 'nud noarp'
+    """
+    output = __salt__['cmd.run']('ip -o neigh show {0}'.format(options))
+    return _structured_neigh_output(output)
 
-# TODO: ip addr show
-# TODO: ip link show
-# TODO: ip neigh show
-# TODO: ip tunnel show
-# TODO: ip route show table all
-# TODO: ip maddr show
-# TODO: ip mroute show
-# TODO: ifenslave -a
-# TODO: netstat -s
+def neighbours():
+    """
+    Return information about all known neighbours
+    """
+    return neighbours_with_options('')
+
+def neighbours_for(name):
+    """
+    Return information about neighbours for a given network link on the system
+    """
+    return neighbours_with_options('dev {0}'.format(name))
+
+def all_neighbours():
+    """
+    Return information about all attempted neighboors, including failed ones
+    """
+    return neighbours_with_options('nud all')
+
 # TODO: brctl show
+# TODO: ip maddr show
+# TODO: ifenslave -a (not sure how parseable this is)
+
+# For networking nerds:
+#   TODO: brctl showmacs name
+#   TODO: ip tunnel show
+#   TODO: ip route show table all (looks like hell)
+#   TODO: ip mroute show
