@@ -183,3 +183,9 @@ def _is_true(v):
     raise ValueError("Failed parsing boolean value: %s" % str(v))
 
 
+
+def config(name, **kws):
+    """No-op state to support state config via the yaml_mako_stateconf renderer."""
+    return dict(name=name, result=True, changes={}, comment='')
+
+
