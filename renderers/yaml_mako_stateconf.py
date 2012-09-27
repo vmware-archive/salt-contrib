@@ -1,4 +1,5 @@
 # Module taken and modified from Salt's built-in yaml_mako.py renderer.
+#
 """
 This module provides a custom renderer that process yaml with the Mako
 templating engine, extract arguments for any 'state.config' and provide the
@@ -74,9 +75,32 @@ Here's a contrived example using this renderer::
 Notice that the end of configuration marker(# --- end of state config --) is
 needed to separate the use of 'state.config' form the rest of your salt file,
 and don't forget to put the "#!yaml_mako_stateconf" shangbang at the beginning
-of your salt files.
+of your salt files. Lastly, you need to have Mako already installed, of course.
 
 """
+
+# TODO:
+#   - support synthetic argument? Eg, 
+#
+#     apache:
+#       state.config:
+#         - host: localhost
+#         - port: 1234
+#         - url: 'http://${host}:${port}/'
+#
+#     Currently, this won't work, but can be worked around like so:
+#
+#     apache:
+#       state.config:
+#         - host: localhost
+#         - port: 1234
+#     ##  - url: 'http://${host}:${port}/'
+#
+#     # --- end of state config ---
+#     <% 
+#     apache.setdefault('url', "http://%(host)s:%(port)s/" % apache)
+#     %>
+#
 
 import logging
 import warnings
@@ -124,6 +148,7 @@ def render(template_file, env='', sls=''):
             extract_state_confs(data)
         return data
 
+
     with open(template_file, 'r') as f:
         sls_templ = f.read()
 
@@ -160,7 +185,7 @@ STATE_CONF_EXT = {}   # state.config under extend: ...
 
 def extract_state_confs(data, is_extend=False):
     for state_id, state_dict in data.iteritems():
-        if state_id == 'extend':
+        if state_id == 'extend' and not is_extend:
             extract_state_confs(state_dict, True)
             continue
 
