@@ -2,11 +2,10 @@
 #
 """
 This module provides a custom renderer that process yaml with the Mako
-templating engine, extract arguments for any 'state.config' and provide the
-extracted arguments(including salt specific args, such as 'require', etc)
+templating engine, extract arguments for any ``state.config`` and provide
+the extracted arguments(including salt specific args, such as 'require', etc)
 as template context. The goal is to make writing reusable/configurable/
-parameterized salt files easier.
-
+parameterized salt files easier and cleaner.
 
 This module depends on a custom state function, 'state.config', which is
 available in salt-contrib. If you don't want to get the whole custome 'state'
@@ -16,8 +15,8 @@ just a no-op state function::
     def config(name, **kws):
         return dict(name=name, changes={}, result=True, comment='')
 
-Save that in state.py in your /srv/salt/_states/ directory; put this module
-in /srv/salt/_renderers/ then you should be good to go.
+Save that in `state.py` in your `/srv/salt/_states/` directory; put this module
+in `/srv/salt/_renderers/` then you should be good to go.
 
 Here's a contrived example using this renderer::
 
@@ -72,10 +71,20 @@ Here's a contrived example using this renderer::
         - cwd: /
 
 
-Notice that the end of configuration marker(# --- end of state config --) is
-needed to separate the use of 'state.config' form the rest of your salt file,
-and don't forget to put the "#!yaml_mako_stateconf" shangbang at the beginning
-of your salt files. Lastly, you need to have Mako already installed, of course.
+``state.config`` let's you declare and set default values for the parameters
+used by your salt file. These parameters will be available in your template 
+context, so you can generate the rest of your salt file according to their
+values. And your parameterized salt file can be included and then extended
+just like any other salt files! So, with the above two salt files, running
+``state.highstate`` will actually output::
+
+  apache configured with port 8080 using conf from /another/path/to/httpd.conf
+
+Notice that the end of configuration marker(``# --- end of state config --``)
+is needed to separate the use of 'state.config' form the rest of your salt
+file, and don't forget to put the ``#!yaml_mako_stateconf`` shangbang at the
+beginning of your salt files. Lastly, you need to have Mako already installed,
+of course.
 
 """
 
@@ -134,7 +143,11 @@ def render(template_file, env='', sls=''):
         if context:
             ctx.update(context)
         try:
-            yaml_data = Template(data).render(**ctx)
+            yaml_data = Template(data,
+                             uri=sls.replace('.', '/'),
+                             strict_undefined=True,
+                             lookup=SaltMakoTemplateLookup(__opts__, env)
+                        ).render(**ctx)
         except:
             raise SaltRenderError(exceptions.text_error_template().render())
 
@@ -208,5 +221,64 @@ def extract_state_confs(data, is_extend=False):
                 if requisite in extend:
                     extend[requisite] += to_dict[state_id].get(requisite, [])
             to_dict[state_id].update(STATE_CONF_EXT[state_id])
+
+
+
+
+
+import urlparse
+from os import path as ospath
+from mako.lookup import TemplateCollection, TemplateLookup
+import salt.fileclient
+
+# With some code taken and modified from salt.utils.jinja.SaltCacheLoader
+class SaltMakoTemplateLookup(TemplateCollection):
+    """
+    Look up Mako template files on Salt master via salt://... URLs.
+
+    If URL is a relative path(without an URL scheme) then assume it's relative
+    to the directory of the salt file that's doing the lookup(with <%include/>
+    or <%namespace/>).
+
+    If URL is an absolute path then it's treated as if it has been prefixed
+    with salt://.
+
+    """
+
+    def __init__(self, opts, env='base'):
+        self.opts = opts
+        self.env = env
+        if __opts__['file_client'] == 'local':
+            searchpath = opts['file_roots'][env]
+        else:
+            searchpath = [ospath.join(opts['cachedir'], 'files', env)]
+        self.lookup = TemplateLookup(directories=searchpath)
+
+        self.file_client = salt.fileclient.get_file_client(self.opts)
+        self.cache = {}
+        
+    def adjust_uri(self, uri, filename):
+        scheme = urlparse.urlparse(uri).scheme
+        if scheme == 'salt':
+            return uri
+        elif scheme:
+            raise ValueError("Unsupported URL scheme(%s) in %s" % \
+                             (scheme, uri))
+        else:
+            return self.lookup.adjust_uri(uri, filename)
+
+
+    def get_template(self, uri):
+        prefix = "salt://"
+        salt_uri = uri if uri.startswith(prefix) else prefix+uri
+        self.cache_file(salt_uri)
+        return self.lookup.get_template(salt_uri[len(prefix):])
+
+
+    def cache_file(self, fpath):
+        if fpath not in self.cache:
+            self.cache[fpath] = \
+                    self.file_client.get_file(fpath, '', True, self.env)
+
 
 
