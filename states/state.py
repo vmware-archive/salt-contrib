@@ -189,4 +189,3 @@ def _no_op(name, **kws):
     return dict(name=name, result=True, changes={}, comment='')
 
 config = _no_op
-goal = _no_op

@@ -186,6 +186,7 @@ def render(template_file, env='', sls=''):
                 del tmplctx[k]
         data = do_it(sls_templ, tmplctx)
 
+    log.debug('Rendered sls: %s' % (data,))
     return data
 
 
@@ -213,8 +214,8 @@ def rewrite_sls_includes_excludes(data, sls):
 RESERVED_SIDS = set(['include', 'exclude'])
 RESERVED_ARGS = set(['require', 'require_in', 'watch', 'watch_in', 'use', 'use_in'])
 
-def _local_to_abs_sid(id, sls): # id must starts with '.'
-    return _parent_sls(sls)+id[1:] if '::' in id else sls+'::'+id[1:] 
+def _local_to_abs_sid(sid, sls): # id must starts with '.'
+    return _parent_sls(sls)+sid[1:] if '::' in sid else sls+'::'+sid[1:] 
 
 def rename_state_ids(data, sls, is_extend=False):
     # if the .sls file is salt://my/salt/file.sls
@@ -235,9 +236,9 @@ def rename_state_ids(data, sls, is_extend=False):
                 if name not in RESERVED_ARGS:
                     continue
                 for req in value:
-                    id = req.itervalues().next()
-                    if id in data and id.startswith('.'):
-                        req[req.iterkeys().next()] = _local_to_abs_sid(id, sls)
+                    sid = req.itervalues().next()
+                    if sid.startswith('.'):
+                        req[req.iterkeys().next()] = _local_to_abs_sid(sid, sls)
 
     for sid in data.keys():
         if sid.startswith('.'):
