@@ -114,6 +114,7 @@ of course.
 import logging
 import warnings
 import re
+from os import path as ospath
 from mako.template import Template
 from mako import exceptions
 from salt.utils.yaml import CustomLoader, load
@@ -122,7 +123,7 @@ from salt.exceptions import SaltRenderError
 log = logging.getLogger(__name__)
 
 __opts__ = {
-  'stateconf_end_marker': r'#\s*-+\s*end of state config\s*-+'
+  'stateconf_end_marker': r'#\s*-+\s*end of state config\s*-+',
   # eg, something like "# --- end of state config --" works by default.
 }
 
@@ -134,17 +135,19 @@ def render(template_file, env='', sls=''):
             if match:
                 data = data[:match.start()]
         
+        uripath = sls.replace('.', '/')
         ctx = dict(salt=__salt__,
                    grains=__grains__,
                    opts=__opts__,
                    pillar=__pillar__,
                    env=env,
-                   sls=sls)
+                   sls=sls,
+                   sls_dir=ospath.dirname(uripath))
         if context:
             ctx.update(context)
         try:
             yaml_data = Template(data,
-                             uri=sls.replace('.', '/'),
+                             uri=uripath,
                              strict_undefined=True,
                              lookup=SaltMakoTemplateLookup(__opts__, env)
                         ).render(**ctx)
@@ -157,8 +160,12 @@ def render(template_file, env='', sls=''):
                 for item in warn_list:
                     log.warn("{warn} found in {file_}".format(
                             warn=item.message, file_=template_file))
+    
+        rewrite_sls_includes_excludes(data, sls)
+        rename_state_ids(data, sls)
         if not context:
             extract_state_confs(data)
+
         return data
 
 
@@ -171,9 +178,72 @@ def render(template_file, env='', sls=''):
     # if some config has been extracted then
     # do a second pass that provides the extracted conf as template context
     if STATE_CONF:  
-        data = do_it(sls_templ, STATE_CONF)
+        tmplctx = STATE_CONF.copy()
+        prefix = sls + '::'
+        for k in tmplctx.keys():
+            if k.startswith(prefix):
+                tmplctx[k[len(prefix):]] = tmplctx[k]
+                del tmplctx[k]
+        data = do_it(sls_templ, tmplctx)
 
     return data
+
+
+def _parent_sls(sls):
+    i = sls.rfind('.')
+    return sls[:i]+'.' if i != -1 else ''
+
+def rewrite_sls_includes_excludes(data, sls):
+    # if the path of the included/excluded sls starts with a leading dot(.) then
+    # it's taken to be relative to the including/excluding sls.
+    sls = _parent_sls(sls)
+    for sid in data: 
+        if sid == 'include':
+            includes = data[sid]
+            for i, each in enumerate(includes):
+                if each.startswith('.'):
+                    includes[i] = sls + each[1:]
+        elif sid == 'exclude':
+            for d in data[sid]:
+                if 'sls' in d and d['sls'].starstwith('.'):
+                    d['sls'] = sls + d['sls'][1:]
+
+
+
+RESERVED_SIDS = set(['include', 'exclude'])
+RESERVED_ARGS = set(['require', 'require_in', 'watch', 'watch_in', 'use', 'use_in'])
+
+def _local_to_abs_sid(id, sls): # id must starts with '.'
+    return _parent_sls(sls)+id[1:] if '::' in id else sls+'::'+id[1:] 
+
+def rename_state_ids(data, sls, is_extend=False):
+    # if the .sls file is salt://my/salt/file.sls
+    # then rename all state ids defined in it that start with a dot(.) with
+    # "my.salt.file::" + the_state_id_without_the_first_dot.
+
+    # update "local" references to the renamed states.
+    for sid, states in data.items():
+        if sid in RESERVED_SIDS:
+            continue
+
+        if sid == 'extend' and not is_extend:
+            rename_state_ids(states, sls, True)
+            continue
+
+        for args in states.itervalues():
+            for name, value in (nv.iteritems().next() for nv in args):
+                if name not in RESERVED_ARGS:
+                    continue
+                for req in value:
+                    id = req.itervalues().next()
+                    if id in data and id.startswith('.'):
+                        req[req.iterkeys().next()] = _local_to_abs_sid(id, sls)
+
+    for sid in data.keys():
+        if sid.startswith('.'):
+            data[_local_to_abs_sid(sid, sls)] = data[sid]
+            del data[sid]
+
 
 
 
@@ -227,7 +297,6 @@ def extract_state_confs(data, is_extend=False):
 
 
 import urlparse
-from os import path as ospath
 from mako.lookup import TemplateCollection, TemplateLookup
 import salt.fileclient
 

@@ -184,8 +184,9 @@ def _is_true(v):
 
 
 
-def config(name, **kws):
+def _no_op(name, **kws):
     """No-op state to support state config via the yaml_mako_stateconf renderer."""
     return dict(name=name, result=True, changes={}, comment='')
 
-
+config = _no_op
+goal = _no_op
