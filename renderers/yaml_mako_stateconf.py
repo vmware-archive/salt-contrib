@@ -84,8 +84,8 @@ Notice that the end of configuration marker(``# --- end of state config --``)
 is needed to separate the use of 'state.config' form the rest of your salt
 file, and don't forget to put the ``#!yaml_mako_stateconf`` shangbang at the
 beginning of your salt files. Lastly, you need to have Mako already installed,
-of course.
-
+of course. See also https://gist.github.com/1f85e4151c4fab675adb for a complete
+list of features provided by this module.
 """
 
 # TODO:
@@ -161,16 +161,24 @@ def render(template_file, env='', sls=''):
                     log.warn("{warn} found in {file_}".format(
                             warn=item.message, file_=template_file))
     
-        rewrite_sls_includes_excludes(data, sls)
-        rename_state_ids(data, sls)
-        if not context:
-            extract_state_confs(data)
-
+        try: 
+            rewrite_sls_includes_excludes(data, sls)
+            rename_state_ids(data, sls)
+            if not context:
+                extract_state_confs(data)
+        except Exception:
+            log.exception((
+                "Error found while pre-processing the salt file, %s.\n"
+                "It's likely due to a formatting error in your salt file.\n"
+                "Pre-processing aborted. Stack trace:---------") % sls)
         return data
 
 
-    with open(template_file, 'r') as f:
-        sls_templ = f.read()
+    if isinstance(template_file, basestring):
+        with open(template_file, 'r') as f:
+            sls_templ = f.read()
+    else: # assume file-like
+        sls_templ = template_file.read()
 
     # first pass to extract the state configuration
     data = do_it(sls_templ)
@@ -206,13 +214,13 @@ def rewrite_sls_includes_excludes(data, sls):
                     includes[i] = sls + each[1:]
         elif sid == 'exclude':
             for d in data[sid]:
-                if 'sls' in d and d['sls'].starstwith('.'):
+                if 'sls' in d and d['sls'].startswith('.'):
                     d['sls'] = sls + d['sls'][1:]
 
 
 
 RESERVED_SIDS = set(['include', 'exclude'])
-RESERVED_ARGS = set(['require', 'require_in', 'watch', 'watch_in', 'use', 'use_in'])
+REQUISITES = set(['require', 'require_in', 'watch', 'watch_in', 'use', 'use_in'])
 
 def _local_to_abs_sid(sid, sls): # id must starts with '.'
     return _parent_sls(sls)+sid[1:] if '::' in sid else sls+'::'+sid[1:] 
@@ -233,7 +241,7 @@ def rename_state_ids(data, sls, is_extend=False):
 
         for args in states.itervalues():
             for name, value in (nv.iteritems().next() for nv in args):
-                if name not in RESERVED_ARGS:
+                if name not in REQUISITES:
                     continue
                 for req in value:
                     sid = req.itervalues().next()
