@@ -69,18 +69,17 @@ def __init__(opts):
     try:
         ansmod = sys.modules[loaded_base_name+'.'+tag+'.'+modname]
     except KeyError:
-        log.error("Make sure the %s salt module's been loaded correctly!" \
+        log.warn("Make sure the %s salt module's been loaded correctly!" \
                   % modname)
-        raise
+    else:
+        # populate the state functions in this module
+        mod = globals()
+        for state in ansmod.STATE_NAMES:
+            mod[state] = ansmod._state_func
 
-    # populate the state functions in this module
-    mod = globals()
-    for state in ansmod.STATE_NAMES:
-        mod[state] = ansmod._state_func
-
-    # make the use of the shell module actually invokes the
-    # command module instead.
-    ansmod.STATE_NAMES['shell'] = 'command'
+        # make the use of the shell module actually invokes the
+        # command module instead.
+        ansmod.STATE_NAMES['shell'] = 'command'
 
 
 def shell(state, **kws):
