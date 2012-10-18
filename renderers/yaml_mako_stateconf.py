@@ -82,7 +82,7 @@ just like any other salt files! So, with the above two salt files, running
 
 Notice that the end of configuration marker(``# --- end of state config --``)
 is needed to separate the use of 'state.config' form the rest of your salt
-file, and don't forget to put the ``#!yaml_mako_stateconf`` shangbang at the
+file, and don't forget to put the ``#!yaml_mako_stateconf`` shebang at the
 beginning of your salt files. Lastly, you need to have Mako already installed,
 of course.
 
