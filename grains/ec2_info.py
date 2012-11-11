@@ -108,7 +108,7 @@ def cached_ec2_info(cache_filename='/var/cache/salt/ec2.pickle'):
             data = pickle.load(file_handler)
         return data
     except IOError:
-        data = _ec2_info()
+        data = ec2_info()
         with open(cache_filename, 'wb') as file_handler:
             pickle.dump(data, file_handler)
         return data
