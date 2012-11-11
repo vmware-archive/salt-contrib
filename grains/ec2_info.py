@@ -10,6 +10,7 @@ import logging
 import httplib
 import socket
 import pickle
+import os
 
 # Set up logging
 LOG = logging.getLogger(__name__)
@@ -98,11 +99,12 @@ def ec2_info():
         LOG.info("Could not read EC2 data (IOError): %s" % (serr))
         return {}
 
-def cached_ec2_info(cache_filename='/var/cache/salt/ec2.pickle'):
+def cached_ec2_info():
     """
     Cache result on the disk, this can speed up a lot this script when running
     outside Amazon EC2 and with firewall that drop packets.
     """
+    cache_filename = os.path.join(__opts__['cachedir'], 'ec2_info.pickle')
     try:
         with open(cache_filename, 'rb') as file_handler:
             data = pickle.load(file_handler)
