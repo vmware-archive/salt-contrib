@@ -155,7 +155,7 @@ def ubuntu_ppa(user, name, key_id, distribution=None):
           apt_repository.ubuntu_ppa:
             - user: pitti
             - name: postgresql
-            - key: 8683D8A2
+            - key_id: 8683D8A2
     '''
     address = 'http://ppa.launchpad.net/{0}/{1}/ubuntu'.format(user, name)
     return present(address, ('main',), distribution, key_id,
