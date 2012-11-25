@@ -23,7 +23,7 @@ def __virtual__():
     except exceptions.CommandNotFoundError:
         return False
 
-def present(address, components, distribution=None, key_id=None,
+def present(address, components, distribution=None, source=False, key_id=None,
             key_server=None, in_sources_list_d=True, filename=None):
     '''
     Manage a APT repository such as an Ubuntu PPA
@@ -49,6 +49,9 @@ def present(address, components, distribution=None, key_id=None,
     distribution:
         Set this to use a different distribution than the one the host that run
         this state.
+
+    source
+        Add source "deb-src" statement? not the default.
 
     key_id
         GnuPG/PGP key ID used to authenticate packages of this repository.
@@ -87,6 +90,10 @@ def present(address, components, distribution=None, key_id=None,
     else:
         apt_file = '/etc/apt/sources.list'
 
+    text = [' '.join(['deb'] + line_content)]
+    if source:
+        text.append(' '.join(['deb-src'] + line_content))
+
     data = {
         filename: {
             'file': [
@@ -95,10 +102,7 @@ def present(address, components, distribution=None, key_id=None,
                     'name': apt_file
                 },
                 {
-                    'text': [
-                        ' '.join(['deb'] + line_content),
-                        ' '.join(['deb-src'] + line_content)
-                    ]
+                    'text': text
                 },
                 {
                     'makedirs': True
@@ -130,7 +134,7 @@ def present(address, components, distribution=None, key_id=None,
     ret['changes'].update(cmd_result['changes'])
     return ret
 
-def ubuntu_ppa(user, name, key_id, distribution=None):
+def ubuntu_ppa(user, name, key_id, source=False, distribution=None):
     '''
     Manage an Ubuntu PPA repository
 
@@ -142,6 +146,9 @@ def ubuntu_ppa(user, name, key_id, distribution=None):
 
     key_id
         Launchpad PGP key ID
+
+    source
+        Add source "deb-src" statement? not the default.
 
     distribution:
         Set this to use a different Ubuntu distribution than the host that run
@@ -162,5 +169,5 @@ def ubuntu_ppa(user, name, key_id, distribution=None):
     filename = '{0}-{1}-{2}.list'.format(
         user, name,
         __salt__['grains.item']('lsb_codename'))
-    return present(address, ('main',), distribution, key_id,
+    return present(address, ('main',), distribution, source, key_id,
                    'keyserver.ubuntu.com', True, filename)
