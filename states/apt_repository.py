@@ -131,6 +131,8 @@ def present(address, components, distribution=None, source=False, key_id=None,
         'changes': file_result['changes'],
         'comment': ' and '.join((file_result['comment'], cmd_result['comment']))
     }
+    if ret['result'] and ret['changes']:
+        __salt__['pkg.refresh_db']
     ret['changes'].update(cmd_result['changes'])
     return ret
 
