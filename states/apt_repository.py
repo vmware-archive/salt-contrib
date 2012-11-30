@@ -131,6 +131,8 @@ def present(address, components, distribution=None, source=False, key_id=None,
         'changes': file_result['changes'],
         'comment': ' and '.join((file_result['comment'], cmd_result['comment']))
     }
+    if ret['result'] and ret['changes']:
+        __salt__['pkg.refresh_db']
     ret['changes'].update(cmd_result['changes'])
     return ret
 
@@ -166,7 +168,7 @@ def ubuntu_ppa(user, name, key_id, source=False, distribution=None):
             - key_id: 8683D8A2
     '''
     address = 'http://ppa.launchpad.net/{0}/{1}/ubuntu'.format(user, name)
-    filename = '{0}-{1}-{2}.list'.format(
+    filename = '{0}-{1}-{2}'.format(
         user, name,
         __salt__['grains.item']('lsb_codename'))
     return present(address, ('main',), distribution, source, key_id,
