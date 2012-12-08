@@ -4,87 +4,88 @@ the performance of the minions, right from the master!
 This module imports SysBench benchmark tool for
 measuring various system parameters such as
 CPU, Memory, FileI/O, Threads and Mutex.
-#'''
+'''
 
 import re
 import salt.utils
 
 __outputter__ = {'test':'txt',
                  'cpu':'txt',
-                 'man':'txt',
-                 'threads':'txt'}
+                 'threads':'txt',
+                 'mutex':'txt',
+                 'memory':'txt',
+                 'fileio':'txt'}
 
-
-def man():
+def cpu():
     '''
-    Provides the help utility for using this module
-    '''
-    man_string = '''Usage:
-    salt \* performance.man            - displays the help information
-    salt \* performance.<test> run     - runs the test
-    salt \* prrformance.<test> verbose - displays details of the test
-    Available tests : cpu,mutex,threads,fileio,memory
-    '''
-
-    return man_string
-
-def cpu(option):
-    '''
-    This tests for the cpu performance 
-    of the minions
+    This tests for the cpu performance of minions. 
+    In this test, the prime numbers are calculated
+    upto the specified maximum limit. The total time 
+    required to generate the primes is displayed in the 
+    final result. Lower the time, better the performance!!
+    USAGE: salt \* performance.cpu
     '''
 
-    # values for test options (more values to be added)
-    thread_values = [1]
-    max_primes = [5000]
+    # maximum limits for prime numbers
+    max_primes = [1000,5000] # 5000,10000,15000,20000 to be added
 
-    # patterns to be searched in output 
-    time = r"( *total time: *[0-9]*s)"
-    total_time = re.compile(time)
-    per95 = r"( *approx. *95 percentile: *[0-9]*ms)"
-    percentile = re.compile(per95)
+    # return values
+    return_value = None
+    result = '\nResult of sysbench.cpu test\n\n'
 
-    # return value (needs to be a dictionary)
-    ret_val = None
+    # the test begins!
+    for primes in max_primes:
+        result = result + 'Maximum prime number={0}\n'.format(primes)
+        test_command = "sysbench --test=cpu --cpu-max-prime={0} run".format(primes)
+        return_value = __salt__['cmd.run'](test_command)
+        result = result + return_value +'\n\n'
 
-    # the test begins
-    for threads in thread_values:
-        for primes in max_primes:
-            test_command = "sysbench --num-threads={0} --test=cpu --cpu-max-prime={1} run".format(threads,primes)
-            ret_val = __salt__['cmd.run'](test_command)
+    return result
 
-            # code for extracting the required information should go here
-            # should display the 95 percentile data for the user
-    
-    if option == 'verbose':
-        return ret_val
-    
-    return None
-
-def threads(option):
+def threads():
     '''
-    This tests the performance of 
-    the scheduler
+    This tests the performance of the processor's
+    scheduling. 
+    USAGE: salt \* performance.threads
     '''
 
-    # values for test option (more values to be added)
-    thread_values = [1]
-    thread_yields = [1000]
-    thread_locks = [8]
+    # values for test option
+    thread_yields = [100,500] #200, 500, 1000
+    thread_locks = [2,16] #4,8,16
 
     # Initializing the required variables
-    test_command = "sysbench --num-threads={0} --test=threads "
-    ret_val = None
+    test_command = "sysbench --num-threads=64 --test=threads "
+    return_value = None
+    result = '\nResult of sysbench.threads test\n\n'
     
-    # test for number of lock/unlock loops to execute per each request
-    for thread in thread_values:
-        for yields in thread_yields:
-            run_command = (test_command+"--thread-yields={1} run").format(thread,yields) 
-            ret_val = __salt__['cmd.run'](run_command)
+    # Testing yields!
+    result = result + '\n\nStarting thread yield test\n'
+    for yields in thread_yields:
+        result = result + 'Number of yield loops={0}\n'.format(yields)
+        run_command = (test_command+"--thread-yields={0} run").format(yields)
+        return_value = __salt__['cmd.run'](run_command)
+        result = result + return_value +'\n\n'
 
-    if option == 'verbose':
-        return ret_val
-    return None
+    # Testing for number of mutexs(locks) to create!
+    result = result + '\n\nStarting thread lock test\n'
+    for locks in thread_locks:
+        result = result + 'Number of locks={0}\n'.format(locks)
+        run_command = (test_command+"--thread-locks={0} run").format(locks)
+        return_value = __salt__['cmd.run'](run_command)
+        result = result + return_value +'\n\n'
+
+    return result
+
+def mutex():
+    '''
+    This test benchmarks the implementation of mutex.
+    A lot of threads race for acquiring the lock
+    over the mutex. However the period of acquisition
+    is very short.
+    USAGE: salt \* performance.mutex
+    '''
+
+    
 
 def test():
  
