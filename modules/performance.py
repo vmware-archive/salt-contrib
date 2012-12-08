@@ -85,8 +85,30 @@ def mutex():
     USAGE: salt \* performance.mutex
     '''
 
-    
+    # Test options and the values they take
+    # --mutex-num = [50,500,1000]           
+    # --mutex-locks = [10000,25000,50000]   
+    # --mutex-loops = [2500,5000,10000]     
 
+    # Orthogonal test cases
+    mutex_num = [50,50,50,500,500,500,1000,1000,1000]
+    mutex_locks = [10000,25000,50000,10000,25000,50000,10000,25000,50000]
+    mutex_loops = [2500,5000,10000,10000,2500,5000,5000,10000,2500]
+
+    # Initializing the required variables
+    test_command = 'sysbench --num-threads=250 --test=mutex --mutex-num={0} --mutex-locks={1} --mutex-loops={2} run '
+    return_value = None
+    result = '\nResult of sysbench.mutex test\n\n'
+
+    # The test begins here!
+    for num,locks,loops in zip(mutex_num,mutex_locks,mutex_loops):
+        result = result + '\nNumber of mutex={0}\nNumber of locks={1}\nNumber of loops={2}\n'.format(num,locks,loops)
+        run_command = test_command.format(num,locks,loops)
+        return_value = __salt__['cmd.run'](run_command)
+        result = result + return_value
+
+    return result
+ 
 def test():
  
     return True
