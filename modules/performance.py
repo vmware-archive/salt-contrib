@@ -16,18 +16,34 @@ __outputter__ = {'test':'txt',
                  'memory':'txt',
                  'fileio':'txt'}
 
-def cpu():
+def __virtual__():
+
+    search_command = 'ls /usr/bin | grep sysbench'
+    search_result = __salt__['cmd.run'](search_command)
+
+    # if sysbench is not installed
+    if search_result == None:
+        return None
+
+    # if sysbench is installed
+    return 'sysbench'
+
+def cpu(option):
     '''
     This tests for the cpu performance of minions. 
     In this test, the prime numbers are calculated
     upto the specified maximum limit. The total time 
     required to generate the primes is displayed in the 
     final result. Lower the time, better the performance!!
-    USAGE: salt \* performance.cpu
+    USAGE: salt \* performance.cpu run - gives the total execution time
+           salt \* performance.cpu verbose - gives a brief output
     '''
 
+    if option not in ['run','verbose']:
+        return 'Invalid argument as option'
+
     # maximum limits for prime numbers
-    max_primes = [1000,5000] # 5000,10000,15000,20000 to be added
+    max_primes = [500,1000,5000] 
 
     # return values
     return_value = None
@@ -38,7 +54,11 @@ def cpu():
         result = result + 'Maximum prime number={0}\n'.format(primes)
         test_command = "sysbench --test=cpu --cpu-max-prime={0} run".format(primes)
         return_value = __salt__['cmd.run'](test_command)
-        result = result + return_value +'\n\n'
+        if option == 'verbose':
+            result = result + return_value
+        elif option == 'run':
+            time = re.search(r'total time:\s*\d.\d\d\d\ds',return_value)
+            result = result + time.group() +'\n\n'
 
     return result
 
@@ -108,6 +128,18 @@ def mutex():
         result = result + return_value
 
     return result
+
+def memory():
+    '''
+    This tests the memory read and write operations.
+    The threads can act either on their global or local
+    memory space, depending on the option given. Other test 
+    parameters like the block size and size of data to 
+    be written / read are also specified in run command
+    USAGE: salt \* performance.memory
+    '''
+
+    
  
 def test():
  
