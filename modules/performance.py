@@ -32,7 +32,7 @@ def cpu(option):
         return 'Invalid argument as option'
 
     # maximum limits for prime numbers
-    max_primes = [500,1000,5000] 
+    max_primes = [500,1000,2500,5000] 
 
     # return values
     return_value = None
