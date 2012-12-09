@@ -16,17 +16,6 @@ __outputter__ = {'test':'txt',
                  'memory':'txt',
                  'fileio':'txt'}
 
-def __virtual__():
-
-    search_command = 'ls /usr/bin | grep sysbench'
-    search_result = __salt__['cmd.run'](search_command)
-
-    # if sysbench is not installed
-    if search_result == None:
-        return None
-
-    # if sysbench is installed
-    return 'sysbench'
 
 def cpu(option):
     '''
@@ -55,10 +44,10 @@ def cpu(option):
         test_command = "sysbench --test=cpu --cpu-max-prime={0} run".format(primes)
         return_value = __salt__['cmd.run'](test_command)
         if option == 'verbose':
-            result = result + return_value
+            result = result + return_value +'\n\n'
         elif option == 'run':
-            time = re.search(r'total time:\s*\d.\d\d\d\ds',return_value)
-            result = result + time.group() +'\n\n'
+            time = re.search(r'total time:\s*\d.\d*s',return_value)
+            result = result + time.group() +'\n'
 
     return result
 
