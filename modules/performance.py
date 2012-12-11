@@ -51,37 +51,37 @@ def cpu(option):
 
     return result
 
-def threads():
+def threads(option):
     '''
     This tests the performance of the processor's
     scheduling. 
-    USAGE: salt \* performance.threads
+    USAGE: salt \* performance.threads run
+           salt \* performance.threads verbose
     '''
 
+    if option not in ['run','verbose']:
+        return 'Invalid argument as option'    
+
     # values for test option
-    thread_yields = [100,500] #200, 500, 1000
-    thread_locks = [2,16] #4,8,16
+    thread_yields = [100,200,500,1000]
+    thread_locks = [2,4,8,16] 
 
     # Initializing the required variables
     test_command = "sysbench --num-threads=64 --test=threads "
     return_value = None
     result = '\nResult of sysbench.threads test\n\n'
     
-    # Testing yields!
-    result = result + '\n\nStarting thread yield test\n'
-    for yields in thread_yields:
+    # Testing begins!
+    for yields,locks in zip(thread_yields,thread_locks):
         result = result + 'Number of yield loops={0}\n'.format(yields)
-        run_command = (test_command+"--thread-yields={0} run").format(yields)
-        return_value = __salt__['cmd.run'](run_command)
-        result = result + return_value +'\n\n'
-
-    # Testing for number of mutexs(locks) to create!
-    result = result + '\n\nStarting thread lock test\n'
-    for locks in thread_locks:
         result = result + 'Number of locks={0}\n'.format(locks)
-        run_command = (test_command+"--thread-locks={0} run").format(locks)
+        run_command = (test_command+"--thread-yields={0} --thread-locks={1} run").format(yields,locks)
         return_value = __salt__['cmd.run'](run_command)
-        result = result + return_value +'\n\n'
+        if option == 'verbose':
+            result = result + return_value
+        else:
+            time = re.search(r'total time:\s*\d.\d*s',return_value)
+            result = result + time.group() +'\n'
 
     return result
 
@@ -91,8 +91,12 @@ def mutex(option):
     A lot of threads race for acquiring the lock
     over the mutex. However the period of acquisition
     is very short.
-    USAGE: salt \* performance.mutex
+    USAGE: salt \* performance.mutex run
+           salt \* performance.mutex verbose
     '''
+
+    if option not in ['run','verbose']:
+        return 'Invalid argument as option'
 
     # Test options and the values they take
     # --mutex-num = [50,500,1000]           
@@ -122,17 +126,58 @@ def mutex(option):
 
     return result
 
-def memory():
+def memory(option):
     '''
     This tests the memory read and write operations.
     The threads can act either on their global or local
     memory space, depending on the option given. Other test 
     parameters like the block size and size of data to 
     be written / read are also specified in run command
-    USAGE: salt \* performance.memory
+    USAGE: salt \* performance.memory run
+           salt \* performance.memory verbose
     '''
 
-    
+    if option not in ['run','verbose']:
+        return 'Invalid argument as option'
+
+    # test defaults
+    # --memory-block-size = 10M
+    # --memory-total-size = 1G
+
+    # We test memory read / write against global / local scope of memory
+    memory_oper = ['read','write']
+    memory_scope = ['local','global']
+
+    # Initializing the required variables
+    test_command = 'sysbench --num-threads=64 --test=memory --memory-oper={0} --memory-scope={1} --memory-block-size= --memory-total-size=1G run '
+    return_value = None
+    result = '\nResult of sysbench.mutex test\n\n'
+
+    # Test begins!
+    for oper in memory_oper:
+        for scope in memory_scope:
+            result = result + 'Operation:Read\nScope:{0}'.format(oper,scope)
+        run_command = test_command.format('read',scope,'1K','1G')
+        return_value = __salt__['cmd.run'](run_command)
+        if option == 'verbose':
+            result = result + return_value +'\n\n'
+        else:
+            time = re.search(r'\s*total time:\s*\d.\d*s',return_value)
+            result = result + time.group() +'\n\n'
+
+    # Write test begins!
+    result = result + 'Writing 1G data to 1M memory\n'
+    for scope in memory_scope:
+        result = result + 'Operation:Write\nScope:{0}'.format(scope)
+        run_command = test_command.format('write',scope,'1K','1G')
+        return_value = __salt__['cmd.run'](run_command)
+        if option == 'verbose':
+            result = result + return_value + '\n\n'
+        else:
+            time = re.search(r'\s*total time:\s*\d.\d*s',return_value)
+            result = result + time.group() + '\n\n'
+
+    return result
  
 def test():
  
