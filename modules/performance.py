@@ -149,36 +149,64 @@ def memory(option):
     memory_scope = ['local','global']
 
     # Initializing the required variables
-    test_command = 'sysbench --num-threads=64 --test=memory --memory-oper={0} --memory-scope={1} --memory-block-size= --memory-total-size=1G run '
+    test_command = 'sysbench --num-threads=64 --test=memory --memory-oper={0} --memory-scope={1} --memory-block-size=1K --memory-total-size=1G run '
     return_value = None
-    result = '\nResult of sysbench.mutex test\n\n'
+    result = '''\nResult of sysbench.mutex test
+    size  of memory block: 1K
+    total size of data to transfer: 1G\n'''
 
     # Test begins!
     for oper in memory_oper:
         for scope in memory_scope:
-            result = result + 'Operation:Read\nScope:{0}'.format(oper,scope)
-        run_command = test_command.format('read',scope,'1K','1G')
+            result = result + 'Operation:{0}\nScope:{1}'.format(oper,scope)
+            run_command = test_command.format(oper,scope)
+            return_value = __salt__['cmd.run'](run_command)
+            if option == 'verbose':
+                result = result + return_value +'\n\n'
+            else:
+                time = re.search(r'\s*total time:\s*\d.\d*s',return_value)
+                result = result + time.group() +'\n\n'
+
+    return result
+
+def fileio(option):
+    '''
+    This tests for the file operations.
+    Varients of file accesses are tested here.
+    USAGE: salt \* performance.fileio run
+           salt \* performance.fileio verbose
+    '''
+
+    if option not in ['run','verbose']:
+        return 'Invalid option as argument'
+
+    # Initializing the required variables
+    test_command = 'sysbench --num-threads=16 --test=fileio --file-total-size=1M --file-test-mode={0} '
+    return_value = None
+    result = '\nResult of sysbench.fileio test\n\n'
+    test_modes = ['seqwr','seqrewr','seqrd','rndrd','rndwr','rndrw'] 
+
+    # Test begins!
+    for mode in test_modes:
+        result = result + 'mode:'+mode
+        # Prepare phase
+        run_command = (test_command + 'prepare').format(mode)
+        __salt__['cmd.run'](run_command)
+        # Test phase
+        run_command = (test_command + 'run').format(mode)
         return_value = __salt__['cmd.run'](run_command)
+        # Clean up phase
+        run_command = (test_command + 'cleanup').format(mode)
+        __salt__['cmd.run'](run_command)
+        
         if option == 'verbose':
-            result = result + return_value +'\n\n'
+                result = result + return_value +'\n\n'
         else:
             time = re.search(r'\s*total time:\s*\d.\d*s',return_value)
             result = result + time.group() +'\n\n'
-
-    # Write test begins!
-    result = result + 'Writing 1G data to 1M memory\n'
-    for scope in memory_scope:
-        result = result + 'Operation:Write\nScope:{0}'.format(scope)
-        run_command = test_command.format('write',scope,'1K','1G')
-        return_value = __salt__['cmd.run'](run_command)
-        if option == 'verbose':
-            result = result + return_value + '\n\n'
-        else:
-            time = re.search(r'\s*total time:\s*\d.\d*s',return_value)
-            result = result + time.group() + '\n\n'
-
+   
     return result
- 
+
 def test():
  
     return True
