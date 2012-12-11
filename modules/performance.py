@@ -85,7 +85,7 @@ def threads():
 
     return result
 
-def mutex():
+def mutex(option):
     '''
     This test benchmarks the implementation of mutex.
     A lot of threads race for acquiring the lock
@@ -114,7 +114,11 @@ def mutex():
         result = result + '\nNumber of mutex={0}\nNumber of locks={1}\nNumber of loops={2}\n'.format(num,locks,loops)
         run_command = test_command.format(num,locks,loops)
         return_value = __salt__['cmd.run'](run_command)
-        result = result + return_value
+        if option == 'verbose':
+            result = result + return_value +'\n\n'
+        else:
+            time = re.search(r'total time:\s*\d.\d*s',return_value)
+            result = result + time.group() +'\n'
 
     return result
 
