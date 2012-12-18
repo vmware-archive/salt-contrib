@@ -18,6 +18,15 @@ __outputter__ = {
 }
 
 
+def __virtual__():
+    '''
+    loads the module, if only sysbench is installed
+    '''
+    if salt.utils.which('sysbench'):
+        return 'sysbench'
+    return None
+
+
 def cpu(option='run'):
     '''
     Tests for the cpu performance of minions.
