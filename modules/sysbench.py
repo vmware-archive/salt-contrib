@@ -10,7 +10,7 @@ import salt.utils
 
 __outputter__ = {
     'ping': 'txt',
-    'cpu': 'txt',
+    'cpu': 'yaml',
     'threads': 'txt',
     'mutex': 'txt',
     'memory': 'txt',
@@ -27,18 +27,26 @@ def __virtual__():
     return None
 
 
-def cpu(option='run'):
+def _parser(result):
+    '''
+    parses the output into a dictionary
+    '''
+    ret_val = {}
+    time = re.search(r'total time:(\s*\d*.\d*s)', result)
+    total_time = re.search(r'total time taken by event execution:(\s*\d*.\d*s)', result)
+    ret_val['time'] = time.group(1)
+    ret_val['total time'] = total_time.group(1)
+    return ret_val
+
+
+def cpu():
     '''
     Tests for the cpu performance of minions.
 
     CLI Examples::
 
         salt '*' sysbench.cpu
-        salt '*' sysbench.cpu verbose
     '''
-
-    if option not in ['run', 'verbose']:
-        return 'Invalid option'
 
     # maximum limits for prime numbers
     max_primes = [500, 1000, 2500, 5000]
@@ -47,24 +55,17 @@ def cpu(option='run'):
     test_command = 'sysbench --test=cpu --cpu-max-prime={0} run'
 
     # return values
-    return_value = None
-    keys = ['run', 'verbose']
-    ret_val = {key: '\nResult of sysbench.cpu test\n\n' for key in keys}
+    result = None
+    ret_val = {}
 
     # the test begins!
     for primes in max_primes:
-        for key in ret_val.iterkeys():
-            ret_val[key] += 'Maximum prime number={0}\n'.format(primes)
+        prime = 'Maximum prime number={0}'.format(primes)
         run_command = test_command.format(primes)
-        return_value = __salt__['cmd.run'](run_command)
-        time = re.search(r'total time:\s*\d.\d*s', return_value)
-        ret_val['verbose'] += return_value + '\n\n'
-        ret_val['run'] += time.group() + '\n'
+        result = __salt__['cmd.run'](run_command)
+        ret_val[prime] = _parser(result)
 
-    if option == 'run':
-        return ret_val['run']
-    else:
-        return ret_val['verbose']
+    return ret_val
 
 
 def threads(option='run'):
