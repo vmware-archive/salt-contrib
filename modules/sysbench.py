@@ -11,10 +11,10 @@ import salt.utils
 __outputter__ = {
     'ping': 'txt',
     'cpu': 'yaml',
-    'threads': 'txt',
-    'mutex': 'txt',
-    'memory': 'txt',
-    'fileio': 'txt'
+    'threads': 'yaml',
+    'mutex': 'yaml',
+    'memory': 'yaml',
+    'fileio': 'yaml'
 }
 
 
@@ -22,6 +22,7 @@ def __virtual__():
     '''
     loads the module, if only sysbench is installed
     '''
+    # finding the path of the binary
     if salt.utils.which('sysbench'):
         return 'sysbench'
     return None
@@ -31,12 +32,34 @@ def _parser(result):
     '''
     parses the output into a dictionary
     '''
-    ret_val = {}
-    time = re.search(r'total time:(\s*\d*.\d*s)', result)
-    total_time = re.search(r'total time taken by event execution:(\s*\d*.\d*s)', result)
-    ret_val['time'] = time.group(1)
-    ret_val['total time'] = total_time.group(1)
-    return ret_val
+
+    # regexes to match
+    _total_time = re.compile(r'total time:\s*(\d*.\d*s)')
+    _total_execution = re.compile(r'event execution:\s*(\d*.\d*s)')
+    _min_response_time = re.compile(r'min:\s*(\d*.\d*ms)')
+    _max_response_time = re.compile(r'max:\s*(\d*.\d*ms)')
+    _avg_response_time = re.compile(r'avg:\s*(\d*.\d*ms)')
+    _per_response_time = re.compile(r'95 percentile:\s*(\d*.\d*ms)')
+
+    # extracting data
+    total_time = re.search(_total_time, result).group(1)
+    total_execution = re.search(_total_execution, result).group(1)
+    min_response_time = re.search(_min_response_time, result).group(1)
+    max_response_time = re.search(_max_response_time, result).group(1)
+    avg_response_time = re.search(_avg_response_time, result).group(1)
+    per_response_time = re.search(_per_response_time, result)
+    if per_response_time is not None:
+        per_response_time = per_response_time.group(1)
+
+    # returning the data as dictionary
+    return {
+           'total time            ': total_time,
+           'total execution time  ': total_execution,
+           'minimum response time ': min_response_time,
+           'maximum response time ': max_response_time,
+           'average response time ': avg_response_time,
+           '95 percentile         ': per_response_time
+           }
 
 
 def cpu():
@@ -48,207 +71,162 @@ def cpu():
         salt '*' sysbench.cpu
     '''
 
-    # maximum limits for prime numbers
+    # Test data
     max_primes = [500, 1000, 2500, 5000]
 
-    # initializing the test command
+    # Initializing the test variables
     test_command = 'sysbench --test=cpu --cpu-max-prime={0} run'
-
-    # return values
     result = None
     ret_val = {}
 
-    # the test begins!
+    # Test beings!
     for primes in max_primes:
-        prime = 'Maximum prime number={0}'.format(primes)
+        key = 'Primer numbers limit: {0}'.format(primes)
         run_command = test_command.format(primes)
         result = __salt__['cmd.run'](run_command)
-        ret_val[prime] = _parser(result)
+        ret_val[key] = _parser(result)
 
     return ret_val
 
 
-def threads(option='run'):
+def threads():
     '''
     This tests the performance of the processor's scheduler
 
     CLI Example::
 
         salt \* sysbench.threads
-        salt \* sysbench.threads verbose
     '''
 
-    if option not in ['run', 'verbose']:
-        return 'Invalid argument'
-
-    # values for test option
+    # Test data
     thread_yields = [100, 200, 500, 1000]
     thread_locks = [2, 4, 8, 16]
 
-    # Initializing the required variables
+    # Initializing the test variables
     test_command = 'sysbench --num-threads=64 --test=threads '
     test_command += '--thread-yields={0} --thread-locks={1} run '
-    return_value = None
-    keys = ['run', 'verbose']
-    ret_val = {key: '\nResult of sysbench.threads test\n\n' for key in keys}
+    result = None
+    ret_val = {}
 
-    # Testing begins!
+    # Test begins!
     for yields, locks in zip(thread_yields, thread_locks):
-        for key in ret_val.iterkeys():
-            ret_val[key] += 'Number of yield loops={0}\n'.format(yields)
-            ret_val[key] += 'Number of locks={0}\n'.format(locks)
+        key = 'Yields: {0} Locks: {1}'.format(yields, locks)
         run_command = test_command.format(yields, locks)
-        return_value = __salt__['cmd.run'](run_command)
-        time = re.search(r'total time:\s*\d.\d*s', return_value)
-        ret_val['verbose'] += return_value + '\n\n'
-        ret_val['run'] += time.group() + '\n'
+        result = __salt__['cmd.run'](run_command)
+        ret_val[key] = _parser(result)
 
-    if option == 'run':
-        return ret_val['run']
-    else:
-        return ret_val['verbose']
+    return ret_val
 
 
-def mutex(option='run'):
+def mutex():
     '''
     Tests the implementation of mutex
 
     CLI Examples::
 
         salt \* sysbench.mutex
-        salt \* sysbench.mutex verbose
     '''
-
-    if option not in ['run', 'verbose']:
-        return 'Invalid argument'
 
     # Test options and the values they take
     # --mutex-num = [50,500,1000]
     # --mutex-locks = [10000,25000,50000]
     # --mutex-loops = [2500,5000,10000]
 
-    # Orthogonal test cases
+    # Test data (Orthogonal test cases)
     mutex_num = [50, 50, 50, 500, 500, 500, 1000, 1000, 1000]
     locks = [10000, 25000, 50000, 10000, 25000, 50000, 10000, 25000, 50000]
     mutex_locks = []
     mutex_locks.extend(locks)
     mutex_loops = [2500, 5000, 10000, 10000, 2500, 5000, 5000, 10000, 2500]
 
-    # Initializing the required variables
+    # Initializing the test variables
     test_command = 'sysbench --num-threads=250 --test=mutex '
     test_command += '--mutex-num={0} --mutex-locks={1} --mutex-loops={2} run '
-    return_value = None
-    iter_result = '\nNumber of mutex={0}\nNumber of locks={1}\n'
-    iter_result += 'Number of loops={2}\n'
-    keys = ['run', 'verbose']
-    ret_val = {key: '\nResult of sysbench.mutex test\n\n' for key in keys}
+    result = None
+    ret_val = {}
 
-    # The test begins here!
+    # Test begins!
     for num, locks, loops in zip(mutex_num, mutex_locks, mutex_loops):
-        for key in ret_val.iterkeys():
-            ret_val[key] += iter_result.format(num, locks, loops)
+        key = 'Mutex: {0} Locks: {1} Loops: {2}'.format(num,locks,loops)
         run_command = test_command.format(num, locks, loops)
-        return_value = __salt__['cmd.run'](run_command)
-        time = re.search(r'total time:\s*\d.\d*s', return_value)
-        ret_val['verbose'] += return_value + '\n\n'
-        ret_val['run'] += time.group() + '\n'
+        result = __salt__['cmd.run'](run_command)
+        ret_val[key] = _parser(result)
 
-    if option == 'run':
-        return ret_val['run']
-    else:
-        return ret_val['verbose']
+    return ret_val
 
 
-def memory(option='run'):
+def memory():
     '''
     This tests the memory for read and write operations.
 
     CLI Examples::
 
         salt \* sysbench.memory
-        salt \* sysbench.memory verbose
     '''
-
-    if option not in ['run', 'verbose']:
-        return 'Invalid argument'
 
     # test defaults
     # --memory-block-size = 10M
     # --memory-total-size = 1G
 
     # We test memory read / write against global / local scope of memory
+    # Test data
     memory_oper = ['read', 'write']
     memory_scope = ['local', 'global']
 
-    # Initializing the required variables
+    # Initializing the test variables
     test_command = 'sysbench --num-threads=64 --test=memory '
     test_command += '--memory-oper={0} --memory-scope={1} '
-    test_command += '--memory-block-size=1K --memory-total-size=1G run '
-    return_value = None
-    keys = ['run', 'verbose']
-    ret_val = {key: '''\nResult of sysbench.memory test\n\n
-    size  of memory block: 1K
-    total size of data to transfer: 1G\n''' for key in keys}
+    test_command += '--memory-block-size=1K --memory-total-size=4G run '
+    result = None
+    ret_val = {}
 
     # Test begins!
     for oper in memory_oper:
         for scope in memory_scope:
-            for key in ret_val.iterkeys():
-                ret_val[key] += 'Operation:{0}\nScope:{1}'.format(oper, scope)
+            key = 'Operation: {0} Scope: {1}'.format(oper, scope)
             run_command = test_command.format(oper, scope)
-            return_value = __salt__['cmd.run'](run_command)
-            time = re.search(r'\s*total time:\s*\d.\d*s', return_value)
-            ret_val['verbose'] += return_value + '\n\n'
-            ret_val['run'] += time.group() + '\n'
+            result = __salt__['cmd.run'](run_command)
+            ret_val[key] = _parser(result)
 
-    if option == 'run':
-        return ret_val['run']
-    else:
-        return ret_val['verbose']
+    return ret_val
 
 
-def fileio(option='run'):
+def fileio():
     '''
     This tests for the file read and write operations
 
     CLI Examples::
 
         salt \* sysbench.fileio
-        salt \* sysbench.fileio verbose
     '''
 
-    if option not in ['run', 'verbose']:
-        return 'Invalid option'
+    # Test data
+    test_modes = ['seqwr', 'seqrewr', 'seqrd', 'rndrd', 'rndwr', 'rndrw']
 
     # Initializing the required variables
     test_command = 'sysbench --num-threads=16 --test=fileio '
-    test_command += '--file-total-size=1M --file-test-mode={0} '
-    return_value = None
-    keys = ['run', 'verbose']
-    ret_val = {key: 'Result of sysbench.fileio test\n\n' for key in keys}
-    test_modes = ['seqwr', 'seqrewr', 'seqrd', 'rndrd', 'rndwr', 'rndrw']
+    test_command += '--file-num=64 --file-total-size=1M --file-test-mode={0} '
+    result = None
+    ret_val = {}
 
     # Test begins!
     for mode in test_modes:
-        for key in ret_val.iterkeys():
-            ret_val[key] += 'mode:{0}'.format(mode)
+        key = 'Mode: {0}'.format(mode)
+
         # Prepare phase
         run_command = (test_command + 'prepare').format(mode)
         __salt__['cmd.run'](run_command)
+
         # Test phase
         run_command = (test_command + 'run').format(mode)
-        return_value = __salt__['cmd.run'](run_command)
-        time = re.search(r'\s*total time:\s*\d.\d*s', return_value)
-        ret_val['verbose'] += return_value + '\n\n'
-        ret_val['run'] += time.group() + '\n'
+        result = __salt__['cmd.run'](run_command)
+        ret_val[key] = _parser(result)
+
         # Clean up phase
         run_command = (test_command + 'cleanup').format(mode)
         __salt__['cmd.run'](run_command)
 
-    if option == 'run':
-        return ret_val['run']
-    else:
-        return ret_val['verbose']
+    return ret_val
 
 
 def ping():
