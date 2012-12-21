@@ -147,7 +147,7 @@ def mutex():
 
     # Test begins!
     for num, locks, loops in zip(mutex_num, mutex_locks, mutex_loops):
-        key = 'Mutex: {0} Locks: {1} Loops: {2}'.format(num,locks,loops)
+        key = 'Mutex: {0} Locks: {1} Loops: {2}'.format(num, locks, loops)
         run_command = test_command.format(num, locks, loops)
         result = __salt__['cmd.run'](run_command)
         ret_val[key] = _parser(result)
@@ -176,7 +176,7 @@ def memory():
     # Initializing the test variables
     test_command = 'sysbench --num-threads=64 --test=memory '
     test_command += '--memory-oper={0} --memory-scope={1} '
-    test_command += '--memory-block-size=1K --memory-total-size=4G run '
+    test_command += '--memory-block-size=1K --memory-total-size=32G run '
     result = None
     ret_val = {}
 
@@ -194,6 +194,16 @@ def memory():
 def fileio():
     '''
     This tests for the file read and write operations
+    Various modes of operations are
+        sequential write
+        sequential rewrite
+        sequential read
+        random read
+        random write
+        random read and write
+
+    The test works with 32 files with each file being 1Gb in size
+    The test consumes a lot of time. Be patient!
 
     CLI Examples::
 
@@ -205,7 +215,7 @@ def fileio():
 
     # Initializing the required variables
     test_command = 'sysbench --num-threads=16 --test=fileio '
-    test_command += '--file-num=64 --file-total-size=1M --file-test-mode={0} '
+    test_command += '--file-num=32 --file-total-size=1G --file-test-mode={0} '
     result = None
     ret_val = {}
 
