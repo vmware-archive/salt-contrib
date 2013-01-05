@@ -81,6 +81,7 @@ def _connect(**dsn):
     return drizzle_db
 
 
+# Server functions
 def status():
     '''
     Show the status of the Drizzle server
@@ -90,8 +91,21 @@ def status():
 
         salt '*' drizzle.status
     '''
-    
 
+    # Initializing the required variables
+    ret_val = {}
+
+    # Fetching status
+    drizzle_db = _connect()
+    cursor = drizzle_db.cursor()
+    cursor.execute('SHOW STATUS')
+    for iter in range(cursor.rowcount):
+        status = cursor.fetchone()
+        ret_val[status[0]] = status[1]
+
+    cursor.close()
+    drizzle_db.close()
+    return ret_val
 
 def version():
     '''
@@ -105,11 +119,18 @@ def version():
 
     drizzle_db = _connect()
     cursor = drizzle_db.cursor(MySQLdb.cursors.DictCursor)
+
+    # Fetching version
     cursor.execute('SELECT VERSION()')
     version = cursor.fetchone()
+
     cursor.close()
     drizzle_db.close()
     return version
+
+
+# Database functions
+
 
 def ping():
     return True
