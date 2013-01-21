@@ -18,8 +18,6 @@ Configuration file can also be included such as::
 '''
 
 # Importing the required libraries
-import time
-import logging
 import re
 import salt.utils
 
@@ -291,5 +289,33 @@ def table_find(table_to_find):
     return ret_val
 
 
+# Plugin functions
+def plugins():
+    '''
+    Fetches the plugins added to the database server
+    
+    CLI Example::
+
+        salt '*' drizzle.plugins
+    '''
+
+    # Initializing the required variables
+    ret_val = {}
+    count = 1
+    drizzle_db = _connect()
+    cursor = drizzle_db.cursor()
+
+    # Fetching the plugins
+    query = 'SELECT PLUGIN_NAME FROM DATA_DICTIONARY.PLUGINS WHERE IS_ACTIVE LIKE "YES"'
+    cursor.execute(query)
+    for iter,count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
+        table = cursor.fetchone()
+        ret_val[count] = table[0]
+
+    cursor.close()
+    drizzle_db.close()
+    return ret_val
+
+    
 def ping():
     return True
