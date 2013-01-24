@@ -6,7 +6,7 @@ import salt.utils
 
 __outputter__ = {
                 'version': 'txt',
-                'list': 'txt',
+                'vzlist': 'txt',
                 'execute': 'txt',
                 'start': 'txt',
                 'stop': 'txt',
@@ -32,13 +32,13 @@ def version():
     out = __salt__['cmd.run']('vzctl --version')
     return out
 
-def list():
+def vzlist():
     '''
     Return list of containers from "vzlist -a"
 
     CLI Example::
 
-    salt '*' vzctl.list
+    salt '*' vzctl.vzlist
     '''
     out = __salt__['cmd.run']('vzlist -a')
     return out
