@@ -6,8 +6,8 @@ import salt.utils
 
 __outputter__ = {
   'version': 'txt',
-	'list': 'txt',
-	'execute': 'txt',
+  'list': 'txt',
+  'execute': 'txt',
   'start': 'txt',
   'stop': 'txt',
   'restart': 'txt'
