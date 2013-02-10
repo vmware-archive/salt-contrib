@@ -38,7 +38,8 @@ __outputter__ = {
     'schema_create': 'txt',
     'schema_drop': 'txt',
     'tables': 'yaml',
-    'table_find': 'yaml'
+    'table_find': 'yaml',
+    'query':'txt'
 }
 __opts__ = __salt__['test.get_opts']()
 
@@ -316,6 +317,88 @@ def plugins():
     drizzle_db.close()
     return ret_val
 
+#TODO: Needs to add plugin_add() and plugin_remove() methods. 
+#      However, only some of the plugins are dynamic at the moment.
+#      Remaining plugins need the server to be restarted.
+#      Hence, these methods can be hacked in the future!
+
+
+# Query functions
+def query(schema, query):
+    '''
+    Query method is used to issue any query to the database.
+
+    CLI Example::
+
+        salt '*' drizzle.query test_db 'select * from test_table'
+        salt '*' drizzle.query test_db 'insert into test_table values (1,"test1")'
+    '''
+
+    # Initializing the required variables
+    ret_val = {}
+    result = {}
+    drizzle_db = _connect()
+    cursor = drizzle_db.cursor()
+    columns = ()
+    rows = ()
+    tuples = {}
+    queries = []
+    _entry = True
+
+    # Support for mutilple queries
+    queries = query.split(";")
+
+    # Using the schema
+    try:
+        cursor.execute('USE {0}'.format(schema))
+    except MySQLdb.Error:
+        return 'check your schema'
+
+    # Issuing the queries
+    for issue in queries:
+        try:
+            rows_affected = cursor.execute(issue)
+        except MySQLdb.Error:
+            return 'Error in your SQL statement'
+
+        # Checking whether the query is a SELECT
+        if re.search(r'\s*select',issue) is None:
+            result['Rows affected:'] = rows_affected
+            ret_val[issue.lower()] = result
+            result = {}
+            continue
+
+        # Fetching the column names
+        if _entry:
+            attributes = cursor.description
+            for column_names in attributes:
+                columns += (column_names[0],)
+            _entry = False
+        result['columns'] = columns
+
+        # Fetching the tuples
+        count = 1
+        for iter in range(cursor.rowcount):
+            row = cursor.fetchone()
+            result['row{0}'.format(count)] = row
+            count += 1
+        result['Rows selected:'] = count-1
+        ret_val[issue.lower()] = result
+        result = {}
+
+    return ret_val
+
+
+# Transaction functions
+#def commit():
+
+
+
+#def rollback():
+    
     
 def ping():
+    '''
+    Checks whether Drizzle module is loaded or not
+    '''
     return True
