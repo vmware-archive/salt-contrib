@@ -485,7 +485,7 @@ def rollback(savepoint=None):
     try:
         if savepoint is None:
             cursor.execute('ROLLBACK')
-        else
+        else:
             cursor.execute('ROLLBACK TO SAVEPOINT {0}'.format(savepoint))
     except MySQLdb.Error:
         return 'Error! Check if transaction is started'
