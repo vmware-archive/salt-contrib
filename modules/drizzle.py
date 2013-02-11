@@ -39,7 +39,7 @@ __outputter__ = {
     'schema_drop': 'txt',
     'tables': 'yaml',
     'table_find': 'yaml',
-    'query':'txt'
+    'query': 'txt'
 }
 __opts__ = __salt__['test.get_opts']()
 
@@ -71,7 +71,7 @@ def _connect(**dsn):
 
     # Initializing the required variables
     dsn_url = {}
-    parameter = ['host','user','passwd','db','port']
+    parameter = ['host', 'user', 'passwd', 'db', 'port']
 
     # Gathering the dsn information
     for param in parameter:
@@ -144,7 +144,7 @@ def schemas():
 
         salt '*' drizzle.schemas
     '''
-    
+
     # Initializing the required variables
     ret_val = {}
     drizzle_db = _connect()
@@ -152,10 +152,10 @@ def schemas():
 
     # Retriving the list of schemas
     cursor.execute('SHOW SCHEMAS')
-    for iter,count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
+    for iter, count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
         schema = cursor.fetchone()
         ret_val[count] = schema[0]
-    
+
     cursor.close()
     drizzle_db.close()
     return ret_val
@@ -180,11 +180,11 @@ def schema_exists(schema):
     if cursor.rowcount == 1:
         return True
     return False
-    
+
 
 def schema_create(schema):
     '''
-    This method is used to create a schema. 
+    This method is used to create a schema.
     It takes the name of the schema as argument
 
     CLI Example::
@@ -215,7 +215,7 @@ def schema_drop(schema):
 
         salt '*' drizzle.schema_drop schema_name
     '''
-    
+
     drizzle_db = _connect()
     cursor = drizzle_db.cursor()
 
@@ -224,7 +224,7 @@ def schema_drop(schema):
         cursor.execute('DROP SCHEMA {0}'.format(schema))
     except MySQLdb.OperationalError:
         return 'Schema does not exist'
-    
+
     cursor.close()
     drizzle_db.close()
     return True
@@ -262,7 +262,7 @@ def tables(schema):
 
 def table_find(table_to_find):
     '''
-    Finds the schema in which the 
+    Finds the schema in which the
     given table is present
 
     CLI Example::
@@ -294,7 +294,7 @@ def table_find(table_to_find):
 def plugins():
     '''
     Fetches the plugins added to the database server
-    
+
     CLI Example::
 
         salt '*' drizzle.plugins
@@ -317,7 +317,7 @@ def plugins():
     drizzle_db.close()
     return ret_val
 
-#TODO: Needs to add plugin_add() and plugin_remove() methods. 
+#TODO: Needs to add plugin_add() and plugin_remove() methods.
 #      However, only some of the plugins are dynamic at the moment.
 #      Remaining plugins need the server to be restarted.
 #      Hence, these methods can be hacked in the future!
@@ -388,8 +388,8 @@ def query(schema, query):
         result = {}
 
     return ret_val
-  
-    
+
+
 def ping():
     '''
     Checks whether Drizzle module is loaded or not
