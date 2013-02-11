@@ -39,11 +39,7 @@ __outputter__ = {
     'schema_drop': 'txt',
     'tables': 'yaml',
     'table_find': 'yaml',
-    'query':'txt',
-    'start_transaction':'txt',
-    'savepoint':'txt',
-    'commit':'txt',
-    'rollback':'txt'
+    'query':'txt'
 }
 __opts__ = __salt__['test.get_opts']()
 
@@ -331,6 +327,7 @@ def plugins():
 def query(schema, query):
     '''
     Query method is used to issue any query to the database.
+    This method also supports multiple queries.
 
     CLI Example::
 
@@ -391,108 +388,7 @@ def query(schema, query):
         result = {}
 
     return ret_val
-
-
-# Transaction functions
-def start_transaction():
-    '''
-    This function is used to start the transaction mode
-    in the server. The changes will here after be recorede.
-    The "start_transaction" is required in order for the other
-    functions such as setting a savepoint, commiting the work and
-    rolling back to a savepoint, to be effective.
-
-    start_transaction returns true if successful. If there is already a
-    transaction, a warning is given.
-
-    CLI Example::
-
-        salt '*' drizzle.start_transaction
-    '''
-
-    # Initializing the required variables
-    drizzle_db = _connect()
-    cursor = drizzle_db.cursor()
-
-    # Starting the transaction!
-    cursor.execute("start transaction")
-
-    # Transaction started!
-    return True
-   
-
-def savepoint(set_savepoint):
-    '''
-    This method is used to set a savepoint.
-    Note that, savepoint can be set only when there is an active transaction.
-    A transaction can be started using start_transaction method
-
-    CLI Example::
-
-        salt '*' drizzle.savepoint my_savepoint
-
-    '''
-
-    # Initializing the required variables
-    drizzle_db = _connect()
-    cursor = drizzle_db.cursor()
-
-    # Setting the savepoint
-    cursor.execute('SAVEPOINT {0}'.format(set_savepoint))
-
-    # Savepoint set!
-    return True
-
-
-def commit():
-    '''
-    This function is used to commit a state in a transaction.
-    This is valid only when there is a valid transaction in progress.
-    A transaction can be started using start_transaction method.
-
-    CLI Example::
-
-        salt '*' drizzle.commit
-    '''
-
-    # Initializing the required variables
-    drizzle_db = _connect()
-    cursor = drizzle_db.cursor()
-
-    # Comming the work
-    cursor.execute("COMMIT")
-
-    # Committed the work
-    return True
-
-
-def rollback(savepoint=None):
-    '''
-    This function is used to rollback to an optional savepoint passed as argument.
-    If no savepoint is passed, it rollbacks to the last stable state.
-
-    CLI Example::
-
-        salt '*' drizzle.rollback
-        salt '*' drizzle.rollback my_savepoint
-    '''
-
-    # Initializing the requried variables
-    drizzle_db = _connect()
-    cursor = drizzle_db.cursor()
-
-    # Rolling back
-    try:
-        if savepoint is None:
-            cursor.execute('ROLLBACK')
-        else:
-            cursor.execute('ROLLBACK TO SAVEPOINT {0}'.format(savepoint))
-    except MySQLdb.Error:
-        return 'Error! Check if transaction is started'
-    
-    # Rolled back successfully
-    return True
-
+  
     
 def ping():
     '''
