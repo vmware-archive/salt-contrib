@@ -13,7 +13,7 @@ salt-contrib git repo.
 Development
 ===========
 
-You symlink your ``salt-contrib`` against a development environment and run
+You can symlink your ``salt-contrib`` against a development environment and run
 the tests against it.
 
 All python files, plus the contents of the ``files``
