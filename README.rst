@@ -13,6 +13,8 @@ salt-contrib git repo.
 Development
 ===========
 
+.. image:: https://travis-ci.org/tf198/salt-contrib.png?branch=develop
+
 You can symlink your ``salt-contrib`` against a development environment and run
 the tests against it.
 

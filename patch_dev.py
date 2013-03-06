@@ -21,15 +21,11 @@ import logging
 import sys
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr)
 
 current_dir = os.path.realpath(os.path.dirname(__file__))
 
-unsafe_modules = ('ansmod', 'flup_fcgi_client',
-                  'image', 'linux_netconfig', 'php_fpm',
-                  'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
-                  'linux_netstat', 'archive', 'ansible',
-                  'apt_repository')
+unsafe_modules = ('ansible',)
 
 def get_files(target):
     '''
@@ -38,7 +34,6 @@ def get_files(target):
     for dirname, dirnames, filenames in os.walk(current_dir):
         rel = dirname[len(current_dir)+1:]
         parts = rel.split('/')
-
         # skip current dir
         if not rel:
             continue
@@ -65,6 +60,10 @@ def install(path):
     count = 0
 
     for f in get_files(path):
+        # clear dead links
+        if os.path.islink(f[1]) and os.path.realpath(f[1]) != f[0]:
+            os.unlink(f[1])
+
         if not os.path.islink(f[1]):
             logger.info("Linking {0}".format(f[0]))
             try:
