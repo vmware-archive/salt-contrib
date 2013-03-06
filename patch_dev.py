@@ -28,7 +28,9 @@ current_dir = os.path.realpath(os.path.dirname(__file__))
 unsafe_modules = ('ansmod', 'circus', 'drizzle', 'flup_fcgi_client',
                   'image', 'keystone', 'linux_netconfig', 'php_fpm',
                   'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
-                  'linux_netstat')
+                  'linux_netstat', 'keystone_role', 'archive', 'ansible',
+                  'keystone_user', 'keystone_tenant', 'apt_repository',
+                  'ec2_info', 'keystone_user_role')
 
 def get_files(target):
     '''
