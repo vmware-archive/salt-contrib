@@ -18,4 +18,4 @@ install:
   - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
   - pip install -e ~/salt
   - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python patch_dev.py ~/salt
-script: "/home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python ~/salt/setup.py test --runtests-opts='-n contrib.tests -v'"
+script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python ~/salt/setup.py test --runtests-opts='-n contrib.tests -v'"
