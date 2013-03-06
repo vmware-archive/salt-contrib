@@ -4,4 +4,3 @@ msgpack-python
 pycrypto
 PyYAML
 pyzmq >= 2.1.9
-git+https://github.com/saltstack/salt.git
