@@ -29,8 +29,7 @@ unsafe_modules = ('ansmod', 'flup_fcgi_client',
                   'image', 'linux_netconfig', 'php_fpm',
                   'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
                   'linux_netstat', 'archive', 'ansible',
-                  'apt_repository',
-                  'ec2_info')
+                  'apt_repository')
 
 def get_files(target):
     '''
