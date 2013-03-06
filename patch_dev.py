@@ -21,10 +21,14 @@ import logging
 import sys
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(stream=sys.stderr)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 current_dir = os.path.realpath(os.path.dirname(__file__))
 
+unsafe_modules = ('ansmod', 'circus', 'drizzle', 'flup_fcgi_client',
+                  'image', 'keystone', 'linux_netconfig', 'php_fpm',
+                  'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
+                  'linux_netstat')
 
 def get_files(target):
     '''
@@ -41,8 +45,8 @@ def get_files(target):
         base = '' if parts[0] == 'tests' else 'salt'
 
         def f(x):
-            if x == 'contrib.py': return True
-            return False
+            if x[:-3] in unsafe_modules:
+                return False
             if x == '__init__.py':
                 return False
             if x[-3:] == '.py':
