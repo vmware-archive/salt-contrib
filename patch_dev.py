@@ -41,6 +41,8 @@ def get_files(target):
         base = '' if parts[0] == 'tests' else 'salt'
 
         def f(x):
+            if x == 'contrib.py': return True
+            return False
             if x == '__init__.py':
                 return False
             if x[-3:] == '.py':
