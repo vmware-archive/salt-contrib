@@ -103,10 +103,12 @@ if __name__ == '__main__':
     if not os.path.isdir("{0}/salt/modules".format(options.path)):
         parser.error("{0} doesn't seem to be a valid salt environment".format(options.path))
 
+    path = os.path.realpath(options.path)
+
     if options.refresh:
-        uninstall(options.path)
-        install(options.path)
+        uninstall(path)
+        install(path)
     elif options.uninstall:
-        uninstall(options.path)
+        uninstall(path)
     else:
-        install(options.path)
+        install(path)
