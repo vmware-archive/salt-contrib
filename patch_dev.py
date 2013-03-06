@@ -25,7 +25,7 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 current_dir = os.path.realpath(os.path.dirname(__file__))
 
-unsafe_modules = ('ansmod', 'circus', 'drizzle', 'flup_fcgi_client',
+unsafe_modules = ('ansmod', 'flup_fcgi_client',
                   'image', 'keystone', 'linux_netconfig', 'php_fpm',
                   'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
                   'linux_netstat', 'keystone_role', 'archive', 'ansible',
