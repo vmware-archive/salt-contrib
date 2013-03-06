@@ -8,9 +8,9 @@ l = len(current_dir)
 
 names = []
 for dirname, dirs, files in os.walk(current_dir):
-    parts  = dirname[l:].split(os.sep)
+    parts = dirname[l:].split(os.sep)
     module = '.'.join(parts[1:])
-    
+
     for f in files:
         if f[-8:] == '_test.py':
             names.append('{0}.{1}'.format(module, f[:-3]))
