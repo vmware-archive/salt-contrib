@@ -26,11 +26,11 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 current_dir = os.path.realpath(os.path.dirname(__file__))
 
 unsafe_modules = ('ansmod', 'flup_fcgi_client',
-                  'image', 'keystone', 'linux_netconfig', 'php_fpm',
+                  'image', 'linux_netconfig', 'php_fpm',
                   'rabbitmq_plugins', 'riak', 'sysbench', 'vzctl',
-                  'linux_netstat', 'keystone_role', 'archive', 'ansible',
-                  'keystone_user', 'keystone_tenant', 'apt_repository',
-                  'ec2_info', 'keystone_user_role')
+                  'linux_netstat', 'archive', 'ansible',
+                  'apt_repository',
+                  'ec2_info')
 
 def get_files(target):
     '''
