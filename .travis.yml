@@ -19,5 +19,5 @@ install:
   - git clone git://github.com/saltstack/salt.git /home/travis/salt
   - pip install -r /home/travis/salt/requirements.txt --use-mirrors
   - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
-  - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python patch_dev.py /home/travis/salt
+  - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python link_contrib.py /home/travis/salt
 script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python /home/travis/salt/tests/runtests.py -n contrib.tests -v"
