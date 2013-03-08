@@ -11,13 +11,12 @@ python:
 before_install:
   - sudo add-apt-repository -y ppa:saltstack/salt
   - sudo apt-get update
-  - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" swig salt-common
+  - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" salt-common
   - "for i in /usr/lib/python${TRAVIS_PYTHON_VERSION}/dist-packages/*; do ln -s $i /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/ || true; done"
-  - pip install mock --use-mirrors --mirrors=http://testpypi.python.org/pypi
 
 install:
   - git clone git://github.com/saltstack/salt.git /home/travis/salt
   - pip install -r /home/travis/salt/requirements.txt --use-mirrors
   - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
   - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python link_contrib.py /home/travis/salt
-script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python /home/travis/salt/tests/runtests.py -n contrib.tests -v"
+script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python /home/travis/salt/tests/runtests.py -n contrib.tests --run-destructive -v"
