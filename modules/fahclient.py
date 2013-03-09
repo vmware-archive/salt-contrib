@@ -69,7 +69,7 @@ def passkey(passkey):
     if os.path.exists(filename):
         __salt__['file.sed'](filename, '<passkey value=".*"/>', 
             '<passkey value="{0}"/>'.format(passkey))
-    return key
+    return passkey
 
 
 def power(power):
