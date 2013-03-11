@@ -1,27 +1,46 @@
 '''
-Manages Apache Service Mix
+Salt State to manage Apache Service Mix
 
 The following grains should be set
-grains:
-  smx:
-    user: admin user name
-    pass: password
-    path: /absolute/path/to/servicemix/home
+smx:
+  user: admin user name
+  pass: password
+  path: /absolute/path/to/servicemix/home
+
+or use pillar:
+smx.user: admin user name
+smx.pass: password
+smx.path: /absolute/path/to/servicemix/home
 
 Note:
+- if both pillar & grains settings exists -> grains wins
 - Tested on apache-servicemix-full-4.4.2.tar.gz
 - When a feature is being removed it will not recursivly remove its nested features
   But it will remove the bundles configure in the feature it self
 '''
 
-def __virtual():
+def __virtual__():
     '''
     Load the state only if smx module is loaded
     '''
     
-    return 'smx' if 'smx' in __salt__ else False
+    return 'smx' if 'smx.run' in __salt__ else False
 
-def feauture_repository_present(name):
+def _get_latest_feature_version(feature):
+    '''
+    get the latest version available for this feature
+    '''
+    
+    feature_refreshurls()
+    ret = ''
+    for line in _parse_list(run('features:list')):
+        lst = line.split()
+        if feature == lst[2]:
+             ret = max(ret,lst[1])
+    
+    return ret
+
+def feature_repository_present(name):
     '''
     Verifies that the repository url is configured and updated
     '''
@@ -31,7 +50,7 @@ def feauture_repository_present(name):
            'changes': {},
            'comment': ''}
     
-    if __salt__['smx.is_feature_url_configured'](name):
+    if __salt__['smx.is_repo'](name):
         ret['comment'] = 'The repository {0} is already configured'.format(name)
         return ret
     
@@ -39,11 +58,11 @@ def feauture_repository_present(name):
         ret['changes'] = {'added': name}
         return ret
     
-    if __salt__['smx.feature_addurl'](name) == 'new':
-        ret['changes'] = {'added': name}
-    else:
+    if __salt__['smx.feature_addurl'](name) == 'missing':
         ret['result'] = False
         ret['comment'] = 'fail to configure {0} as a feature repository'.format(name)
+    else:
+        ret['changes'] = {'added': name}
     
     return ret
 
@@ -57,7 +76,7 @@ def feature_installed_latest(name, bundles=''):
     Note: it won't start the bundles if the feature is already installed
     '''
     
-    version = __salt__['smx.get_latest_feature_version'](name)
+    version = _get_latest_feature_version(name)
     if version:
         return feature_installed(name, version, bundles)
     else:
@@ -113,6 +132,6 @@ def feature_installed(name, version, bundles=''):
         ret['comment'] += ', could not install feature'
     else:
         ret['result'] = False
-        ret['comment'] += ', the following bundles are not Active {0}'.format(__salt__['smx.get_nonactive_bundles'](bundles))
+        ret['comment'] += ', the following bundles are not Active {0}'.format(__salt__['smx.nonactive_bundles'](bundles))
     
     return ret
