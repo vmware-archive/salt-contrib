@@ -112,6 +112,12 @@ def feature_installed(name, version, bundles=''):
             ret['comment'] = 'the feature is installed already'
             return ret
     
+    # Test
+    if __opts__['test']:
+        ret['changes']['installed'] = feature_fullname
+        ret['comment'] = 'if the feature is installed in other version it will be removed'
+        return ret
+    
     # remove old versions if needed
     msg = __salt__['smx.feature_remove_all_versions'](name)
     if msg.startswith('error'):
