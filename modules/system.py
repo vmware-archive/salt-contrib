@@ -15,13 +15,6 @@ def __virtual__():
     return 'system'
 
 
-def test():
-    '''
-    Test module import status
-    '''
-    return True
-
-
 def halt():
     '''
     Halt a running system
