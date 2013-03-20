@@ -343,6 +343,8 @@ def deploy_war(war, context, force='no', url='http://localhost:8080/manager', en
         except Exception:
             return 'FAIL - could not cache the war file'
     
+    context = '{0}##{1}'.format(context, war.split('/')[-1].replace('.war',''))
+    
     # Prepare options
     opts = {
         'war': 'file:{0}'.format(tempfile),
