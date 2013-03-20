@@ -50,7 +50,7 @@ def __virtual__():
 
 def _auth(uri):
     '''
-    returns an authentication handler.
+    returns a authentication handler.
     Get user & password from grains, if are not set default to modules.config.option
     
     If user & pass are missing return False
@@ -123,6 +123,17 @@ def _wget(cmd, opts={}, url='http://localhost:8080/manager'):
     
     return ret
 
+def _simple_cmd(cmd, app, url='http://localhost:8080/manager'):
+    '''
+    Simple command wrapper to commands that need only a path option
+    '''
+    
+    try:
+        full = ls(url)[app]['fullname']
+        return '\n'.join(_wget(cmd,{'path': '/'+full},url)['msg'])
+    except Exception:
+        return 'FAIL - No context exists for path {0}'.format(app)
+
 def status(url='http://localhost:8080/manager'):
     '''
     Used to test if the tomcat manager is up
@@ -184,7 +195,7 @@ def stop(app, url='http://localhost:8080/manager'):
         salt '*' tomcat_manager.stop /jenkins http://localhost:8080/manager
     '''
     
-    return '\n'.join(_wget('stop',{'path': app},url)['msg'])
+    return _simple_cmd('stop', app, url)
 
 def start(app, url='http://localhost:8080/manager'):
     '''
@@ -200,7 +211,7 @@ def start(app, url='http://localhost:8080/manager'):
         salt '*' tomcat_manager.start /jenkins http://localhost:8080/manager
     '''
     
-    return '\n'.join(_wget('start',{'path': app},url)['msg'])
+    return _simple_cmd('start', app, url)
 
 def reload(app, url='http://localhost:8080/manager'):
     '''
@@ -216,7 +227,7 @@ def reload(app, url='http://localhost:8080/manager'):
         salt '*' tomcat_manager.reload /jenkins http://localhost:8080/manager
     '''
     
-    return '\n'.join(_wget('reload',{'path': app},url)['msg'])
+    return _simple_cmd('reload', app, url)
 
 def sessions(app, url='http://localhost:8080/manager'):
     '''
@@ -232,7 +243,7 @@ def sessions(app, url='http://localhost:8080/manager'):
         salt '*' tomcat_manager.sessions /jenkins http://localhost:8080/manager
     '''
     
-    return '\n'.join(_wget('sessions',{'path': app},url)['msg'])
+    return _simple_cmd('sessions', app, url)
 
 def status_webapp(app, url='http://localhost:8080/manager'):
     '''
@@ -290,11 +301,11 @@ def undeploy(app, url='http://localhost:8080/manager'):
     
     CLI Examples::
         
-        salt '*' tomcat_manager.reload /jenkins
-        salt '*' tomcat_manager.reload /jenkins http://localhost:8080/manager
+        salt '*' tomcat_manager.undeploy /jenkins
+        salt '*' tomcat_manager.undeploy /jenkins http://localhost:8080/manager
     '''
     
-    return '\n'.join(_wget('undeploy',{'path': app},url)['msg'])
+    return _simple_cmd('undeploy', app, url)
 
 def deploy_war(war, context, force='no', url='http://localhost:8080/manager', env='base'):
     '''
