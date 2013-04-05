@@ -28,7 +28,8 @@ def version():
     '''
     cmd = 'riak version'
     out = __salt__['cmd.run'](cmd).split('\n')
-    return out[1]
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    return msgs[1]
 
 
 def ping():
@@ -48,7 +49,7 @@ def is_up():
     '''
     cmd = 'riak ping'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "pong":
+    if out[-1] == "pong":
         return True
     else:
         return False
@@ -56,7 +57,7 @@ def is_up():
 
 def start():
     '''
-    Start a Riak node.
+    Start a Riak node. Returns True if the node is left in a running state.
 
     CLI Example::
 
@@ -64,7 +65,8 @@ def start():
     '''
     cmd = 'riak start'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 1:
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) == 1 or msgs[1] == "Node is already running!":
         return True
     else:
         return False
@@ -72,7 +74,8 @@ def start():
 
 def stop():
     '''
-    Stop a running Riak node.
+    Stop a running Riak node. Returns True if the node is left in a stopped
+    state.
 
     CLI Example::
 
@@ -80,7 +83,8 @@ def stop():
     '''
     cmd = 'riak stop'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "ok":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) == 2 and msgs[1] in ("ok", "Node is not running!"):
         return True
     else:
         return False
@@ -89,6 +93,7 @@ def stop():
 def restart():
     '''
     Stops and then starts the running Riak node without exiting the Erlang VM.
+    Returns True if the node is left in a running state.
 
     CLI Example::
 
@@ -96,7 +101,8 @@ def restart():
     '''
     cmd = 'riak restart'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "ok":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) == 2 and msgs[1] == "ok":
         return True
     else:
         return False
