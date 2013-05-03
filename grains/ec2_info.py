@@ -58,9 +58,9 @@ def _get_ec2_hostinfo(path=""):
     """
 
 
-    for line in read_uri("latest/meta-data/%s" % path).split("\n"):
+    for line in _call_aws("latest/meta-data/%s" % path).split("\n"):
         if line[-1] != "/":
-            grains["ec2_" + line] = read_uri("latest/meta-data/%s" % (path + line))
+            grains["ec2_" + line] = _call_aws("latest/meta-data/%s" % (path + line))
             #grains.append(read_uri("latest/meta-data/%s") % (path + line))
         else:
             _walk(path + line)
