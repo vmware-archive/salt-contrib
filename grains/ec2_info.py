@@ -14,6 +14,8 @@ import os
 # Set up logging
 LOG = logging.getLogger(__name__)
 
+# Initialize grain variable
+grains = {}
 
 def _call_aws(url):
     """
@@ -28,11 +30,10 @@ def _call_aws(url):
     if response.status != 200:
         return ""
 
-    data = response.read()
-    return data
+    return response.read()
 
 
-def _get_ec2_hostinfo():
+def _get_ec2_hostinfo(path=""):
     """
     Will return grain information about this host that is EC2 specific
 
@@ -56,20 +57,13 @@ def _get_ec2_hostinfo():
     "public-hostname" : "ec2-AA-BB-CC-DD.eu-west-1.compute.amazonaws.com"
     """
 
-    grains = {}
-    #Read the buffert, and convert it to a dict
-    data = _call_aws("/latest/dynamic/instance-identity/document")
-    #null isn't None so translate on the fly
-    grains = ast.literal_eval(data.replace('null', 'None'))
 
-    #Add some more default data
-    grains['local-ipv4'] = _call_aws("/latest/meta-data/local-ipv4")
-    grains['local-hostname'] = _call_aws("/latest/meta-data/local-hostname")
-
-    grains['public-ipv4'] = _call_aws("/latest/meta-data/public-ipv4")
-    grains['public-hostname'] = _call_aws("/latest/meta-data/public-hostname")
-
-    return grains
+    for line in read_uri("latest/meta-data/%s" % path).split("\n"):
+        if line[-1] != "/":
+            grains["ec2_" + line] = read_uri("latest/meta-data/%s" % (path + line))
+            #grains.append(read_uri("latest/meta-data/%s") % (path + line))
+        else:
+            _walk(path + line)
 
 
 def ec2_info():
@@ -84,7 +78,7 @@ def ec2_info():
         return {}
 
     try:
-        grains = _get_ec2_hostinfo()
+        _get_ec2_hostinfo()
         return grains
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
