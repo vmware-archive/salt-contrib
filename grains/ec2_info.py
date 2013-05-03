@@ -14,8 +14,6 @@ import os
 # Set up logging
 LOG = logging.getLogger(__name__)
 
-# Initialize grain variable
-grains = {}
 
 def _call_aws(url):
     """
@@ -23,17 +21,28 @@ def _call_aws(url):
     Host: 169.254.169.254
 
     """
-
     conn = httplib.HTTPConnection("169.254.169.254", 80, timeout=1)
     conn.request('GET', url)
     response = conn.getresponse()
-    if response.status != 200:
-        return ""
+    if response.status == 200:
+        return response.read()
+    return False
 
-    return response.read()
+def _walk_ec2_metadata(path="", data={}):
+    try:
+        # data = read_uri("latest/meta-data/%s" % path).split("\n")
+        # print data
+        for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
+            if line[-1] != "/":
+                data["ec2_" + line] = _call_aws("/latest/meta-data/%s" % (path + line))
+                #grains.append(read_uri("latest/meta-data/%s") % (path + line))
+            else:
+                _walk_ec2_metadata(path + line, data=data)
+    except Exception as e:
+        print "oh noes! %s" % e
 
 
-def _get_ec2_hostinfo(path=""):
+def _get_ec2_hostinfo():
     """
     Will return grain information about this host that is EC2 specific
 
@@ -56,14 +65,24 @@ def _get_ec2_hostinfo(path=""):
     "public-ipv4" : "AA.BB.CC.DD",
     "public-hostname" : "ec2-AA-BB-CC-DD.eu-west-1.compute.amazonaws.com"
     """
+    grains = {}
+    _walk_ec2_metadata(data=grains)
+    return grains
+
+    # #Read the buffert, and convert it to a dict
+    # data = _call_aws("/latest/meta-data/%s")
+    # #null isn't None so translate on the fly
+    # grains = ast.literal_eval(data.replace('null', 'None'))
+
+    # #Add some more default data
+    # grains['local-ipv4'] = _call_aws("/latest/meta-data/local-ipv4")
+    # grains['local-hostname'] = _call_aws("/latest/meta-data/local-hostname")
+
+    # grains['public-ipv4'] = _call_aws("/latest/meta-data/public-ipv4")
+    # grains['public-hostname'] = _call_aws("/latest/meta-data/public-hostname")
 
 
-    for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
-        if line[-1] != "/":
-            grains["ec2_" + line] = _call_aws("/latest/meta-data/%s" % (path + line))
-            #grains.append(read_uri("latest/meta-data/%s") % (path + line))
-        else:
-            _walk(path + line)
+    # return grains
 
 
 def ec2_info():
@@ -78,7 +97,7 @@ def ec2_info():
         return {}
 
     try:
-        _get_ec2_hostinfo()
+        grains = _get_ec2_hostinfo()
         return grains
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
