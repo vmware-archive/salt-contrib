@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Get some grains information that is only available in Amazon AWS
@@ -26,7 +27,6 @@ def _call_aws(url):
     response = conn.getresponse()
     if response.status == 200:
         return response.read()
-    return False
 
 
 def _get_ec2_hostinfo(path="", data={}):
