@@ -6,11 +6,9 @@ Get some grains information that is only available in Amazon AWS
 Author: Erik Günther
 
 """
-import ast
 import logging
 import httplib
 import socket
-import os
 
 # Set up logging
 LOG = logging.getLogger(__name__)
@@ -36,7 +34,7 @@ def _get_ec2_hostinfo(path="", data={}):
     :param data: Dictionary containing the results from walking the AWS meta-data
 
     All EC2 variables are prefixed with "ec2_" so they are nicely grouped as grains and also avoids collisions with
-    other grain names. 
+    other grain names.
     """
     for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
         if line[-1] != "/":
