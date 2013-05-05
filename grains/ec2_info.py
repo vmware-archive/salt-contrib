@@ -32,7 +32,11 @@ def _call_aws(url):
 def _get_ec2_hostinfo(path="", data={}):
     """
     Recursive function that walks the EC2 metadata that is available to each minion.
-    Shamelessly stolen from the Facter module from Puppet (ec2.rb)
+    :param path: URI fragment to append to /latest/meta-data/
+    :param data: Dictionary containing the results from walking the AWS meta-data
+
+    All EC2 variables are prefixed with "ec2_" so they are nicely grouped as grains and also avoids collisions with
+    other grain names. 
     """
     for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
         if line[-1] != "/":
