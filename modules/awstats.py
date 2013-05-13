@@ -127,6 +127,7 @@ def configure(domain, logfile, period="hourly"):
     '''
     if domain and logfile:
         awcfg = _getAwstatsConfig()
+        tdir = _getTargetDir()
 
         # Generate a valid awstats configuration file
         with open(awcfg['model']) as f:
@@ -150,9 +151,9 @@ def configure(domain, logfile, period="hourly"):
 
         # Generate an appropriate update script, store in /usr/local/bin
         update = update_script.format(domain,
-                                      TARGET_DIR,
-                                      AWSTATS,
-                                      AWSTATS_STATIC)
+                                      tdir,
+                                      awcfg['awstats'],
+                                      awcfg['static'])
         with open('/usr/local/bin/awstats_update', 'w') as f:
             os.chmod('/usr/local/bin/awstats_update', 0700)
             f.write(update)
