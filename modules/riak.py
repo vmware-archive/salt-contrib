@@ -237,6 +237,24 @@ def cluster_commit():
     return out
 
 
+def ring_ready():
+    '''
+    Return ringready from riak-admin ring-status
+
+    CLI Example::
+
+        salt '*' riak.ring_ready
+    '''
+    cmd = 'riak-admin ring-status'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    out = out[1:len(out)]
+    ret = []
+    for line in out:
+        if 'Ring Ready' in line:
+            return True if line[12:] == "true" else False
+    return None
+
+
 def ring_status():
     '''
     Outputs the current claimant, its status, ringready, pending ownership 
