@@ -9,9 +9,11 @@ Handle Debian, Ubuntu and other Debian based distribution APT repositories
 
 '''
 
+
 import urlparse
 
 from salt import exceptions, utils
+
 
 def __virtual__():
     '''
@@ -22,6 +24,7 @@ def __virtual__():
         return 'apt_repository'
     except exceptions.CommandNotFoundError:
         return False
+
 
 def present(address, components, distribution=None, source=False, key_id=None,
             key_server=None, in_sources_list_d=True, filename=None):
@@ -67,7 +70,7 @@ def present(address, components, distribution=None, source=False, key_id=None,
         This is used by default.
     '''
     if distribution is None:
-        distribution = __salt__['grains.item']('oscodename')
+        distribution = __salt__['grains.item']('oscodename')['oscodename']
 
     if filename is None:
         url = urlparse.urlparse(address)
@@ -75,10 +78,12 @@ def present(address, components, distribution=None, source=False, key_id=None,
             return {'name': address, 'result': False, 'changes': {},
                     'comment': "Invalid address '{0}'".format(address)}
         filename = '-'.join((
-            url.netloc.split(':')[0], # address without port
-            url.path.lstrip('/').replace('/', '_'), # path with _ instead of /
+            # address without port
+            url.netloc.split(':')[0],
+            # path with _ instead of /
+            url.path.lstrip('/').rstrip('/').replace('/', '_'),
             distribution
-            ))
+        ))
 
     # deb http://ppa.launchpad.net/mercurial-ppa/releases/ubuntu precise main
     # without the deb
@@ -127,14 +132,15 @@ def present(address, components, distribution=None, source=False, key_id=None,
 
     ret = {
         'name': filename,
-        'result': file_result['result'] == cmd_result['result'] == True,
+        'result': file_result['result'] == cmd_result['result'] is True,
         'changes': file_result['changes'],
         'comment': ' and '.join((file_result['comment'], cmd_result['comment']))
     }
     if ret['result'] and ret['changes']:
-        __salt__['pkg.refresh_db']
+        __salt__['pkg.refresh_db']()
     ret['changes'].update(cmd_result['changes'])
     return ret
+
 
 def ubuntu_ppa(user, name, key_id, source=False, distribution=None):
     '''
@@ -170,6 +176,7 @@ def ubuntu_ppa(user, name, key_id, source=False, distribution=None):
     address = 'http://ppa.launchpad.net/{0}/{1}/ubuntu'.format(user, name)
     filename = '{0}-{1}-{2}'.format(
         user, name,
-        __salt__['grains.item']('lsb_codename'))
+        __salt__['grains.item']('lsb_codename')['lsb_codename']
+    )
     return present(address, ('main',), distribution, source, key_id,
                    'keyserver.ubuntu.com', True, filename)
