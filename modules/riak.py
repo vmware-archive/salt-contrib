@@ -29,7 +29,9 @@ def version():
     cmd = 'riak version'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    return msgs[1]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    return msgs[0]
 
 
 def ping():
@@ -66,7 +68,9 @@ def start():
     cmd = 'riak start'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 1 or msgs[1] == "Node is already running!":
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if len(msgs) == 0 or msgs[0] == "Node is already running!":
         return True
     else:
         return False
@@ -84,7 +88,9 @@ def stop():
     cmd = 'riak stop'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 2 and msgs[1] in ("ok", "Node is not running!"):
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] in ("ok", "Node is not running!"):
         return True
     else:
         return False
@@ -102,7 +108,9 @@ def restart():
     cmd = 'riak restart'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 2 and msgs[1] == "ok":
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "ok":
         return True
     else:
         return False
@@ -123,10 +131,13 @@ def cluster_join(node):
         return False
     cmd = 'riak-admin cluster join %s' % node
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_leave(node=None, force=False):
@@ -156,10 +167,13 @@ def cluster_leave(node=None, force=False):
     if node is not None:
         cmd = '%s %s' % (cmd, node)
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_replace(node1, node2, force=False):
@@ -186,10 +200,13 @@ def cluster_replace(node1, node2, force=False):
         return False
     cmd = 'riak-admin cluster replace %s %s' % (node1, node2)
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_plan():
@@ -202,9 +219,13 @@ def cluster_plan():
     '''
     cmd = 'riak-admin cluster plan'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "There are no staged changes":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "There are no staged changes":
         return None
-    return out
+    else:
+        return msgs
 
 
 def cluster_clear():
@@ -217,9 +238,13 @@ def cluster_clear():
     '''
     cmd = 'riak-admin cluster clear'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "Cleared staged cluster changes":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "Cleared staged cluster changes":
         return True
-    return out
+    else:
+        return msgs[0]
 
 
 def cluster_commit():
@@ -232,27 +257,29 @@ def cluster_commit():
     '''
     cmd = 'riak-admin cluster commit'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("You must verify the plan"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("You must verify the plan"):
         return cluster_plan()
-    return out
+    else:
+        return msgs[0]
 
 
-def ring_ready():
+def ringready():
     '''
-    Return ringready from riak-admin ring-status
+    Checks whether all nodes in the cluster agree on the ring state.
 
     CLI Example::
 
-        salt '*' riak.ring_ready
+        salt '*' riak.ringready
     '''
-    cmd = 'riak-admin ring-status'
+    cmd = 'riak-admin ringready'
     out = __salt__['cmd.run'](cmd).split('\n')
-    out = out[1:len(out)]
-    ret = []
-    for line in out:
-        if 'Ring Ready' in line:
-            return True if line[12:] == "true" else False
-    return None
+    if len(out) > 0 and out[0].startswith("TRUE"):
+        return True
+    else:
+        return False
 
 
 def ring_status():
@@ -289,4 +316,55 @@ def member_status():
     for line in out:
         if len(line) > 0 and line[:1] != "=" and line[:1] != "-":
             ret.append(line)
+    return ret
+
+
+def transfers():
+    '''
+    Identifies nodes that are awaiting transfer of one or more partitions.
+
+    CLI Example::
+
+        salt '*' riak.transfers
+    '''
+    cmd = 'riak-admin transfers'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    if out[0] == "No transfers active":
+        return out[0]
+    else:
+        return out
+
+
+def diag():
+    '''
+    Run diagnostic checks against <node>.
+
+    CLI Example::
+
+        salt '*' riak.diag
+    '''
+    cmd = 'riak-admin diag'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    if len(out) == 1 and len(out[0]) == 0:
+        return "Nothing to report"
+    else:
+        return out
+
+
+def status():
+    '''
+    Prints status information, including performance statistics, system health
+    information, and version numbers.
+
+    CLI Example::
+
+        salt '*' riak.status
+    '''
+    cmd = 'riak-admin status'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    ret = []
+    for line in out:
+        parts = line.split(" : ")
+        if len(parts) == 2:
+            ret.append({parts[0]: parts[1]})
     return ret
