@@ -266,22 +266,20 @@ def cluster_commit():
         return msgs[0]
 
 
-def ring_ready():
+def ringready():
     '''
-    Return ringready from riak-admin ring-status
+    Checks whether all nodes in the cluster agree on the ring state.
 
     CLI Example::
 
-        salt '*' riak.ring_ready
+        salt '*' riak.ringready
     '''
-    cmd = 'riak-admin ring-status'
+    cmd = 'riak-admin ringready'
     out = __salt__['cmd.run'](cmd).split('\n')
-    out = out[1:len(out)]
-    ret = []
-    for line in out:
-        if 'Ring Ready' in line:
-            return True if line[12:] == "true" else False
-    return None
+    if len(out) > 0 and out[0].startswith("TRUE"):
+        return True
+    else:
+        return False
 
 
 def ring_status():
