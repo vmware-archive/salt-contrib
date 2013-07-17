@@ -29,7 +29,9 @@ def version():
     cmd = 'riak version'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    return msgs[1]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    return msgs[0]
 
 
 def ping():
@@ -66,7 +68,9 @@ def start():
     cmd = 'riak start'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 1 or msgs[1] == "Node is already running!":
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if len(msgs) == 0 or msgs[0] == "Node is already running!":
         return True
     else:
         return False
@@ -84,7 +88,9 @@ def stop():
     cmd = 'riak stop'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 2 and msgs[1] in ("ok", "Node is not running!"):
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] in ("ok", "Node is not running!"):
         return True
     else:
         return False
@@ -102,7 +108,9 @@ def restart():
     cmd = 'riak restart'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) == 2 and msgs[1] == "ok":
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "ok":
         return True
     else:
         return False
@@ -123,10 +131,13 @@ def cluster_join(node):
         return False
     cmd = 'riak-admin cluster join %s' % node
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_leave(node=None, force=False):
@@ -156,10 +167,13 @@ def cluster_leave(node=None, force=False):
     if node is not None:
         cmd = '%s %s' % (cmd, node)
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_replace(node1, node2, force=False):
@@ -186,10 +200,13 @@ def cluster_replace(node1, node2, force=False):
         return False
     cmd = 'riak-admin cluster replace %s %s' % (node1, node2)
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("Success"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("Success"):
         return True
     else:
-        return out[1]
+        return msgs[0]
 
 
 def cluster_plan():
@@ -202,9 +219,13 @@ def cluster_plan():
     '''
     cmd = 'riak-admin cluster plan'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "There are no staged changes":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "There are no staged changes":
         return None
-    return out
+    else:
+        return msgs
 
 
 def cluster_clear():
@@ -217,9 +238,13 @@ def cluster_clear():
     '''
     cmd = 'riak-admin cluster clear'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1] == "Cleared staged cluster changes":
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0] == "Cleared staged cluster changes":
         return True
-    return out
+    else:
+        return msgs[0]
 
 
 def cluster_commit():
@@ -232,9 +257,13 @@ def cluster_commit():
     '''
     cmd = 'riak-admin cluster commit'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 2 and out[1].startswith("You must verify the plan"):
+    msgs = [line for line in out if not line.startswith("!!!!")]
+    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
+        del(msgs[0])
+    if msgs[0].startswith("You must verify the plan"):
         return cluster_plan()
-    return out
+    else:
+        return msgs[0]
 
 
 def ring_ready():
