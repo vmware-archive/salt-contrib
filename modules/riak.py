@@ -317,3 +317,54 @@ def member_status():
         if len(line) > 0 and line[:1] != "=" and line[:1] != "-":
             ret.append(line)
     return ret
+
+
+def transfers():
+    '''
+    Identifies nodes that are awaiting transfer of one or more partitions.
+
+    CLI Example::
+
+        salt '*' riak.transfers
+    '''
+    cmd = 'riak-admin transfers'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    if out[0] == "No transfers active":
+        return out[0]
+    else:
+        return out
+
+
+def diag():
+    '''
+    Run diagnostic checks against <node>.
+
+    CLI Example::
+
+        salt '*' riak.diag
+    '''
+    cmd = 'riak-admin diag'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    if len(out) == 1 and len(out[0]) == 0:
+        return "Nothing to report"
+    else:
+        return out
+
+
+def status():
+    '''
+    Prints status information, including performance statistics, system health
+    information, and version numbers.
+
+    CLI Example::
+
+        salt '*' riak.status
+    '''
+    cmd = 'riak-admin status'
+    out = __salt__['cmd.run'](cmd).split('\n')
+    ret = []
+    for line in out:
+        parts = line.split(" : ")
+        if len(parts) == 2:
+            ret.append({parts[0]: parts[1]})
+    return ret
