@@ -9,6 +9,7 @@ Author: Erik Günther
 import logging
 import httplib
 import socket
+import json
 
 # Set up logging
 LOG = logging.getLogger(__name__)
@@ -43,6 +44,14 @@ def _get_ec2_hostinfo(path="", data={}):
             _get_ec2_hostinfo(path + line, data=data)
 
 
+def _get_ec2_region():
+    """
+    Recursive call in _get_ec2_hostinfo() does not retrieve a node's region
+    """
+    data = _call_aws("/latest/dynamic/instance-identity/document")
+    return json.loads(data)['region']
+
+
 def ec2_info():
     """
     Collect some extra host information
@@ -57,6 +66,7 @@ def ec2_info():
     try:
         grains = {}
         _get_ec2_hostinfo(data=grains)
+        grains['ec2_region'] = _get_ec2_region()
         return grains
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
