@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - '2.7'
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" swig rabbitmq-server ruby
+  - pip install --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io mock timelib
+  - pip install http://dl.dropbox.com/u/174789/m2crypto-0.20.1.tar.gz
+  - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io unittest2 ordereddict; fi"
+
+install:
+  - git clone git://github.com/saltstack/salt.git /home/travis/salt
+  - pip install -r /home/travis/salt/requirements.txt --use-mirrors
+  - pip install -r /home/travis/salt/dev_requirements_python27.txt --use-mirrors
+  - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
+  - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python link_contrib.py /home/travis/salt
+
+script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python /home/travis/salt/tests/runtests.py -n contrib.tests --run-destructive -v"
