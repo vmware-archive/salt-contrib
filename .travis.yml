@@ -19,6 +19,7 @@ before_install:
 install:
   - git clone git://github.com/saltstack/salt.git /home/travis/salt
   - pip install -r /home/travis/salt/requirements.txt --use-mirrors
+  - pip install -r /home/travis/salt/dev_requirements_python27.txt --use-mirrors
   - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
   - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python link_contrib.py /home/travis/salt
 
