@@ -1,10 +1,4 @@
-
 language: python
-
-branches:
-  only:
-    - develop
-    - working
 
 python:
   - '2.7'
