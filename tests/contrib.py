@@ -15,7 +15,6 @@ if current_file[-4:] == '.pyc':
     current_file = current_file[:-1]
 
 current_dir = os.path.dirname(os.path.realpath(current_file))
-print current_file, current_dir
 
 l = len(current_dir)
 
@@ -30,5 +29,4 @@ for dirname, dirs, files in os.walk(current_dir):
         if f[-3:] == '.py' and f != '__init__.py':
             names.append('{0}.{1}'.format(module, f[:-3]))
 
-print names
 tests.addTest(loader.loadTestsFromNames(names))
