@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Get some grains information that is only available in Amazon AWS
@@ -5,11 +6,10 @@ Get some grains information that is only available in Amazon AWS
 Author: Erik Günther
 
 """
-import ast
 import logging
 import httplib
 import socket
-import os
+import json
 
 # Set up logging
 LOG = logging.getLogger(__name__)
@@ -21,55 +21,35 @@ def _call_aws(url):
     Host: 169.254.169.254
 
     """
-
     conn = httplib.HTTPConnection("169.254.169.254", 80, timeout=1)
     conn.request('GET', url)
     response = conn.getresponse()
-    if response.status != 200:
-        return ""
-
-    data = response.read()
-    return data
+    if response.status == 200:
+        return response.read()
 
 
-def _get_ec2_hostinfo():
+def _get_ec2_hostinfo(path="", data={}):
     """
-    Will return grain information about this host that is EC2 specific
+    Recursive function that walks the EC2 metadata that is available to each minion.
+    :param path: URI fragment to append to /latest/meta-data/
+    :param data: Dictionary containing the results from walking the AWS meta-data
 
-    "kernelId" : "aki-12345678",
-    "ramdiskId" : None,
-    "instanceId" : "i-12345678",
-    "instanceType" : "c1.medium",
-    "billingProducts" : None,
-    "architecture" : "i386",
-    "version" : "2010-08-31",
-    "accountId" : "123456789012",
-    "imageId" : "ami-12345678",
-    "availabilityZone" : "eu-west-1a",
-    "pendingTime" : "2012-07-10T03:54:24Z",
-    "devpayProductCodes" : None,
-    "privateIp" : "10.XX.YY.ZZ",
-    "region" : "eu-west-1",
-    "local-ipv4" : "10.XX.YY.ZZ",
-    "local-hostname" : "ip-10-XX-YY-ZZ.eu-west-1.compute.internal",
-    "public-ipv4" : "AA.BB.CC.DD",
-    "public-hostname" : "ec2-AA-BB-CC-DD.eu-west-1.compute.amazonaws.com"
+    All EC2 variables are prefixed with "ec2_" so they are nicely grouped as grains and also avoids collisions with
+    other grain names.
     """
+    for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
+        if line[-1] != "/":
+            data["ec2_" + line] = _call_aws("/latest/meta-data/%s" % (path + line))
+        else:
+            _get_ec2_hostinfo(path + line, data=data)
 
-    grains = {}
-    #Read the buffert, and convert it to a dict
+
+def _get_ec2_region():
+    """
+    Recursive call in _get_ec2_hostinfo() does not retrieve a node's region
+    """
     data = _call_aws("/latest/dynamic/instance-identity/document")
-    #null isn't None so translate on the fly
-    grains = ast.literal_eval(data.replace('null', 'None'))
-
-    #Add some more default data
-    grains['local-ipv4'] = _call_aws("/latest/meta-data/local-ipv4")
-    grains['local-hostname'] = _call_aws("/latest/meta-data/local-hostname")
-
-    grains['public-ipv4'] = _call_aws("/latest/meta-data/public-ipv4")
-    grains['public-hostname'] = _call_aws("/latest/meta-data/public-hostname")
-
-    return grains
+    return json.loads(data)['region']
 
 
 def ec2_info():
@@ -84,7 +64,9 @@ def ec2_info():
         return {}
 
     try:
-        grains = _get_ec2_hostinfo()
+        grains = {}
+        _get_ec2_hostinfo(data=grains)
+        grains['ec2_region'] = _get_ec2_region()
         return grains
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
