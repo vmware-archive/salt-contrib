@@ -1,3 +1,4 @@
+
 language: python
 
 branches:
@@ -9,14 +10,18 @@ python:
   - '2.7'
 
 before_install:
-  - sudo add-apt-repository -y ppa:saltstack/salt
   - sudo apt-get update
-  - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" salt-common
-  - "for i in /usr/lib/python${TRAVIS_PYTHON_VERSION}/dist-packages/*; do ln -s $i /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/ || true; done"
+  - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" swig rabbitmq-server ruby
+  - (git describe && git fetch --tags) || (git remote add upstream git://github.com/saltstack/salt.git && git fetch --tags upstream)
+  - pip install --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io mock timelib
+  - pip install http://dl.dropbox.com/u/174789/m2crypto-0.20.1.tar.gz
+  - pip install --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io pylint coveralls
+  - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io unittest2 ordereddict; fi"
+  - pip install git+https://github.com/saltstack/salt-testing.git#egg=SaltTesting
 
 install:
-  - git clone git://github.com/saltstack/salt.git /home/travis/salt
-  - pip install -r /home/travis/salt/requirements.txt --use-mirrors
-  - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
+  - pip install -r requirements.txt --use-mirrors --mirrors=http://g.pypi.python.org --mirrors=http://c.pypi.python.org --mirrors=http://pypi.crate.io
+#  - git --git-dir=/home/travis/salt/.git describe && git --git-dir=/home/travis/salt/.git fetch --tags
   - /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python link_contrib.py /home/travis/salt
+
 script: "sudo -E /home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/python /home/travis/salt/tests/runtests.py -n contrib.tests --run-destructive -v"
