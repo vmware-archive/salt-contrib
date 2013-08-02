@@ -1,4 +1,4 @@
-from saltunittest import TestSuite, TestLoader
+from salttesting import TestSuite, TestLoader
 import os
 
 tests = TestSuite()
