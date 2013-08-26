@@ -3,7 +3,7 @@ ec2_tags.py - exports all EC2 tags in an 'ec2_tags' grain
 
 To use it:
 
-  1. Place ec2_tags.py in roots/_grains/
+  1. Place ec2_tags.py in <salt_root>/_grains/
   2. Make sure boto version >= 2.8.0
   3. There are three ways of supplying AWS credentials used to fetch instance tags:
 
