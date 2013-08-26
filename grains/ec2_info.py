@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 def _call_aws(url):
     """
-    Call AWS via httplib. require correct path to data will
+    Call AWS via httplib. Require correct path.
     Host: 169.254.169.254
 
     """
@@ -30,12 +30,12 @@ def _call_aws(url):
 
 def _get_ec2_hostinfo(path="", data={}):
     """
-    Recursive function that walks the EC2 metadata that is available to each minion.
+    Recursive function that walks the EC2 metadata available to each minion.
     :param path: URI fragment to append to /latest/meta-data/
     :param data: Dictionary containing the results from walking the AWS meta-data
 
-    All EC2 variables are prefixed with "ec2_" so they are nicely grouped as grains and also avoids collisions with
-    other grain names.
+    All EC2 variables are prefixed with "ec2_" so they are grouped as grains and to
+    avoid collisions with other grain names.
     """
     for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
         if line[-1] != "/":
@@ -57,7 +57,7 @@ def ec2_info():
     Collect some extra host information
     """
     try:
-        #First do a quick check if AWS magic URL work. If so we guessing that
+        # First check that the AWS magic URL works. If it does
         # we are running in AWS and will try to get more data.
         _call_aws('/')
     except (socket.timeout, socket.error, IOError):
