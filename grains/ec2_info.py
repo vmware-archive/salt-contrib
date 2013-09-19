@@ -39,7 +39,11 @@ def _get_ec2_hostinfo(path="", data={}):
     """
     for line in _call_aws("/latest/meta-data/%s" % path).split("\n"):
         if line[-1] != "/":
-            data["ec2_" + line] = _call_aws("/latest/meta-data/%s" % (path + line))
+            call_response = _call_aws("/latest/meta-data/%s" % (path + line))
+            if call_response is not None:
+                data["ec2_" + path.replace("/", "_") + line] = call_response
+            else:
+                data["ec2_" + path.replace("/", "_")[:-1]] = line
         else:
             _get_ec2_hostinfo(path + line, data=data)
 
