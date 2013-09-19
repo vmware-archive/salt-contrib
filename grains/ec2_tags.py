@@ -101,9 +101,15 @@ def ec2_tags():
 
     tags = {}
     try:
-        reservation = conn.get_all_instances(instance_ids=[ instance_id ])[0]
-        instance = reservation.instances[0]
-        tags = instance.tags
+        #reservation = conn.get_all_instances(instance_ids=[ instance_id ])[0]
+        #instance = reservation.instances[0]
+        reservations = conn.get_all_instances()
+        instances = [i for r in reservations for i in r.instances]
+
+        for instance in instances:
+            if instance.__dict__['id'] == instance_id:
+                tags = instance.tags
+                break
     except IndexError, e:
         log.error("Couldn't retrieve instance information: %s", e)
         return None
