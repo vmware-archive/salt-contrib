@@ -117,7 +117,7 @@ def install(target, opts):
         else:
             dest = os.path.join(target, 'salt', source)
         
-        if link(source, dest):
+        if link(os.path.join(current_dir, source), dest):
             count += 1
             
     sys.stderr.write("Linked {0} items\n".format(count))
@@ -128,7 +128,7 @@ def install(target, opts):
         for source in get_files(target, exclude, ('tests',)):
             dest = os.path.join(target, source)
             
-            if link(source, dest):
+            if link(os.path.join(current_dir, source), dest):
                 count += 1
                 
         sys.stderr.write("Linked {0} test items\n".format(count))
