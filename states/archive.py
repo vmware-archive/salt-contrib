@@ -104,6 +104,7 @@ def extracted(name, source, archive_format, tar_options=None, source_hash=None,
         log.debug("Archive file {0} is already in cache", name)
 
     __salt__['file.makedirs'](name)
+    __salt__['file.mkdir'](name)
 
     if archive_format in ('zip', 'rar'):
         log.debug("Extract %s in %s", filename, name)
