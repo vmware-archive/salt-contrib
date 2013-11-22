@@ -109,14 +109,9 @@ def extracted(name, source, archive_format, tar_options=None, source_hash=None,
         log.debug("Extract %s in %s", filename, name)
         files = __salt__['archive.un{0}'.format(archive_format)](filename, name)
     else:
-        # this is needed until merging PR 2651
         log.debug("Untar %s in %s", filename, name)
-        results = __salt__['cmd.run_all']('tar -xv{0}f {1}'.format(tar_options,
-                                                                   filename),
-                                          cwd=name)
-        if results['retcode'] != 0:
-            return results
-        files = results['stdout']
+        files = __salt__['archive.tar'](options='xv{0}f'.format(tar_options),
+                            tarfile=filename, dest=name)
     if len(files) > 0:
         ret['result'] = True
         ret['changes']['directories_created'] = [name]
