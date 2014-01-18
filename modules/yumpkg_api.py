@@ -40,7 +40,7 @@ import yaml
 import salt.utils
 from salt.exceptions import CommandExecutionError
 from salt.utils import namespaced_function as _namespaced_function
-from salt.modules.yumpkg5 import (
+from salt.modules.yumpkg import (
     _parse_repo_file, list_repos, mod_repo, get_repo, del_repo,
     expand_repo_def, __ARCHES
 )
