@@ -2,6 +2,11 @@ import salt.utils
 import salt.modules.puppet
 import salt.modules.cmdmod
 
+import logging
+import json
+
+log = logging.getLogger(__name__)
+
 __salt__ = {
     'cmd.run': salt.modules.cmdmod._run_quiet,
     'cmd.run_all': salt.modules.cmdmod._run_all_quiet
@@ -15,19 +20,6 @@ def _check_facter():
     salt.utils.check_or_die('facter')
 
 
-def _format_fact(output):
-    '''
-    Format facter output into a tuple.
-    '''
-    try:
-        fact, value = output.split(' => ', 1)
-        value = value.strip()
-    except ValueError:
-        fact = None
-        value = None
-    return (fact, value)
-
-
 def facter():
     '''
     Return facter facts as grains.
@@ -36,19 +28,21 @@ def facter():
 
     grains = {}
     try:
-        output = __salt__['cmd.run']('facter')
-
-        # Prefix fact names with 'facter_', so it doesn't
-        # conflict with existing or future grain names.
-        for line in output.splitlines():
-            if not line:
-                continue
-            fact, value = _format_fact(line)
-            if not fact:
-                continue
-            grain = 'facter_{0}'.format(fact)
+        # -p: load puppet libraries, for puppet specific facts
+        # -j: return json data
+        output = __salt__['cmd.run']('facter -p -j')
+        try:
+            facts = json.loads(output)
+        except (KeyError, ValueError):
+            log.critical('Failed to load json facter data')
+            return {}
+        for key, value in facts.iteritems():
+            # Prefix fact names with 'facter_', so it doesn't
+            # conflict with existing or future grain names.
+            grain = 'facter_{0}'.format(key)
             grains[grain] = value
         return grains
     except OSError:
+        log.critical('Failed to run facter')
         return {}
     return {}
