@@ -4,11 +4,18 @@
 
 Python renderer that includes a Pythonic Object based interface
 
-Available (with fulld docs) in develop branch of Salt at
+Available (with full docs) in develop branch of Salt at
 https://github.com/saltstack/salt/blob/develop/salt/renderers/pyobjects.py
 
 This is a backport (by Matthew Williams <mgwilliams@gmail.com> for older
 versions  of Salt. Tested with 0.17.
+
+To use, copy this file to the _renderers directory within your file roots
+(e.g., /srv/salt/_renderers/pybojects.py) and execute:
+
+.. code-block:: bash
+
+    salt '*' saltutil.sync_renderers
 '''
 
 import logging
