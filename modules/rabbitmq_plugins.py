@@ -24,9 +24,10 @@ def __virtual__():
 
 def _convert_env(env):
     output = {}
-    for var in env.split():
-        k, v = var.split('=')
-        output[k] = v
+    if env:
+        for var in env.split():
+            k, v = var.split('=')
+            output[k] = v
     return output
 
 def _rabbitmq_plugins(command, runas=None, env=()):
