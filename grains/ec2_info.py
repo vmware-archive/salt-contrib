@@ -3,7 +3,7 @@
 """
 Get some grains information that is only available in Amazon AWS
 
-Author: Erik Günther
+Author: Erik Günther, J C Lawrence <claw@kanga.nu>
 
 """
 import logging
@@ -48,12 +48,20 @@ def _get_ec2_hostinfo(path="", data={}):
             _get_ec2_hostinfo(path + line, data=data)
 
 
-def _get_ec2_region():
+def _get_ec2_additional():
     """
-    Recursive call in _get_ec2_hostinfo() does not retrieve a node's region
+    Recursive call in _get_ec2_hostinfo() does not retrieve some of
+    the hosts information like region, availability zone or
+    architecture.
+
     """
     data = _call_aws("/latest/dynamic/instance-identity/document")
-    return json.loads(data)['region']
+    rc = dict()
+    for pair in json.loads(data).items ():
+        # De-camelcase the keys: availabilityZone -> availability-zone
+        key = "".join((("-" + x.lower()) if x.isupper() else x) for x in pair[0])
+        rc["ec2_" + key] = pair[1]
+    return rc
 
 
 def ec2_info():
@@ -68,18 +76,17 @@ def ec2_info():
         return {}
 
     try:
-        grains = {}
+        grains = _get_ec2_additional()
         _get_ec2_hostinfo(data=grains)
-        grains['ec2_region'] = _get_ec2_region()
         return grains
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
         return {}
-        
+
     except socket.error, serr:
         LOG.info("Could not read EC2 data (error): %s" % (serr))
         return {}
-        
+
     except IOError, serr:
         LOG.info("Could not read EC2 data (IOError): %s" % (serr))
         return {}

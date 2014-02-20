@@ -1,3 +1,5 @@
+__virtualname__ = 'netconfig'
+
 def __virtual__():
     """
     Only run on Linux systems
