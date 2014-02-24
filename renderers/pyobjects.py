@@ -448,7 +448,6 @@ TODO
 import logging
 import sys
 
-from salt.utils.pyobjects import StateRegistry, StateFactory, SaltObject
 
 log = logging.getLogger(__name__)
 
