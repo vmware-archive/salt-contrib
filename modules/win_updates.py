@@ -1,24 +1,15 @@
 # -*- coding: utf-8 -*-
 '''
-Module for running arbitrary tests
+Module for running windows updates.
 '''
 
 # Import Python libs
-import os
-import sys
-import time
-import random
 import tempfile
 import subprocess
 
-# Import Salt libs
-#import salt
-#import salt.version
-#import salt.loader
-
 
 list_script = """Set updateSession = CreateObject("Microsoft.Update.Session")
-updateSession.ClientApplicationID = "MSDN Sample Script"
+updateSession.ClientApplicationID = "Salt Windows Updater"
 
 Set updateSearcher = updateSession.CreateUpdateSearcher()
 
