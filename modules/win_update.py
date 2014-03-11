@@ -7,182 +7,63 @@ Module for running windows updates.
 import tempfile
 import subprocess
 import logging
-import win32com.client
+try:
+        import win32com.client
+        import win32api
+        import win32con
+        import pywintypes
+        import threading
+        import pythoncom
+        HAS_DEPENDENCIES = True
+except ImportError:
+        HAS_DEPENDENCIES = False
+
+import salt.utils
 
 log = logging.getLogger(__name__)
-
-list_script = '''Set updateSession = CreateObject("Microsoft.Update.Session")
-updateSession.ClientApplicationID = "Salt Windows Updater"
-
-Set updateSearcher = updateSession.CreateUpdateSearcher()
-
-Set searchResult = _
-updateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
-
-
-For I = 0 To searchResult.Updates.Count-1
-        Set update = searchResult.Updates.Item(I)
-        WScript.Echo update.Title
-Next
-
-If searchResult.Updates.Count = 0 Then
-        WScript.Echo "There are no applicable updates."
-        WScript.Quit
-End If
-'''
-
-download_script = '''
-
-WScript.Echo vbCRLF & "Creating collection of updates to download:"
-
-Set updatesToDownload = CreateObject("Microsoft.Update.UpdateColl")
-
-For I = 0 to searchResult.Updates.Count-1
-        Set update = searchResult.Updates.Item(I)
-        addThisUpdate = false
-        If update.InstallationBehavior.CanRequestUserInput = true Then
-                WScript.Echo I + 1 & "> skipping: " & update.Title & _
-                " because it requires user input"
-        Else
-                addThisUpdate = true
-        End If
-        If addThisUpdate = true Then
-                WScript.Echo I + 1 & "> adding: " & update.Title 
-                updatesToDownload.Add(update)
-        End If
-Next
-
-If updatesToDownload.Count = 0 Then
-        WScript.Echo "All applicable updates require user input"
-        WScript.Quit
-End If
-        
-WScript.Echo vbCRLF & "Downloading updates..."
-
-Set downloader = updateSession.CreateUpdateDownloader() 
-downloader.Updates = updatesToDownload
-downloader.Download()
-
-Set updatesToInstall = CreateObject("Microsoft.Update.UpdateColl")
-
-rebootMayBeRequired = false
-
-WScript.Echo vbCRLF & "Successfully downloaded updates:"
-
-For I = 0 To searchResult.Updates.Count-1
-        set update = searchResult.Updates.Item(I)
-        If update.IsDownloaded = true Then
-                WScript.Echo I + 1 & "> " & update.Title 
-                updatesToInstall.Add(update) 
-                If update.InstallationBehavior.RebootBehavior > 0 Then
-                        rebootMayBeRequired = true
-                End If
-        End If
-Next
-
-If updatesToInstall.Count = 0 Then
-        WScript.Echo "No updates were successfully downloaded."
-        WScript.Quit
-End If
-
-If rebootMayBeRequired = true Then
-        WScript.Echo vbCRLF & "These updates may require a reboot."
-Else
-        WScript.Echo 
-End If
-'''
-
-install_script = '''
-WScript.Echo "Installing updates..."
-Set installer = updateSession.CreateUpdateInstaller()
-installer.Updates = updatesToInstall
-Set installationResult = installer.Install()
-
-'Output results of install
-WScript.Echo "Installation Result: " & _
-installationResult.ResultCode 
-WScript.Echo "Reboot Required: " & _ 
-installationResult.RebootRequired & vbCRLF 
-WScript.Echo "Listing of updates installed " & _
-"and individual installation results:" 
-
-For I = 0 to updatesToInstall.Count - 1
-        WScript.Echo I + 1 & "> " & _
-        updatesToInstall.Item(i).Title & _
-        ": " & installationResult.GetUpdateResult(i).ResultCode   
-Next
-'''
 
 __virtualname__ = 'win_update'
 
 def __virtual__():
-    '''
-    Only works on Windows systems
-    '''
-    if salt.utils.is_windows():
-        return __virtualname__
-    return False
-
-def _get_temporary_script_file():
-        log.debug('Writing temporary script')
-        temp = tempfile.NamedTemporaryFile(suffix='.vbs',delete=False)
-
-        temp_location = None
-        try:
-                temp_location = temp.name
-        except:
-                log.warning('Temporary Script not created')
-                return false
-
-        if temp_location == None:
-                log.warning('Temporary Script not created')
-                return false
-        return temp
+        '''
+        Only works on Windows systems
+        '''
+        if salt.utils.is_windows() and HAS_DEPENDENCIES:
+                return __virtualname__
+        return False
 
 def list_updates():
         '''
         Returns a list of the updates available and not currently installed.
-        
+        WITH OUT VISUAL BASIC!
         CLI Example:
         
         .. code-block:: bash
                 salt '*' win_updates.list_updates
         
         '''
-        
+        log.debug('CoInitializing the pycom system')
+        pythoncom.CoInitialize()
+        log.debug('dispatching keeper to keep the session object.')
         keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+        
+        log.debug('keeper got. Now creating a seeker to seek out the updates')
         seeker = keeper.CreateUpdateSearcher()
+        
+        log.debug('seeker being its seeking')
         golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
         
         updates = []
-        
+        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
         for i in range(golden_snitch.Updates.Count):
-                updates.append(golden_snitch.Updates.Item(i)
-        
+                update = golden_snitch.Updates.Item(i)
+                if update.InstallationBehavior.CanRequestUserInput == True:
+                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        continue
+                updates.append(str(golden_snitch.Updates.Item(i)))
+                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
+        log.info('returning list of '+str(len(updates))+' updates')
         return updates
-        
-def list_updates_script():
-        '''
-        Returns a list of the updates available and not currently installed.
-        
-        CLI Example:
-        
-        .. code-block:: bash
-                salt '*' win_updates.list_updates
-        
-        '''
-
-        temp = _get_temporary_script_file()
-        temp_location = temp.name
-
-        temp.write(list_script)
-        temp.close()
-
-        log.debug('Running script to get available updates.')
-        val = subprocess.check_output(['cscript',temp_location])
-        
-        log.debug('script complete, parsing and returning results.')
-        return val[val.find('\r\n\r\n')+4:].split('\r\n')[:-1]
 
 def download_updates():
         '''
@@ -195,23 +76,29 @@ def download_updates():
         
         '''
         
-        temp = _get_temporary_script_file()
-        temp_location = temp.name
+        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+        seeker = keeper.CreateUpdateSearcher()
+        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
         
-        temp.write(list_script+download_script)
-        temp.close()
-
-        log.debug('Running temporary script.')
-        results = subprocess.check_output(['cscript',temp_location])
+        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
+        updates = []
         
-        log.debug('Parsing output from download script')
-        resultsList = results[results.find('\r\n\r\n')+4:].split('\r\n')[:-1]
-        collection = resultsList[resultsList.index('Creating collection of updates to download:')+1:
-                           resultsList.index('Downloading updates...')-1]
-        downloaded = resultsList[resultsList.index('Downloading updates...')+3:-2]
+        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
+        for i in range(golden_snitch.Updates.Count):
+                update = golden_snitch.Updates.Item(i)
+                if update.InstallationBehavior.CanRequestUserInput == True:
+                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        continue
+                quaffle.Add(golden_snitch.Updates.Item(i))
+                updates.append(str(update))
+                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
         
-        log.debug('returning list of succesfully downloaded updates')
-        return downloaded
+        
+        chaser = keeper.CreateUpdateDownloader()
+        chaser.Updates = quaffle
+        chaser.Download()
+        
+        return updates
 
 def install_updates():
         '''
@@ -224,24 +111,57 @@ def install_updates():
         
         '''
         
-        temp = _get_temporary_script_file()
-        temp_location = temp.name
+        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+        seeker = keeper.CreateUpdateSearcher()
+        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
         
-        temp.write(list_script+download_script+install_script)
-        temp.close()
+        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
+        updates = []
         
-        log.debug('Running temporary script')
-        results = subprocess.check_output(['cscript',temp_location])
-        log.debug('Parsing results from script.')
-        resultsList = results[results.find('Listing of updates installed and individual installation results:'):
-                              ].split('\r\n')[1:-1]
-        log.debug('Returning list of succesful updates')
-        return resultsList
+        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
+        for i in range(golden_snitch.Updates.Count):
+                update = golden_snitch.Updates.Item(i)
+                if update.InstallationBehavior.CanRequestUserInput == True:
+                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        continue
+                if update.IsDownloaded:
+                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        continue
+                quaffle.Add(golden_snitch.Updates.Item(i))
+                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
+        
+        if quaffle.Count != 0:
+                chaser = keeper.CreateUpdateDownloader()
+                chaser.Updates = quaffle
+                chaser.Download()
+        else:
+                log.debug('Skipped downloading, all updates were already cached.')
+        
+        bludger = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
+        
+        for i in range(golden_snitch.Updates.Count):
+                update = golden_snitch.Updates.Item(i)
+                if update.IsDownloaded:
+                        bludger.Add(update)
+                        updates.append(str(update))
+
+        if bludger.Count != 0:
+                log.debug('Install list created, about to install')
+                beater = keeper.CreateUpdateInstaller()
+                beater.Updates = bludger
+                points = beater.Install()
+                for i in range(bludger.Count):
+                        updates.append(str(points.GetUpdateResult(i).ResultCode)+": "+ 
+                                str(bludger.Item(i).Title))
+                log.info('Installation of updates complete')
+                return updates
+        log.info('Install complete, none were added as the system was already up to date.")
+        return "Windows is up to date."
 
 ret = None
 
 if __name__ == '__main__':
-        ret = list_updates()
+        ret = install_updates()
         print ret
         
 #To the King#
