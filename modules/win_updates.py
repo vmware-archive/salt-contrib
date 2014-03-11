@@ -6,9 +6,11 @@ Module for running windows updates.
 # Import Python libs
 import tempfile
 import subprocess
+import logging
 
+log = logging.getLogger(__name__)
 
-list_script = """Set updateSession = CreateObject("Microsoft.Update.Session")
+list_script = '''Set updateSession = CreateObject("Microsoft.Update.Session")
 updateSession.ClientApplicationID = "Salt Windows Updater"
 
 Set updateSearcher = updateSession.CreateUpdateSearcher()
@@ -26,9 +28,9 @@ If searchResult.Updates.Count = 0 Then
         WScript.Echo "There are no applicable updates."
         WScript.Quit
 End If
-"""
+'''
 
-download_script = """
+download_script = '''
 
 WScript.Echo vbCRLF & "Creating collection of updates to download:"
 
@@ -87,9 +89,9 @@ If rebootMayBeRequired = true Then
 Else
         WScript.Echo 
 End If
-"""
+'''
 
-install_script = """
+install_script = '''
 WScript.Echo "Installing updates..."
 Set installer = updateSession.CreateUpdateInstaller()
 installer.Updates = updatesToInstall
@@ -108,20 +110,33 @@ For I = 0 to updatesToInstall.Count - 1
         updatesToInstall.Item(i).Title & _
         ": " & installationResult.GetUpdateResult(i).ResultCode   
 Next
-"""
+'''
 
+__virtualname__ = 'win_update'
 
-def echo(text):
-        '''
-        Return a string - used for testing the connection
+def __virtual__():
+    '''
+    Only works on Windows systems
+    '''
+    if salt.utils.is_windows():
+        return __virtualname__
+    return False
 
-        CLI Example:
+def _get_temporary_script_file():
+        log.debug('Writing temporary script')
+        temp = tempfile.NamedTemporaryFile(suffix='.vbs',delete=False)
 
-        .. code-block:: bash
+        temp_location = None
+        try:
+                temp_location = temp.name
+        except:
+                log.warning('Temporary Script not created')
+                return false
 
-                salt '*' test.echo 'foo bar baz quo qux'
-        '''
-        return text
+        if temp_location = None:
+                log.warning('Temporary Script not created')
+                return false
+        return temp
 
 def list_updates():
         '''
@@ -133,13 +148,18 @@ def list_updates():
                 salt '*' win_updates.list_updates
         
         '''
-        temp = tempfile.NamedTemporaryFile(suffix=".vbs",delete=False)
+
+        temp = _get_temporary_script_file()
         temp_location = temp.name
+
         temp.write(list_script)
         temp.close()
 
+        log.debug('Running script to get available updates.')
         val = subprocess.check_output(['cscript',temp_location])
-        return val[val.find("\r\n\r\n")+4:].split("\r\n")[:-1]
+        
+        log.debug('script complete, parsing and returning results.')
+        return val[val.find('\r\n\r\n')+4:].split('\r\n')[:-1]
 
 def download_updates():
         '''
@@ -152,18 +172,23 @@ def download_updates():
         
         '''
         
-        temp = tempfile.NamedTemporaryFile(suffix=".vbs",delete=False)
+        temp = _get_temporary_script_file()
         temp_location = temp.name
+        
         temp.write(list_script+download_script)
         temp.close()
 
+        log.debug('Running temporary script.')
         results = subprocess.check_output(['cscript',temp_location])
-        resultsList = results[results.find("\r\n\r\n")+4:].split("\r\n")[:-1]
-        coll = resultsList[resultsList.index('Creating collection of updates to download:')+1:
-                           resultsList.index('Downloading updates...')-1]
-        downs = resultsList[resultsList.index('Downloading updates...')+3:-2]
         
-        return coll
+        log.debug('Parsing output from download script')
+        resultsList = results[results.find('\r\n\r\n')+4:].split('\r\n')[:-1]
+        collection = resultsList[resultsList.index('Creating collection of updates to download:')+1:
+                           resultsList.index('Downloading updates...')-1]
+        downloaded = resultsList[resultsList.index('Downloading updates...')+3:-2]
+        
+        log.debug('returning list of succesfully downloaded updates')
+        return downloaded
 
 def install_updates():
         '''
@@ -176,19 +201,23 @@ def install_updates():
         
         '''
         
-        temp = tempfile.NamedTemporaryFile(suffix=".vbs",delete=False)
+        temp = _get_temporary_script_file()
         temp_location = temp.name
+        
         temp.write(list_script+download_script+install_script)
         temp.close()
-
+        
+        log.debug('Running temporary script')
         results = subprocess.check_output(['cscript',temp_location])
-        resultsList = results[results.find("Listing of updates installed and individual installation results:"):
-                              ].split("\r\n")[1:-1]
+        log.debug('Parsing results from script.')
+        resultsList = results[results.find('Listing of updates installed and individual installation results:'):
+                              ].split('\r\n')[1:-1]
+        log.debug('Returning list of succesful updates')
         return resultsList
 
 ret = None
 
-if __name__ == "__main__":
+if __name__ == '__main__':
         ret = install_updates()
         print ret
         
