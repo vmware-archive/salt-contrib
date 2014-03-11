@@ -7,6 +7,7 @@ Module for running windows updates.
 import tempfile
 import subprocess
 import logging
+import win32com.client
 
 log = logging.getLogger(__name__)
 
@@ -133,12 +134,34 @@ def _get_temporary_script_file():
                 log.warning('Temporary Script not created')
                 return false
 
-        if temp_location = None:
+        if temp_location == None:
                 log.warning('Temporary Script not created')
                 return false
         return temp
 
 def list_updates():
+        '''
+        Returns a list of the updates available and not currently installed.
+        
+        CLI Example:
+        
+        .. code-block:: bash
+                salt '*' win_updates.list_updates
+        
+        '''
+        
+        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+        seeker = keeper.CreateUpdateSearcher()
+        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
+        
+        updates = []
+        
+        for i in range(golden_snitch.Updates.Count):
+                updates.append(golden_snitch.Updates.Item(i)
+        
+        return updates
+        
+def list_updates_script():
         '''
         Returns a list of the updates available and not currently installed.
         
@@ -218,7 +241,7 @@ def install_updates():
 ret = None
 
 if __name__ == '__main__':
-        ret = install_updates()
+        ret = list_updates()
         print ret
         
 #To the King#
