@@ -32,38 +32,78 @@ def __virtual__():
                 return __virtualname__
         return False
 
-def list_updates():
+def _gather_update_categories(updateCollection):
+        categories = []
+        for i in range(updateCollection.Count):
+                update = updateCollection.Item(i)
+                for j in range(update.Categories.Count):
+                        name = update.Categories.Item(j).Name
+                        if name not in categories:
+                                log.debug('found category: {0}'.format(name))
+                                categories.append(name)
+        return categories
+
+# some known categories:
+#       Updates
+#       Windows 7
+#       Critical Updates
+#       Security Updates
+#       Update Rollups
+
+def list_updates(verbose=False):
         '''
-        Returns a list of the updates available and not currently installed.
-        WITH OUT VISUAL BASIC!
+        Returns a summary of available updates, grouped into their non-mutually
+        exclusive categories. 
+        
+        to list the actual updates by name, add 'verbose' to the call.
+        
+        
         CLI Example:
         
         .. code-block:: bash
-                salt '*' win_updates.list_updates
+                salt '*' win_updates.list_updates <verbose>
         
         '''
         log.debug('CoInitializing the pycom system')
         pythoncom.CoInitialize()
+        
         log.debug('dispatching keeper to keep the session object.')
         keeper = win32com.client.Dispatch('Microsoft.Update.Session')
         
         log.debug('keeper got. Now creating a seeker to seek out the updates')
         seeker = keeper.CreateUpdateSearcher()
         
-        log.debug('seeker being its seeking')
+        log.debug('seeker begining its seeking')
         golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
         
+        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
         updates = []
-        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
-        for i in range(golden_snitch.Updates.Count):
-                update = golden_snitch.Updates.Item(i)
+        log.debug('parsing results. {0} updates were found.'.format(str(golden_snitch.Updates.Count)))
+        
+        for update in golden_snitch.Updates:
                 if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        log.debug('Skipped update {0}'.format(str(update)))
                         continue
-                updates.append(str(golden_snitch.Updates.Item(i)))
-                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
-        log.info('returning list of '+str(len(updates))+' updates')
-        return updates
+                updates.append(str(update))
+                quaffle.Add(update)
+                log.debug('added update {0}'.format(str(update)))
+        
+        categories = _gather_update_categories(quaffle)
+        
+        results = 'Total Updates availabe: {0} in the following Categories:\n'.format(quaffle.Count)
+        for category in categories:
+                count = 0
+                for update in quaffle:
+                        for c in update.Categories:
+                                if category == c.Name:
+                                        count += 1
+                results += '\t{0}: {1}\n'.format(category,count)
+        
+        log.info('returning update information for {0} updates'.format(quaffle.Count))
+        log.info('Verbose results: {0}'.format(verbose))
+        if verbose=='verbose':
+                return updates
+        return results
 
 def download_updates():
         '''
@@ -86,31 +126,34 @@ def download_updates():
         quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
         updates = []
         
-        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
+        log.debug('parsing results. {0} updates were found'.format(str(golden_snitch.Updates.Count)))
         for i in range(golden_snitch.Updates.Count):
                 update = golden_snitch.Updates.Item(i)
                 if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
                         continue
                 quaffle.Add(golden_snitch.Updates.Item(i))
                 updates.append(str(update))
-                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
+                log.debug('added update {0}'.format(str(golden_snitch.Updates.Item(i))))
         
         
         chaser = keeper.CreateUpdateDownloader()
         chaser.Updates = quaffle
         chaser.Download()
         
+        log.info('download complete, returning info about downloads.')
         return updates
 
-def install_updates():
+def install_updates(cached):
         '''
         Downloads and installs all available updates, skipping those that require user interaction.
+        
+        Add 'cached' to only install those updates which have already been downloaded.
         
         CLI Example:
         
         .. code-block:: bash
-                salt '*' win_updates.download_updates
+                salt '*' win_updates.download_updates <cached>
         
         '''
         
@@ -124,19 +167,19 @@ def install_updates():
         quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
         updates = []
         
-        log.debug('parsing results. ' + str(golden_snitch.Updates.Count) + ' updates were found')
+        log.debug('parsing results. {0} updates were found'.format(str(golden_snitch.Updates.Count) ))
         for i in range(golden_snitch.Updates.Count):
                 update = golden_snitch.Updates.Item(i)
                 if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
                         continue
                 if update.IsDownloaded:
-                        log.debug('Skipped update ' + str(golden_snitch.Updates.Item(i)))
+                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
                         continue
                 quaffle.Add(golden_snitch.Updates.Item(i))
-                log.debug('added update ' + str(golden_snitch.Updates.Item(i)))
+                log.debug('added update {0}'.format(str(golden_snitch.Updates.Item(i))))
         
-        if quaffle.Count != 0:
+        if quaffle.Count != 0 and cached!='cached':
                 chaser = keeper.CreateUpdateDownloader()
                 chaser.Updates = quaffle
                 chaser.Download()
@@ -157,12 +200,13 @@ def install_updates():
                 beater.Updates = bludger
                 points = beater.Install()
                 for i in range(bludger.Count):
-                        updates.append(str(points.GetUpdateResult(i).ResultCode)+": "+ 
-                                str(bludger.Item(i).Title))
+                        updates.append('{0}: {1}'.format(
+                                str(points.GetUpdateResult(i).ResultCode),
+                                str(bludger.Item(i).Title)))
                 log.info('Installation of updates complete')
                 return updates
         log.info('Install complete, none were added as the system was already up to date.')
-        return "Windows is up to date."
+        return 'Windows is up to date.'
 
 ret = None
 
