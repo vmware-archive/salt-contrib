@@ -76,6 +76,9 @@ def download_updates():
         
         '''
         
+        log.debug('CoInitializing the pycom system')
+        pythoncom.CoInitialize()
+        
         keeper = win32com.client.Dispatch('Microsoft.Update.Session')
         seeker = keeper.CreateUpdateSearcher()
         golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
@@ -110,6 +113,9 @@ def install_updates():
                 salt '*' win_updates.download_updates
         
         '''
+        
+        log.debug('CoInitializing the pycom system')
+        pythoncom.CoInitialize()
         
         keeper = win32com.client.Dispatch('Microsoft.Update.Session')
         seeker = keeper.CreateUpdateSearcher()
@@ -155,7 +161,7 @@ def install_updates():
                                 str(bludger.Item(i).Title))
                 log.info('Installation of updates complete')
                 return updates
-        log.info('Install complete, none were added as the system was already up to date.")
+        log.info('Install complete, none were added as the system was already up to date.')
         return "Windows is up to date."
 
 ret = None
