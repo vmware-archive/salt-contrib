@@ -95,7 +95,7 @@ def maintain(name,category=None):
                 if update.InstallationBehavior.CanRequestUserInput == True:
                         log.debug('Skipped update {0}'.format(str(update)))
                         continue
-                if 
+                for category in update.Categories
                 quaffle.Add(update)
                 log.debug('added update {0}'.format(str(update)))
         
