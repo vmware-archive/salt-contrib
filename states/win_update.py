@@ -50,7 +50,7 @@ def _gather_update_categories(updateCollection):
 #       Security Updates
 #       Update Rollups
 
-def maintain(name,category=None):
+def maintain(name,categories=None):
         '''
         Set windows updates to run by category
 
@@ -61,163 +61,100 @@ def maintain(name,category=None):
         and download but not install standard updates.
 
         Example::
-                Security_Updates:
-                      win_update.maintain:
-                        - install
-                Critical_Updates:
-                      win_update.maintain:
-                        - install
-                Updates:
-                      win_update.maintain:
-                        - download
+                installed:
+                        win_update.maintain:
+                                - categories: 'Critical Updates','Security Updates'
+                downloaded:
+                        win_update.maintain:
+                                - categories: 'Updates'
         '''
+        ret = {'name': name,
+               'result': True,
+               'changes': {},
+               'comment': ''}
         
-        #translate the categories to the names windows updates uses:
-        name = name.replace(' ','_')
+        try:
+                log.debug('CoInitializing the pycom system')
+                pythoncom.CoInitialize()
+                
+                log.debug('dispatching keeper to keep the session object.')
+                keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+                
+                log.debug('keeper got. Now creating a seeker to seek out the updates')
+                seeker = keeper.CreateUpdateSearcher()
+                
+                log.debug('seeker begining its seeking')
+                golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
+                
+        except Exception as e:
+                ret['comment'] = 'Failed in the seeking process:\n\t\t{0}'.format(str(e))
+                ret['result'] = False
+                return ret
         
-        log.debug('CoInitializing the pycom system')
-        pythoncom.CoInitialize()
+        try: 
+                quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
+                updates = []
+                log.debug('parsing results. {0} updates were found.'.format(str(golden_snitch.Updates.Count)))
         
-        log.debug('dispatching keeper to keep the session object.')
-        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
+                for update in golden_snitch.Updates:
+                        if update.InstallationBehavior.CanRequestUserInput == True:
+                                log.debug('Skipped update {0}'.format(str(update)))
+                                continue
+                        for category in update.Categories:
+                                if category.Name in categories or categories == None:
+                                        quaffle.Add(update)
+                                        log.debug('added update {0}'.format(str(update)))
+        except Exception as e:
+                ret['comment'] = 'Failed while parsing out the update:\n\t\t{0}'.format(str(e))
+                ret['result'] = False
+                return ret
         
-        log.debug('keeper got. Now creating a seeker to seek out the updates')
-        seeker = keeper.CreateUpdateSearcher()
+        try:
+                categories = _gather_update_categories(quaffle)
         
-        log.debug('seeker begining its seeking')
-        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
         
-        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
-        updates = []
-        log.debug('parsing results. {0} updates were found.'.format(str(golden_snitch.Updates.Count)))
+                if quaffle.Count != 0:
+                        chaser = keeper.CreateUpdateDownloader()
+                        chaser.Updates = quaffle
+                        chaser.Download()
+                else:
+                        ret['comment'] = 'Downloading was skipped as all updates were already cached.\n'
+                        log.debug('Skipped downloading, all updates were already cached.')
+                
         
-        for update in golden_snitch.Updates:
-                if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update {0}'.format(str(update)))
-                        continue
-                for category in update.Categories
-                quaffle.Add(update)
-                log.debug('added update {0}'.format(str(update)))
+                bludger = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
+        except Exception as e:
+                ret['comment'] = 'Failed while trying to download updates:\n\t\t{0}'.format(str(e))
+                ret['result'] = False
+                return ret
         
-        categories = _gather_update_categories(quaffle)
-        
-        results = 'Total Updates availabe: {0} in the following Categories:\n'.format(quaffle.Count)
-        for category in categories:
-                count = 0
-                for update in quaffle:
-                        for c in update.Categories:
-                                if category == c.Name:
-                                        count += 1
-                results += '\t{0}: {1}\n'.format(category,count)
-        
-        log.info('returning update information for {0} updates'.format(quaffle.Count))
-        log.info('Verbose results: {0}'.format(verbose))
-        if verbose=='verbose':
-                return updates
-        return results
+        try:
+                for i in range(golden_snitch.Updates.Count):
+                        update = golden_snitch.Updates.Item(i)
+                        if update.IsDownloaded:
+                                bludger.Add(update)
+                                updates.append(str(update))
 
-def download_updates():
-        '''
-        Downloads all available updates, skipping those that require user interaction.
-        
-        CLI Example:
-        
-        .. code-block:: bash
-                salt '*' win_updates.download_updates
-        
-        '''
-        
-        log.debug('CoInitializing the pycom system')
-        pythoncom.CoInitialize()
-        
-        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
-        seeker = keeper.CreateUpdateSearcher()
-        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
-        
-        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
-        updates = []
-        
-        log.debug('parsing results. {0} updates were found'.format(str(golden_snitch.Updates.Count)))
-        for i in range(golden_snitch.Updates.Count):
-                update = golden_snitch.Updates.Item(i)
-                if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
-                        continue
-                quaffle.Add(golden_snitch.Updates.Item(i))
-                updates.append(str(update))
-                log.debug('added update {0}'.format(str(golden_snitch.Updates.Item(i))))
-        
-        
-        chaser = keeper.CreateUpdateDownloader()
-        chaser.Updates = quaffle
-        chaser.Download()
-        
-        log.info('download complete, returning info about downloads.')
-        return updates
-
-def install_updates(cached):
-        '''
-        Downloads and installs all available updates, skipping those that require user interaction.
-        
-        Add 'cached' to only install those updates which have already been downloaded.
-        
-        CLI Example:
-        
-        .. code-block:: bash
-                salt '*' win_updates.download_updates <cached>
-        
-        '''
-        
-        log.debug('CoInitializing the pycom system')
-        pythoncom.CoInitialize()
-        
-        keeper = win32com.client.Dispatch('Microsoft.Update.Session')
-        seeker = keeper.CreateUpdateSearcher()
-        golden_snitch = seeker.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
-        
-        quaffle = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
-        updates = []
-        
-        log.debug('parsing results. {0} updates were found'.format(str(golden_snitch.Updates.Count) ))
-        for i in range(golden_snitch.Updates.Count):
-                update = golden_snitch.Updates.Item(i)
-                if update.InstallationBehavior.CanRequestUserInput == True:
-                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
-                        continue
-                if update.IsDownloaded:
-                        log.debug('Skipped update {0}'.format(str(golden_snitch.Updates.Item(i))))
-                        continue
-                quaffle.Add(golden_snitch.Updates.Item(i))
-                log.debug('added update {0}'.format(str(golden_snitch.Updates.Item(i))))
-        
-        if quaffle.Count != 0 and cached!='cached':
-                chaser = keeper.CreateUpdateDownloader()
-                chaser.Updates = quaffle
-                chaser.Download()
-        else:
-                log.debug('Skipped downloading, all updates were already cached.')
-        
-        bludger = win32com.client.Dispatch('Microsoft.Update.UpdateColl')
-        
-        for i in range(golden_snitch.Updates.Count):
-                update = golden_snitch.Updates.Item(i)
-                if update.IsDownloaded:
-                        bludger.Add(update)
-                        updates.append(str(update))
-
-        if bludger.Count != 0:
-                log.debug('Install list created, about to install')
-                beater = keeper.CreateUpdateInstaller()
-                beater.Updates = bludger
-                points = beater.Install()
-                for i in range(bludger.Count):
-                        updates.append('{0}: {1}'.format(
-                                str(points.GetUpdateResult(i).ResultCode),
-                                str(bludger.Item(i).Title)))
-                log.info('Installation of updates complete')
-                return updates
-        log.info('Install complete, none were added as the system was already up to date.')
-        return 'Windows is up to date.'
+                if bludger.Count != 0:
+                        log.debug('Install list created, about to install')
+                        beater = keeper.CreateUpdateInstaller()
+                        beater.Updates = bludger
+                        points = beater.Install()
+                        for i in range(bludger.Count):
+                                updates.append('{0}: {1}'.format(
+                                        str(points.GetUpdateResult(i).ResultCode),
+                                        str(bludger.Item(i).Title)))
+                        log.info('Installation of updates complete')
+                        for i,update in enumerate(updates):
+                                ret['changes']['update {0}'.format(i)] = update
+                        return ret
+                log.info('Install complete, none were added as the system was already up to date.')
+                ret['comment'] += 'Now new updates. everything was already up to date'
+                return ret
+        except Exception as e:
+                ret['comment'] = 'Failed while trying to install the updates.\n\t\t{0}'.format(str(e))
+                ret['result'] = False
+                return ret
 
 ret = None
 
