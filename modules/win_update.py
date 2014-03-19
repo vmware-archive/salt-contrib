@@ -144,7 +144,7 @@ def download_updates():
         log.info('download complete, returning info about downloads.')
         return updates
 
-def install_updates(cached):
+def install_updates(cached=None):
         '''
         Downloads and installs all available updates, skipping those that require user interaction.
         
