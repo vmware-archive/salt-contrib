@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 '''
 Module for running windows updates.
+
+:depends:   - win32com
+            - win32con
+            - win32api
+            - pywintypes
+
+.. versionadded: 2014.1.1 (Helium)
+
 '''
 
 # Import Python libs

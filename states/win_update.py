@@ -1,6 +1,57 @@
 # -*- coding: utf-8 -*-
 '''
-Module for running windows updates.
+Management of the windows update agent.
+=======================================
+
+.. versionadded: 2014.1.1 (Helium)
+
+Set windows updates to run by category. Default behavior is to install
+all updates that do not require user interaction to complete. 
+
+Optionally set ``category`` to a category of your choosing to only
+install certain updates. default is all available updates.
+
+In the example below, will install all Security and Critical Updates,
+and download but not install standard updates.
+
+Example::
+        updates:
+                win_update.install:
+                        - categories: 
+                                - 'Critical Updates'
+                                - 'Security Updates'
+                win_update.downloaded:
+                        - categories:
+                                - 'Updates'
+
+You can also specify a number of features about the update to have a 
+fine grain approach to specific types of updates. These are the following
+features/states of updates available for configuring:
+        'UI' - User interaction required, skipped by default
+        'downloaded' - Already downloaded, skipped by default (downloading)
+        'present' - Present on computer, included by default (installing)
+        'installed' - Already installed, skipped by default
+        'reboot' - Reboot required, included by default
+        'hidden' - skip those updates that have been hidden.
+        
+        'software' - Software updates, included by default
+        'driver' - driver updates, skipped by defautl
+
+This example installs all driver updates that don't require a reboot:
+Example::
+        gryffindor:
+                win_update.install:
+                        - includes:
+                                - driver: True
+                                - software: False
+                                - reboot: False
+
+
+tl;dr: want to just have your computers update? add this your sls:
+updates:
+        win_update.install
+        
+
 '''
 
 # Import Python libs
@@ -51,14 +102,24 @@ def _gather_update_categories(updateCollection):
 #       Update Rollups
 
 class PyWinUpdater:
-        def __init__(self,skipUI = True,skipDownloaded = True,categories=None):
+        def __init__(self,categories=None,skipUI = True,skipDownloaded = True,
+                        skipInstalled=True, skipReboot=False,skipPresent=False,
+                        softwareUpdates=True, driverUpdates=False,skipHidden=True):
                 log.debug('CoInitializing the pycom system')
                 pythoncom.CoInitialize()
                 
                 self.skipUI = skipUI
                 self.skipDownloaded = skipDownloaded
+                self.skipInstalled = skipInstalled
+                self.skipReboot = skipReboot
+                self.skipPresent = skipPresent
+                self.skipHidden = skipHidden
+                
+                self.softwareUpdates = softwareUpdates
+                self.driverUpdates = driverUpdates
                 self.categories = categories
-                self.soughtCategories = None
+                self.foundCategories = None
+                
                 
                 log.debug('dispatching keeper to keep the session object.')
                 self.keeper = win32com.client.Dispatch('Microsoft.Update.Session')
@@ -88,7 +149,7 @@ class PyWinUpdater:
 
         def Search(self,searchString):
                 try:
-                        log.debug('beginning search of the passed string.')
+                        log.debug('beginning search of the passed string: {0}'.format(searchString))
                         self.golden_snitch = self.seeker.Search(searchString)
                         log.debug('search completed successfully.')
                 except Exception as e:
@@ -102,16 +163,46 @@ class PyWinUpdater:
                                 if update.InstallationBehavior.CanRequestUserInput == True:
                                         log.debug('Skipped update {0}'.format(str(update)))
                                         continue
-#                                for category in update.Categories:
-#                                        if category.Name in self.categories or self.categories == None:
-                                self.quaffle.Add(update)
-#                                                log.debug('added update {0}'.format(str(update)))
-                        self.soughtCategories = _gather_update_categories(self.quaffle)
+                                for category in update.Categories:
+                                        if self.skipDownloaded and update.IsDownloaded:
+                                                continue
+                                        if category.Name in self.categories or self.categories == None:
+                                                self.quaffle.Add(update)
+                                                log.debug('added update {0}'.format(str(update)))
+                        self.foundCategories = _gather_update_categories(self.quaffle)
                         return True
                 except Exception as e:
                         log.info('parsing updates failed. {0}'.format(str(e)))
                         return e
                         
+        def AutoSearch(self):
+                search_string = ''
+                searchParams = []
+                if self.skipInstalled: searchParams.append('IsInstalled=0')
+                else: searchParams.append('IsInstalled=1')
+                if self.skipHidden: searchParams.append('IsHidden=0')
+                else: searchParams.append('IsHidden=1')
+                if self.skipReboot: searchParams.append('RebootRequired=1')
+                else: searchParams.append('RebootRequired=0')
+                if self.skipPresent: searchParams.append('IsPresent=0')
+                else: searchParams.append('IsPresent=1')
+                if len(searchParams) > 1:
+                        for i in searchParams:
+                                search_string += '{0} and '.format(i)
+                else:
+                        search_string += '{0} and '.format(searchParams[1])
+                
+                if self.softwareUpdates and self.driverUpdates:
+                        search_string += 'Type=\'Software\' or Type=\'Driver\''
+                elif self.softwareUpdates:
+                        search_string += 'Type=\'Software\''
+                elif self.driverUpdates:
+                        search_string += 'Type=\'Driver\''
+                else:
+                        return False ##if there is no type, the is nothing to search.
+                log.debug('generated search string: {0}'.format(search_string))
+                return self.Search(search_string)
+
         def Download(self):
                 try:
                         if self.quaffle.Count != 0:
@@ -150,7 +241,7 @@ class PyWinUpdater:
         def GetInstallationResults(self):
                 log.debug('bluger has {0} updates in it'.format(str(self.bludger.Count)))
                 if self.bludger.Count == 0:
-                        return ['None']
+                        return {}
                 for i in range(self.bludger.Count):
                         updates.append('{0}: {1}'.format(
                                 str(self.fouls.GetUpdateResult(i).ResultCode),
@@ -175,7 +266,32 @@ class PyWinUpdater:
                 return results
 
         def SetCategories(self,categories):
-                self.soughtCategories = categories
+                self.categories = categories
+
+        def GetCategories(self):
+                return self.categories
+
+        def GetAvailableCategories(self):
+                return self.foundCategories
+
+        def SetIncludes(self,includes):
+                for i in includes:
+                        value = i[i.keys()[0]]
+                        include = i.keys()[0]
+                        self.SetInclude(include,value)
+                        log.debug('was asked to set {0} to {1}'.format(include,value))
+
+        def SetInclude(self,include,state):
+                if include == 'UI': self.skipUI = state
+                elif include == 'downloaded': self.skipDownloaded = state
+                elif include == 'installed': self.skipInstalled = state
+                elif include == 'reboot': self.skipReboot = state
+                elif include == 'present': self.skipPresent = state
+                elif include == 'software':self.softwareUpdates = state
+                elif include == 'driver':self.driverUpdates = state
+                log.debug('new search state: \n\tUI: {0}\n\tDownload: {1}\n\tInstalled: {2}\n\treboot :{3}\n\tPresent: {4}\n\tsoftware: {5}\n\tdriver: {6}'.format(
+                        self.skipUI,self.skipDownloaded,self.skipInstalled,self.skipReboot,
+                        self.skipPresent,self.softwareUpdates,self.driverUpdates))
 
 def _search(quidditch,retries=5):
         passed = False
@@ -183,7 +299,7 @@ def _search(quidditch,retries=5):
         comment = ''
         while passed != True:
                 log.debug('Searching. tries left: {0}'.format(str(retries)))
-                passed = quidditch.Search('IsInstalled=0 and Type=\'Software\' and IsHidden=0')
+                passed = quidditch.AutoSearch()
                 log.debug('Done searching: {0}'.format(str(passed)))
                 if isinstance(passed,Exception):
                         clean = False
@@ -246,25 +362,9 @@ def _install(quidditch,retries=5):
         return (comment,True,retries)
 
 
-def install(name,categories=None,retries=10):
+def install(name,categories=None,includes=None,retries=10):
         '''
-        Set windows updates to run by category
-
-        Optionally set ``category`` to a category of your choosing to only
-        install certain updates. default is all available updates.
-
-        In the example below, will install all Security and Critical Updates,
-        and download but not install standard updates.
-
-        Example::
-                updates:
-                        win_update.install:
-                                - categories: 
-                                        - 'Critical Updates'
-                                        - 'Security Updates'
-                        win_update.downloaded:
-                                - categories:
-                                        - 'Updates'
+        Install specified windows updates.
         '''
         ret = {'name': name,
                'result': True,
@@ -273,6 +373,7 @@ def install(name,categories=None,retries=10):
         log.debug('categories to search for are: '.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
+        quidditch.SetIncludes(includes)
         
         
         ##this is where we be seeking the things! yar!
@@ -302,25 +403,9 @@ def install(name,categories=None,retries=10):
                 ret['comment'] += 'could not get results, but updates were installed.'
         return ret
 
-def download(name,categories=None,retries=10):
+def download(name,categories=None,includes=None,retries=10):
         '''
-        Set windows updates to run by category
-
-        Optionally set ``category`` to a category of your choosing to only
-        install certain updates. default is all available updates.
-
-        In the example below, will install all Security and Critical Updates,
-        and download but not install standard updates.
-
-        Example::
-                updates:
-                        win_update.install:
-                                - categories: 
-                                        - 'Critical Updates'
-                                        - 'Security Updates'
-                        win_update.downloaded:
-                                - categories:
-                                        - 'Updates'
+        Cache updates for later install. 
         '''
         ret = {'name': name,
                'result': True,
@@ -329,7 +414,7 @@ def download(name,categories=None,retries=10):
         log.debug('categories to search for are: '.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
-        
+        quidditch.SetIncludes(includes)
         
         ##this is where we be seeking the things! yar!
         comment, passed, retries = _search(quidditch,retries)
@@ -350,43 +435,6 @@ def download(name,categories=None,retries=10):
         except Exception as e:
                 ret['comment'] += 'could not get results, but updates were downloaded.'
                 
-        return ret
-        
-def search(name,categories=None,retries=10):
-        '''
-        Set windows updates to run by category
-
-        Optionally set ``category`` to a category of your choosing to only
-        install certain updates. default is all available updates.
-
-        In the example below, will install all Security and Critical Updates,
-        and download but not install standard updates.
-
-        Example::
-                updates:
-                        win_update.install:
-                                - categories: 
-                                        - 'Critical Updates'
-                                        - 'Security Updates'
-                        win_update.downloaded:
-                                - categories:
-                                        - 'Updates'
-        '''
-        ret = {'name': name,
-               'result': True,
-               'changes': {},
-               'comment': ''}
-        log.debug('categories to search for are: '.format(str(categories)))
-        quidditch = PyWinUpdater()
-        quidditch.SetCategories(categories)
-        
-        
-        ##this is where we be seeking the things! yar!
-        comment, passed, retries = _search(quidditch,retries)
-        ret['comment'] += comment
-        if not passed:
-                ret['result'] = False
-                return ret
         return ret
 
 #To the King#
