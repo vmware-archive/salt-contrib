@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 '''
 Module for running windows updates.
+
+:depends:   - win32com
+            - win32con
+            - win32api
+            - pywintypes
+
+.. versionadded: 2014.1.1 (Helium)
+
 '''
 
 # Import Python libs
@@ -144,7 +152,7 @@ def download_updates():
         log.info('download complete, returning info about downloads.')
         return updates
 
-def install_updates(cached):
+def install_updates(cached=None):
         '''
         Downloads and installs all available updates, skipping those that require user interaction.
         
