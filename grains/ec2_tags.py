@@ -15,6 +15,7 @@ To use it:
           aws:
             access_key: ABC123
             secret_key: abc123
+    iv. Use IAM roles
 
   4. Test it
 
@@ -70,10 +71,11 @@ def _get_credentials():
     secret_key = os.environ.get('AWS_SECRET_KEY') or os.environ.get('AWS_SECRET_ACCESS_KEY')
     if access_key and secret_key:
         return {
-                'access_key': aws['access_key'],
-                'secret_key': aws['secret_key'],}
+                'access_key': access_key,
+                'secret_key': secret_key,}
 
-    return None
+    # 4. Leave as None to use roles
+    return AWS_CREDENTIALS
 
 def ec2_tags():
 
@@ -90,14 +92,19 @@ def ec2_tags():
 
     (instance_id, region) = _get_instance_info()
     credentials = _get_credentials()
-    if not credentials:
-        log.error("%s: no AWS credentials found, see documentation for how to provide them.", __name__)
-        return None
 
     # Connect to EC2 and parse the Roles tags for this instance
-    conn = boto.ec2.connect_to_region(region,
-            aws_access_key_id=credentials['access_key'],
-            aws_secret_access_key=credentials['secret_key'])
+    try:
+        conn = boto.ec2.connect_to_region(region,
+                aws_access_key_id=credentials['access_key'],
+                aws_secret_access_key=credentials['secret_key'])
+    except:
+        if not (credentials['access_key'] and credentials['secret_key']):
+            log.error("%s: no AWS credentials found, see documentation for how to provide them.", __name__)
+            return None
+        else:
+            log.error("%s: invalid AWS credentials found, see documentation for how to provide them.", __name__)
+            return None
 
     tags = {}
     try:
