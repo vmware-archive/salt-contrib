@@ -166,7 +166,7 @@ class PyWinUpdater:
                                 for category in update.Categories:
                                         if self.skipDownloaded and update.IsDownloaded:
                                                 continue
-                                        if category.Name in self.categories or self.categories == None:
+                                        if self.categories == None or category.Name in self.categories:
                                                 self.quaffle.Add(update)
                                                 log.debug('added update {0}'.format(str(update)))
                         self.foundCategories = _gather_update_categories(self.quaffle)
