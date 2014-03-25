@@ -3,7 +3,7 @@
 Management of the windows update agent.
 =======================================
 
-.. versionadded: 2014.1.1 (Helium)
+.. versionadded: (Helium)
 
 Set windows updates to run by category. Default behavior is to install
 all updates that do not require user interaction to complete. 
@@ -103,7 +103,7 @@ def _gather_update_categories(updateCollection):
 
 class PyWinUpdater:
         def __init__(self,categories=None,skipUI = True,skipDownloaded = True,
-                        skipInstalled=True, skipReboot=False,skipPresent=False,
+                        skipInstalled=True, skipReboot=False,skipPresent=True,
                         softwareUpdates=True, driverUpdates=False,skipHidden=True):
                 log.debug('CoInitializing the pycom system')
                 pythoncom.CoInitialize()
@@ -275,11 +275,12 @@ class PyWinUpdater:
                 return self.foundCategories
 
         def SetIncludes(self,includes):
-                for i in includes:
-                        value = i[i.keys()[0]]
-                        include = i.keys()[0]
-                        self.SetInclude(include,value)
-                        log.debug('was asked to set {0} to {1}'.format(include,value))
+                if includes:
+                        for i in includes:
+                                value = i[i.keys()[0]]
+                                include = i.keys()[0]
+                                self.SetInclude(include,value)
+                                log.debug('was asked to set {0} to {1}'.format(include,value))
 
         def SetInclude(self,include,state):
                 if include == 'UI': self.skipUI = state
