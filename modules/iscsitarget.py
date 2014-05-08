@@ -39,6 +39,7 @@ def _is_ietd_running():
     '''
     Check if the iSCSI daemon is running
     '''
+    # TODO: Make this a virtual function
     cmd = "pgrep -u root ietd"
     out = __salt__['cmd.run'](cmd)
 
@@ -276,13 +277,32 @@ def add_target(name, **kwargs):
     fall back to defaults configured in the minion configuration file if 
     not specified on the command line.
 
+    To add an iSCSI target on the SAN, you must first use this function to 
+    create a target, then add volumes to the target using the add_lun
+    function.
+
+    name
+      Name of the new target that will be appended to the IQN base (required)
+
+    iqn_base
+      Override the default IQN Base parameter in the minion config file
+      with this value (optional)
+
+    volgroup
+      Override the default volume group specified in the minion config file
+      with this value (optionalP
+
+    iet_config
+      Override the default location of the ietd.conf file that is specified
+      in the minion config file (optional)
+
     CLI_Examples::
     
         salt \* iscsitarget.add_target test
 
-        salt \* iscsitarget.add_target test iqn_base=iqn.2007-12.net.enpraxis
+        salt \* iscsitarget.add_target test iqn_base=iqn.200i0-01.com.mydomain
 
-        salt \* iscsitarget.add_taerget test volgroup=vg_spare
+        salt \* iscsitarget.add_taerget test volgroup=vg_storage
 
         salt \* iscsitarget.add_target test iet_config=/dev/iet/ietd.conf
     '''
@@ -313,19 +333,36 @@ def add_target(name, **kwargs):
 
 def delete_target(name, **kwargs):
     '''
-    A function for deleting an iSCSI target definition. The name parameter is 
-    the name used to generate the IQN. Optional parameters are iqn_base, volgroup, 
-    iet_config. These will be read from the minion configuration file if not provided. 
+    A function for deleting an iSCSI target definition. To prevent orphaned
+    volumes, all LUNs should be deleted before this function is called. The 
+    name parameter is required and is the name used in conjunction with the 
+    IQN Base. Optional parameters are iqn_base, volgroup, iet_config. These 
+    will be read from the minion configuration file if not provided.
+
+    name
+      Name of the target minus the IQN Base (required)
+
+    iqn_base
+      Override the IQN Base parameter in the minion config file with this value
+      instead (optional)
+
+    volgroup
+      Override the volume group specified in the minion config file with this
+      value (optional)
+
+    iet_config
+      Override the path setting in the minion config file for the location of the
+      ietd.conf file (optional)
 
     CLI Example::
 
         salt \* iscsitarget.delete_target test
 
-        salt \* iscsitarget.delete_target test iqn_base=iqn-2007-12.net.enpraxis
+        salt \* iscsitarget.delete_target test iqn_base=iqn-2000-01.com.mydomain
 
-        salt \* iscsitarget.delete_target test volgroup=vg_spare
+        salt \* iscsitarget.delete_target test volgroup=vg_storage
 
-        salt \* iscsitarget.delete_target test "config=/etc/iet/ietd.conf"
+        salt \* iscsitarget.delete_target test "iet_config=/etc/iet/ietd.conf"
     '''
     # Check that ietd is running
     # We do this because if the SAN is running
@@ -357,11 +394,21 @@ def delete_target(name, **kwargs):
 
 def add_lun(name, lun, size, **kwargs):
     '''
-    Add a LUN to an existing target
+    Add a LUN to an existing target.
+
+    name
+      The name of the iSCSI share minus the IQN (required)
+
+    lun
+      The LUN for the new iSCSI share, Must be unique for this target
+      (required)
+
+    size
+      Size of the share to attach to the LUN (required)
 
     CLI Example::
 
-        salt '*' iscsirarget.add_lun 2 10G
+        salt '*' iscsirarget.add_lun test 1 10G
     '''
 
     # Check that ietd is running
@@ -395,9 +442,16 @@ def delete_lun(name, lun, **kwargs):
     '''
     Delete a LUN on an existing target
 
+    name
+      Name of the target that the LUN is configured in, minus the static IQN portion
+      (required)
+
+    lun
+      The ID of the LUN in the target to delete (required)
+
     CLI Example::
 
-        salt \* iscsitarget.delete_lun 2
+        salt \* iscsitarget.delete_lun test 1
     '''
 
     # Check that ietd is running
@@ -435,6 +489,8 @@ def list_volumes():
 
         salt \* iscsitarget.list_volumes
     '''
+    # Directly return the contents of the kernel params
+    # TODO: Parse the output and make it machine readable
     with open('/proc/net/iet/volume') as f:
         return f.read()
 
@@ -447,6 +503,8 @@ def list_sessions():
 
         salt \* iscsitarget.list_sessions
     '''
+    # Directly return the content of the kernel params
+    # TODO: Parse the output and make it readable
     with open('/proc/net/iet/session') as f:
         return f.read()
 
