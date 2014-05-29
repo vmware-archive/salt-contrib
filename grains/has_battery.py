@@ -9,7 +9,7 @@
 
     Returns a boolean indicating whether (or not) the system has a battery.
 
-    FIXME: Only works in Linux, requires the acpi binary.
+    FIXME: Only works in Linux, requires the acpi binary, which CentOS doesn't ship.
     FIXME: See: http://sourceforge.net/projects/acpiclient/
 '''
 
@@ -30,7 +30,6 @@ def has_battery():
 	# old vs new acpi detection our selves.
 	acpi = salt.utils.which('acpi')
 	if acpi == None or acpi == "":
-		log.warn('acpi was not found in the path. has_battery grain may not be accurate.')
 		return {'has_battery': [] }
 	
 	# call ACPI binary: `acpi -b` to return the battery status.  As long as the
