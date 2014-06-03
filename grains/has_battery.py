@@ -30,7 +30,7 @@ def has_battery():
 	# old vs new acpi detection our selves.
 	acpi = salt.utils.which('acpi')
 	if acpi == None or acpi == "":
-		return {'has_battery': [] }
+		return {}
 	
 	# call ACPI binary: `acpi -b` to return the battery status.  As long as the
 	# binary exists, it will return either the status of all batteries it knows
@@ -45,4 +45,4 @@ def has_battery():
 		return {'has_battery': 1 }
 	else:
 		log.warn('Unexpected output from `acpi -b`: %s' % result)
-		return {'has_battery': [] }
+		return {}
