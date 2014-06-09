@@ -20,8 +20,6 @@ except ImportError:
 def __virtual__():
     if not HAS_DEPS:
         return False
-    if not __salt__['pillar.get']('cloudflare:email','') and not __salt__['pillar.get']('cloudflare:apikey',''):
-        return False
     return 'cloudflare'
 
 def _pyflare_obj():
