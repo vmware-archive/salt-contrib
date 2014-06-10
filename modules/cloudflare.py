@@ -23,15 +23,15 @@ def __virtual__():
     return 'cloudflare'
 
 def _pyflare_obj():
+    '''
+    Return a new Pyflare object given API credentials provided via pillar
+    '''
     return Pyflare(__salt__['pillar.get']('cloudflare:email',''), __salt__['pillar.get']('cloudflare:apikey',''))
 
-def _get_ips(rec_type):
-    if rec_type == 'AAAA':
-        return __salt__['network.ip_addrs6']()
-    else:
-        return __salt__['network.ip_addrs']()
-
 def _get_ip_by_iface(iface, rec_type):
+    '''
+    Returns the IPv4 or IPv6 address of a given network interface.
+    '''
     if iface not in __salt__['network.interfaces']():
         return None
 
@@ -45,12 +45,19 @@ def _get_ip_by_iface(iface, rec_type):
     return __salt__['network.interfaces']()[iface][iface_type][0]['address']
 
 def _existing_record(zone, rec_name, type):
+    '''
+    Searches for (and returns) an existing record of given zone, record name, and type.
+    '''
     for rec in _pyflare_obj().rec_load_all(zone):
         if ".".join([rec_name, zone]) == rec['name'] and rec['type'] == type:
             return rec
     return None
 
 def _interpret_name(rec_name):
+    '''
+    Returns a "host" section for a DNS record by substituting values for any 
+    supported 
+    '''
     if '%M' in rec_name:
         return rec_name.replace('%M', __salt__['grains.get']('id', ''))
     else:
@@ -97,6 +104,7 @@ def add_record(zone=None, iface=None, rec_name='%H', type='A', ttl=1, edit_if_ex
     if type not in ['A','AAAA']:
         return 'ERROR: record type must be A or AAAA.'
     
+    # TODO: provide ways to retrieve IP by inputs other than interface (e.g. CIDR block)
     content = _get_ip_by_iface(iface, type)
     if not content:
         return 'ERROR: unable to get IP address; bad interface or DNS record type provided.'
