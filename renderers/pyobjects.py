@@ -54,8 +54,8 @@ class StateRegistry(object):
 
     def salt_data(self):
         states = OrderedDict([
-            (id_, state())
-            for id_, state in self.states.iteritems()
+            (id_, states_)
+            for id_, states_ in self.states.iteritems()
         ])
 
         if self.includes:
@@ -63,8 +63,8 @@ class StateRegistry(object):
 
         if self.extends:
             states['extend'] = OrderedDict([
-                (id_, state())
-                for id_, state in self.extends.iteritems()
+                (id_, states_)
+                for id_, states_ in self.extends.iteritems()
             ])
 
         self.empty()
@@ -78,7 +78,13 @@ class StateRegistry(object):
             attr = self.states
 
         if id_ in attr:
-            raise DuplicateState("A state with id '%s' already exists" % id_)
+            if state.full_func in attr[id_]:
+                raise DuplicateState("A state with id '%s', type '%s' exists" % (
+                    id_,
+                    state.full_func
+                ))
+        else:
+            attr[id_] = OrderedDict()
 
         # if we have requisites in our stack then add them to the state
         if len(self.requisites) > 0:
@@ -87,7 +93,7 @@ class StateRegistry(object):
                     state.kwargs[req.requisite] = []
                 state.kwargs[req.requisite].append(req())
 
-        attr[id_] = state
+        attr[id_].update(state())
 
     def extend(self, id_, state):
         self.add(id_, state, extend=True)
@@ -289,6 +295,7 @@ example that ensures the ``/tmp`` directory is in the correct state.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     File.managed("/tmp", user='root', group='root', mode='1777')
@@ -326,6 +333,7 @@ core of what makes pyobjects the best way to write states.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     with Pkg.installed("nginx"):
@@ -346,6 +354,7 @@ The above could have also been written use direct requisite statements as.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     Pkg.installed("nginx")
@@ -360,6 +369,7 @@ generated outside of the current file.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     # some-other-package is defined in some other state file
@@ -371,6 +381,7 @@ watch_in, use & use_in) when using the requisite as a context manager.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     with Service("my-service", "watch_in"):
@@ -391,12 +402,13 @@ a state.
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     include('http', 'ssh')
 
     Service.running(extend('apache'),
-                    watch=[{'file': '/etc/httpd/extra/httpd-vhosts.conf'}])
+                    watch=[File('/etc/httpd/extra/httpd-vhosts.conf')])
 
 Salt object
 ^^^^^^^^^^^
@@ -410,6 +422,7 @@ The following lines are functionally equivalent:
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     ret = salt.cmd.run(bar)
@@ -428,6 +441,7 @@ The following pairs of lines are functionally equivalent:
 
 .. code-block:: python
    :linenos:
+
     #!pyobjects
 
     value = pillar('foo:bar:baz', 'qux')
@@ -456,10 +470,17 @@ def render(template, saltenv='base', sls='',
            tmplpath=None, rendered_sls=None,
            _states=None, **kwargs):
 
+    # these hold the scope that our sls file will be executed with
     _globals = {}
     _locals = {}
 
+    # create our registry
     _registry = StateRegistry()
+
+    # if we haven't been provided a list of states (which really only happens
+    # from the tests) then try to use the __states__ global that the renderer
+    # loader should provide (see commit cc8539f), if the global doesn't exist
+    # (also usually from the tests) then we load the states ourself
     if _states is None:
         try:
             _states = __states__
@@ -469,7 +490,8 @@ def render(template, saltenv='base', sls='',
             __opts__['pillar'] = __pillar__
             _states = states(__opts__, __salt__)
 
-    # build our list of states and functions
+    # build our list of states and functions that we will use to build our
+    # StateFactory objects
     _st_funcs = {}
     for func in _states:
         (mod, func) = func.split(".")
@@ -496,11 +518,12 @@ def render(template, saltenv='base', sls='',
             exec mod_cmd in _st_globals, _st_locals
         _globals[mod_camel] = _st_locals[mod_camel]
 
-    # add our Include and Extend functions
+    # add our include and extend functions
     _globals['include'] = _registry.include
     _globals['extend'] = _registry.make_extend
 
-    # for convenience
+    # add some convenience methods to the global scope as well as the "dunder"
+    # format of all of the salt objects
     try:
         _globals.update({
             # salt, pillar & grains all provide shortcuts or object interfaces
@@ -517,6 +540,8 @@ def render(template, saltenv='base', sls='',
     except NameError:
         pass
 
+    # now exec our template using our created scopes
+    # in py3+ exec is a function, prior to that it is a statement
     if sys.version > 3:
         exec(template.read(), _globals, _locals)
     else:
