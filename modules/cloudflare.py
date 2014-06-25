@@ -2,8 +2,9 @@
 '''
 Module for interacting with Cloudflare's API
 
-:depends:  - pyflare Python Module
-             requests Python Module
+:depends:  - pyflare Python module
+             requests Python module
+             ipaddress Python module
 :configuration:  - Specify your Cloudflare credentials in Pillar at cloudflare:email
                    and cloudflare:apikey
 '''
@@ -13,6 +14,7 @@ import salt.utils
 
 try:
     from pyflare import Pyflare
+    import ipaddress
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
@@ -27,6 +29,28 @@ def _pyflare_obj():
     Return a new Pyflare object given API credentials provided via pillar
     '''
     return Pyflare(__salt__['pillar.get']('cloudflare:email',''), __salt__['pillar.get']('cloudflare:apikey',''))
+
+def _get_ip_by_cidr(cidr):
+    '''
+    Return a minion IP address which matches cidr.
+    '''
+    try:
+        subnet = ipaddress.ip_network(cidr)
+    except ValueError:
+        return None
+
+    if type(subnet) == ipaddress.IPv4Network:
+        ips = __salt__['network.ip_addrs']()
+    elif type(subnet) == ipaddress.IPv6Network:
+        ips = __salt__['network.ip_addrs6']()
+    else:
+        return None
+
+    for ip in ips:
+        if ipaddress.ip_address(ip) in subnet:
+            return str(ip)
+    return None
+
 
 def _get_ip_by_iface(iface, rec_type):
     '''
@@ -62,27 +86,31 @@ def _interpret_name(rec_name):
         return rec_name.replace('%M', __salt__['grains.get']('id', ''))
     else:
         if '%H' in rec_name:
-            return rec_name.replace('%H', __salt__['grains.get']('host',''))
+            return rec_name.replace('%H', __salt__['grains.get']('host', ''))
         else:
             return __salt__['grains.get']('host', '')
 
-def add_record(zone=None, iface=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False):
+def add_record(zone=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False, **kwargs):
     '''
-    Add A or AAAA records to a zone on your account which point to the IP address(es)
-    of given network interfaces.
+    Add A or AAAA records to a zone on your Cloudflare account which point to the IP address(es)
+    of a given network interface or CIDR block
 
     CLI Examples:
 
     .. code-block:: bash
 
-        salt '*' cloudflare.add_record example.com eth0
-
-    By default, the minion's 'host' grain will be used for the host portion. However,
-    you may modify this by using '%H' within a string passed as rec_name:
+        salt '*' cloudflare.add_record example.com iface=eth0
 
     .. code-block:: bash
 
-        salt '*' cloudflare.add_record example.com eth0 rec_name='%H-app'
+        salt '*' cloudflare.add_record example.com cidr=10.0.0.0/8
+
+    By default, the minion's ``host`` grain will be used for the host portion of the DNS record. 
+    However, you may modify this by using '%H' within a string passed as ``rec_name``:
+
+    .. code-block:: bash
+
+        salt '*' cloudflare.add_record example.com rec_name='%H-app' iface=eth0
 
     If your nodes' hostnames are web1, web2, etc, the above command will add records like
     web1-app.example.com, web2-app.example.com, etc.
@@ -93,23 +121,29 @@ def add_record(zone=None, iface=None, rec_name='%H', type='A', ttl=1, edit_if_ex
 
     .. code-block:: bash
 
-        salt '*' cloudflare.add_record example.com eth0 type='AAAA'
+        salt '*' cloudflare.add_record example.com iface=eth0 type='AAAA'
 
     Specify edit_if_exists=True if you would like to overwrite any existing records matching
-    zone, rec_name, and type. The default is false (i.e. existing records will not be overwritten)
+    zone, rec_name, and type. The default is False (i.e. existing records will not be overwritten)
     '''
+    ip_sources = ['iface', 'cidr']
     cf = _pyflare_obj()
-    if not zone or not iface:
-        return 'ERROR: must provide both zone and iface whose IP address to add.'
+    if not zone:
+        return 'ERROR: you must provide a DNS zone.'
+    if len(set(ip_sources) & set(kwargs.keys())) != 1:
+        return 'ERROR: you must provide a source for IP address (one of %s)' % ', '.join(ip_sources)
     if type not in ['A','AAAA']:
         return 'ERROR: record type must be A or AAAA.'
     
-    # TODO: provide ways to retrieve IP by inputs other than interface (e.g. CIDR block)
-    content = _get_ip_by_iface(iface, type)
+    content = None
+    if 'iface' in kwargs:
+        content = _get_ip_by_iface(kwargs['iface'], type)
+    elif 'cidr' in kwargs:
+        content = _get_ip_by_cidr(kwargs['cidr'])
     if not content:
-        return 'ERROR: unable to get IP address; bad interface or DNS record type provided.'
+        return 'ERROR: unable to get IP address from information provided.'
 
-    name = _interpret_name(rec_name)        
+    name = _interpret_name(rec_name)
     record = _existing_record(zone, name, type)
     if record:
         msgs = ["record %s.%s (%s) already exists" % (name, zone, type)]
