@@ -11,7 +11,6 @@
     Return the external IP address reported by one of the following providers:
 
         * ipecho.net
-        * externalip.net
         * ident.me
 
     Which ever reports a valid IP first
@@ -26,12 +25,11 @@ import urllib2
 from salt.utils.validate.net import ipv4_addr as _ipv4_addr
 
 
-def external_ip():
+def ext_ip():
     '''
     Return the external IP address
     '''
     check_ips = ('http://ipecho.net/plain',
-                 'http://api.externalip.net/ip',
                  'http://v4.ident.me')
 
     for url in check_ips:
