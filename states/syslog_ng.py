@@ -5,7 +5,7 @@ State module for syslog_ng
 
 :maintainer:    Tibor Benke <btibi@sch.bme.hu>
 :maturity:      new
-:depends:       cmd, ps
+:depends:       cmd, ps, syslog_ng
 :platform:      all
 
 Users can generate syslog-ng configuration files from YAML format by using
@@ -20,16 +20,8 @@ The service module is not available on all system, so this module includes
 and :mod:`syslog_ng.started <salt.states.syslog_ng.started>` functions.
 If the service module is available on the computers, users should use that.
 
-Syslog-ng can be installed via a package manager or from source. In the
-latter case, the syslog-ng and syslog-ng-ctl binaries are not available
-from the PATH, so users should set location of the sbin directory with
-:mod:`syslog_ng.set_binary_path <salt.states.syslog_ng.set_binary_path>`.
-
-Similarly, users can specify the location of the configuration file with
-:mod:`syslog_ng.set_config_file <salt.states.syslog_ng.set_config_file>`, then
-the module will use it. If it is not set, syslog-ng use the default
-configuration file.
-
+Users can generate syslog-ng configuration with
+:mod:`syslog_ng.config <salt.states.syslog_ng.config>` function.
 For more information see :doc:`syslog-ng state usage </topics/tutorials/syslog_ng-state-usage>`.
 
 Syslog-ng configuration file format
