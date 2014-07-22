@@ -8,10 +8,22 @@ Module for getting information about syslog-ng
 :depends:       cmd
 :platform:      all
 
-This is module is capable of managing syslog-ng instances which were not
-installed via a package manager. Users can use a directory as a parameter
-in the case of most functions, which contains the syslog-ng and syslog-ng-ctl
+This is module is capable of managing syslog-ng instances which were installed
+via a package manager of from source. Users can use a directory as a parameter
+in the case of some functions, which use the syslog-ng and syslog-ng-ctl
 binaries.
+
+Syslog-ng can be installed via a package manager or from source. In the
+latter case, the syslog-ng and syslog-ng-ctl binaries are not available
+from the PATH, so users should set location of the sbin directory with
+:mod:`syslog_ng.set_binary_path <salt.modules.syslog_ng.set_binary_path>`.
+
+Similarly, users can specify the location of the configuration file with
+:mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_config_file>`, then
+the module will use it. If it is not set, syslog-ng uses the default
+configuration file.
+
+
 '''
 
 from __future__ import generators, with_statement
@@ -312,7 +324,8 @@ def config(name,
            config,
            write=True):
     '''
-    Builds syslog-ng configuration.
+    Builds syslog-ng configuration. This function is intended to be used from
+    the state module, users should not use it directly!
 
     name : the id of the Salt document
     config : the parsed YAML code
@@ -337,7 +350,8 @@ def config(name,
 
 def set_binary_path(name):
     '''
-    Sets the path, where the syslog-ng binary can be found.
+    Sets the path, where the syslog-ng binary can be found. This function is
+    intended to be used from the state module.
 
     If syslog-ng is installed via a package manager, users don't need to use
     this function.
@@ -349,7 +363,8 @@ def set_binary_path(name):
 
 def set_config_file(name):
     '''
-    Sets the configuration's name.
+    Sets the configuration's name. This function is intended to be used from
+    the state module.
     '''
     global __SYSLOG_NG_CONFIG_FILE
     old = __SYSLOG_NG_CONFIG_FILE
@@ -567,7 +582,11 @@ def _add_boolean_cli_param(params, key, value):
 
 def stop(name=None):
     '''
-    Kills syslog-ng.
+    Kills syslog-ng. This function is intended to be used from the state module.
+
+    Users shouldn't use this function, if the service module is available on
+    their system.  If :mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_binary_path>`,
+    is called before, this function will use the set binary path.
     '''
     pids = __salt__['ps.pgrep'](pattern='syslog-ng')
 
@@ -603,10 +622,12 @@ def start(name=None,
           control=None,
           worker_threads=None):
     '''
-    Ensures, that syslog-ng is started via the given parameters.
+    Ensures, that syslog-ng is started via the given parameters. This function
+    is intended to be used from the state module.
 
     Users shouldn't use this function, if the service module is available on
-    their system.
+    their system.  If :mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_binary_path>`,
+    is called before, this function will use the set binary path.
     '''
     params = []
     _add_cli_param(params, 'user', user)
@@ -646,7 +667,11 @@ def start(name=None,
 
 def reload(name):
     '''
-    Reloads syslog-ng.
+    Reloads syslog-ng. This function is intended to be used from the state
+    module.
+
+    If :mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_binary_path>`,
+    is called before, this function will use the set binary path.
     '''
     if __SYSLOG_NG_BINARY_PATH:
         syslog_ng_ctl_binary = os.path.join(__SYSLOG_NG_BINARY_PATH, 'syslog-ng-ctl')
@@ -670,7 +695,11 @@ def _format_generated_config_header():
 
 def write_config(name, config, newlines=2):
     '''
-    Writes the given parameter config into the config file.
+    Writes the given parameter config into the config file. This function is
+    intended to be used from the state module.
+
+    If :mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_config_file>`,
+    is called before, this function will use the set config file.
     '''
     succ = _write_config(config, newlines)
     return _format_state_result(name, result=succ)
@@ -703,6 +732,10 @@ def _write_config(config, newlines=2):
 def write_version(name):
     '''
     Removes the previous configuration file, then creates a new one and writes the name line.
+    This function is intended to be used from the state module.
+
+    If :mod:`syslog_ng.set_config_file <salt.modules.syslog_ng.set_config_file>`,
+    is called before, this function will use the set config file.
     '''
     line = '@version: {0}'.format(name)
     try:
