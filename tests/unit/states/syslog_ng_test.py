@@ -7,6 +7,7 @@ import yaml
 import re
 import tempfile
 import os
+import pdb
 
 from salttesting import skipIf, TestCase
 from salttesting.helpers import ensure_in_syspath
@@ -19,6 +20,7 @@ from salt.modules import syslog_ng as syslog_ng_module
 
 syslog_ng.__salt__ = {}
 syslog_ng_module.__salt__ = {}
+syslog_ng_module.__opts__ = {'test': False}
 
 SOURCE_1_CONFIG = {
     "id": "s_tail",
@@ -26,7 +28,7 @@ SOURCE_1_CONFIG = {
         """
         source:
             - file:
-              - "/var/log/apache/access.log"
+              - '"/var/log/apache/access.log"'
               - follow_freq : 1
               - flags:
                 - no-parse
@@ -52,7 +54,7 @@ SOURCE_2_CONFIG = {
         """
         source:
           - tcp:
-            - ip: 0.0.0.0
+            - ip: '"0.0.0.0"'
             - port: 1234
             - flags: no-parse
         """
@@ -76,7 +78,7 @@ FILTER_1_CONFIG = {
         """
         filter:
           - match:
-            - "@json:"
+            - '"@json:"'
         """
     )
 }
@@ -97,7 +99,7 @@ TEMPLATE_1_CONFIG = {
         """
         template:
           - template:
-            - "$ISODATE $HOST $MSG\n"
+            - '"$ISODATE $HOST $MSG\n"'
           - template_escape:
             - "no"
         """
@@ -123,8 +125,8 @@ REWRITE_1_CONFIG = {
         """
         rewrite:
           - set:
-            - "${.json.message}"
-            - value : "$MESSAGE"
+            - '"${.json.message}"'
+            - value : '"$MESSAGE"'
         """
     )
 }
@@ -154,7 +156,7 @@ LOG_1_CONFIG = {
               - rewrite: r_set_message_to_MESSAGE
               - destination:
                 - file:
-                  - "/tmp/json-input.log"
+                  - '"/tmp/json-input.log"'
                   - template: t_gsoc2014
               - flags: final
             - channel:
@@ -165,7 +167,7 @@ LOG_1_CONFIG = {
               - flags: final
           - destination:
             - file:
-              - "/tmp/all.log"
+              - '"/tmp/all.log"'
               - template: t_gsoc2014
         """
     )
@@ -232,6 +234,57 @@ OPTIONS_1_EXPECTED = (
     """
 )
 
+SHORT_FORM_CONFIG = {
+    "id": "source.s_gsoc",
+    "config": (
+        """
+          - tcp:
+            - ip: '"0.0.0.0"'
+            - port: 1234
+            - flags: no-parse
+        """
+    )
+}
+
+SHORT_FORM_EXPECTED = (
+    """
+    source s_gsoc {
+        tcp(
+            ip(
+                "0.0.0.0"
+            ),
+            port(
+                1234
+            ),
+            flags(
+              no-parse
+            )
+        );
+    };
+    """
+)
+
+GIVEN_CONFIG = {
+    'id': "config.some_name",
+    'config': (
+"""  |
+               source s_gsoc {
+                  tcp(
+                      ip(
+                          "0.0.0.0"
+                      ),
+                      port(
+                          1234
+                      ),
+                      flags(
+                        no-parse
+                      )
+                  );
+               };
+"""
+    ) 
+
+}
 
 _SALT_VAR_WITH_MODULE_METHODS = {
     'syslog_ng.config': syslog_ng_module.config,
@@ -271,6 +324,12 @@ class SyslogNGTestCase(TestCase):
     def test_generate_global_options_config(self):
         self._config_generator_template(OPTIONS_1_CONFIG, OPTIONS_1_EXPECTED)
 
+    def test_generate_short_form_statement(self):
+        self._config_generator_template(SHORT_FORM_CONFIG, SHORT_FORM_EXPECTED)
+
+    def test_generate_given_config(self):
+        self._config_generator_template(GIVEN_CONFIG, SHORT_FORM_EXPECTED)
+
     def _config_generator_template(self, yaml_input, expected):
         parsed_yaml_config = yaml.load(yaml_input["config"])
         id = yaml_input["id"]
@@ -280,10 +339,6 @@ class SyslogNGTestCase(TestCase):
             config = got["changes"]["new"]
             self.assertEqual(remove_whitespaces(expected), remove_whitespaces(config))
             self.assertEqual(False, got["result"])
-            print("#######################")
-            print(yaml_input["config"])
-            print("-------")
-            print(got)
 
     def test_write_config(self):
         yaml_inputs = (
@@ -298,8 +353,8 @@ class SyslogNGTestCase(TestCase):
 
         with patch.dict(syslog_ng.__salt__, _SALT_VAR_WITH_MODULE_METHODS):
             syslog_ng_module.set_config_file(config_file_name)
-            syslog_ng.write_version("3.6")
-            syslog_ng.write_config("", config='@include "scl.conf"')
+            syslog_ng_module.write_version("3.6")
+            syslog_ng_module.write_config(config='@include "scl.conf"')
 
             for i in yaml_inputs:
                 parsed_yaml_config = yaml.load(i["config"])

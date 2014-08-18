@@ -8,8 +8,8 @@ State module for syslog_ng
 :depends:       cmd, ps, syslog_ng
 :platform:      all
 
-Users can generate syslog-ng configuration files from YAML format by using
-this module or use plain ones and reload, start, or stop their syslog-ng.
+Users can generate syslog-ng configuration files from YAML format or use
+ plain ones and reload, start, or stop their syslog-ng by using this module.
 
 Details
 -------
@@ -41,7 +41,8 @@ These constructions are also called statements. There are options inside of them
         option(parameter1, parameter2); option2(parameter1, parameter2);
 
 You can find more information about syslog-ng's configuration syntax in the
-Syslog-ng Admin guide: http://www.balabit.com/sites/default/files/documents/syslog-ng-ose-3.5-guides/en/syslog-ng-ose-v3.5-guide-admin/html-single/index.html#syslog-ng.conf.5
+Syslog-ng Admin guide:
+http://www.balabit.com/sites/default/files/documents/syslog-ng-ose-3.5-guides/en/syslog-ng-ose-v3.5-guide-admin/html-single/index.html#syslog-ng.conf.5
 '''
 
 from __future__ import generators, print_function, with_statement
@@ -63,20 +64,6 @@ def config(name,
     otherwise just returns it
     '''
     return __salt__['syslog_ng.config'](name, config, write)
-
-
-def write_config(name, config, newlines=2):
-    '''
-    Writes the given parameter config into the config file.
-    '''
-    return __salt__['syslog_ng.write_config'](name, config, newlines)
-
-
-def write_version(name):
-    '''
-    Removes the previous configuration file, then creates a new one and writes the name line.
-    '''
-    return __salt__['syslog_ng.write_version'](name)
 
 
 def stopped(name=None):
