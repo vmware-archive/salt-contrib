@@ -45,4 +45,5 @@ You can also link against a state folder so the modules are pushed out to client
 For grains, simply make a _grains folder in /srv/salt. Then run sync_grains.
 
 ::
+
   $ saltutil.sync_grains
