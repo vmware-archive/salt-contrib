@@ -9,7 +9,7 @@ Module for getting information about syslog-ng
 :platform:      all
 
 This module is capable of managing syslog-ng instances which were installed
- via a package manager or from source. Users can use a directory as a parameter
+via a package manager or from source. Users can use a directory as a parameter
 in the case of most functions, which contains the syslog-ng and syslog-ng-ctl
 binaries.
 
