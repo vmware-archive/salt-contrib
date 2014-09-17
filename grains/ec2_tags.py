@@ -58,7 +58,7 @@ def _get_credentials():
         return AWS_CREDENTIALS
 
     # 2. Get from minion config
-    if aws in __opts__.get['ec2_tags']:
+    if "aws" in __opts__.get['ec2_tags']:
         try:
             aws = __opts__.get['ec2_tags']['aws']
             return {
