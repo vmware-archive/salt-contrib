@@ -52,7 +52,6 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
                 kwargs['minion_id'] = minion_id
             return func(*args, **kwargs)
         elif isinstance(o, ast.Name):
-            log.info(o.id + '<<<')
             return salt.utils.traverse_dict_and_list(pillar, o.id, 'x', ':')
         elif isinstance(o, ast.Expr):
             return process(o.value)
@@ -60,12 +59,22 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             return ast.literal_eval(o)
 
     def walk(data):
-        for k, v in data.iteritems():
-            if isinstance(v, dict):
+        def process_val(k, v):
+            if isinstance(v, dict) or isinstance(v, list):
                 walk(v)
             elif isinstance(v, str) or isinstance(v, unicode):
                 m = re.search('^\$\{(.*)\}$', v)
                 if m:
                     s = m.groups()[0]
                     data[k] = process(ast.parse(s).body[0].value)
+
+        if isinstance(data, dict):
+            for k, v in data.iteritems():
+                process_val(k, v)
+        elif isinstance(data, list):
+            i = 0
+            for v in data:
+                process_val(i, v)
+                i = i+1
+
     walk(pillar)
