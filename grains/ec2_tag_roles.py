@@ -21,7 +21,6 @@ import socket
 import pprint
 import boto.ec2
 from boto.utils import get_instance_metadata
-import httplib
 
 def ec2_roles():
                 # Get meta-data from instance
