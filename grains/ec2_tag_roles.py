@@ -1,36 +1,52 @@
+"""
+ec2_tag_roles.py - imports tags for an instance and makes grains for that instance out of them
+
+To use it:
+
+                1: Copy ec2_tag_roles.py to <salt_Root>/_grains/
+                2: Make sure boto is installed and version is >= 2.8.0
+                3: Enter your AWS credentials in the variables below
+                4: Test:
+                        salt '*' saltutil.sync_grains
+                        salt '*' grains.items
+
+Author: Demian Ginther <st.siluted@gmail.com>
+License: Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+"""
+
 #!/usr/bin/env python
 
 import os
 import socket
 import pprint
 import boto.ec2
-import httplib
+from boto.utils import get_instance_metadata
 
 def ec2_roles():
-    # Get meta-data to determine which availability zone we are in
-    httpconn = httplib.HTTPConnection("169.254.169.254", 80, 10 )
-    httpconn.request('GET', "/latest/meta-data/placement/availability-zone")
-    response = httpconn.getresponse()
-    az = response.read()
+                # Get meta-data from instance
+                metadata = get_instance_metadata()
 
-    # Chop off the AZ letter to get the region
-    region = az[:-1]
+                # Chop off the AZ letter to get the region
+                region = metadata['placement']['availability-zone'][:-1]
 
-    # Get the hostname of the instance we're on
-    hostname = socket.gethostname()
+                # Connect to EC2 and get the instance information for this instance id
+                conn = boto.ec2.connect_to_region(region,
+                aws_access_key_id='XXXXXXXXXXXXXXXXXXXX',
+                aws_secret_access_key='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                reservation = conn.get_all_reservations(filters={'instance-id': metadata['instance-id']})
 
-    # Connect to EC2 and parse the Roles tags for this instance
-    conn = boto.ec2.connect_to_region(region, 
-    aws_access_key_id='PUTACCESSKEYHERE',
-    aws_secret_access_key='PUTSECRETACCESSKEYHERE')
-    reservation = conn.get_all_instances(filters={"tag:Name": hostname})[0]
-    instance = reservation.instances[0]
-    tags = instance.tags.get('Roles','')
+                # Dump tags from instance. Feel free to add variables here to get other tags.
+                # Use var = instance.tags['TAG NAME']
+                instances = [i for r in reservation for i in r.instances]
+                for instance in instances:
+                        roles = instance.tags['Roles']
 
-    # Initialize grains
-    grains={}
+                # Initialize grains dict
+                grains={}
 
-    # Fill grains with tags
-    grains['ec2_roles'] = tags.split(',')
+                # Fill grains dict with tags
+                # Don't forget to add any variables you added from above!
+                grains['ec2_roles'] = roles.split(',')
 
-    return grains
+                # Return our dict
+                return grains
