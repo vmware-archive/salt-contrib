@@ -58,7 +58,7 @@ THIS SOFTWARE.
 
 __copyright__    = 'Copyright (c) 2014, SaltStack, Inc and Palo Alto Networks, Inc.'
 __author__       = 'C. R. Oldham, wxzjohn, Claud Xiao'
-__version__      = '1.0'
+__version__      = '1.1'
 
 
 import os
