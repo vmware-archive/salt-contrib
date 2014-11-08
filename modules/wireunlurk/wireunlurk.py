@@ -96,7 +96,8 @@ MALICIOUS_LAUNCHD_PLISTS = [
 
 MALICIOUS_FILES = [
     '/Users/Shared/run.sh',
-    '/usr/bin/globalupdate/usr/local/machook/',
+    '/usr/bin/globalupdate',
+    '/usr/local/machook/',
     '/usr/bin/WatchProc',
     '/usr/bin/itunesupdate',
     '/usr/bin/com.apple.MailServiceAgentHelper',
@@ -352,7 +353,7 @@ def scan(clean=False):
     output = '[+] Scanning for infected applications ... (may take minutes)\n'
     _console_print(output)
 
-    # infected_apps = _scan_app()
+    infected_apps = _scan_app()
     infected_apps = []
     if len(infected_apps) == 0:
         output = '[-] No infected apps found.\n'
