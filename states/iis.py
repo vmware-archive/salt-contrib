@@ -60,7 +60,7 @@ def _resource_present(resource, name, settings, alt_name=None):
         if need_2_add:
             ret['comment'] = '{0} will be created'.format(alt_name)
         else:
-            ret['comment'] = 'the following will be set'.format(need_2_config)
+            ret['comment'] = 'the following will be set {0}'.format(need_2_config)
         return ret
 
     if need_2_add:

@@ -371,7 +371,7 @@ def install(name,categories=None,includes=None,retries=10):
                'result': True,
                'changes': {},
                'comment': ''}
-        log.debug('categories to search for are: '.format(str(categories)))
+        log.debug('categories to search for are: {0}'.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
         quidditch.SetIncludes(includes)
@@ -412,7 +412,7 @@ def download(name,categories=None,includes=None,retries=10):
                'result': True,
                'changes': {},
                'comment': ''}
-        log.debug('categories to search for are: '.format(str(categories)))
+        log.debug('categories to search for are: {0}'.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
         quidditch.SetIncludes(includes)

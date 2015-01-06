@@ -81,7 +81,7 @@ def extracted(name, source, archive_format, tar_options=None, source_hash=None,
                             '{0}.{1}'.format(if_missing.replace('/', '_'),
                                              archive_format))
     if not os.path.exists(filename):
-        log.debug("Archive file {0} is not in cache, download it", source)
+        log.debug("Archive file {0} is not in cache, download it".format(source))
         data = {
             filename: {
                 'file': [

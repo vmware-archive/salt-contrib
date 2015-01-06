@@ -53,7 +53,7 @@ def _remove(fpath):
     except OSError, e:
         # Ignore if file does not exist
         if e.errno != 2:
-            raise OSError, e
+            raise OSError(e)
 
 
 def configure(domain, logfile, period='hourly'):
