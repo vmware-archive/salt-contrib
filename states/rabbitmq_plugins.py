@@ -25,6 +25,7 @@ def disabled(name, runas=None, env=None):
     name
         The name of the plugin to disable
     '''
+    ret = {}
     if __opts__['test']:
         ret['comment'] = 'The plugin {0} would have been disabled'.format(name)
         return ret
