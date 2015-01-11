@@ -125,13 +125,13 @@ def feature_removeurl(url):
     '''
         
     if is_repo(url) == False:
-        return 'absent'.format(url)
+        return 'absent url {0}'.format(url)
     else:
         run('features:removeurl {0}'.format(url))
         if is_repo(url) == False:
-            return 'removed'.format(url)
+            return 'removed {0}'.format(url)
         else:
-            return 'failed'.format(url)
+            return 'failed {0}'.format(url)
 
 def feature_refreshurls():
     '''
@@ -160,7 +160,7 @@ def feature_refreshurl(url):
         run('features:refreshurl {0}'.format(url))
         return 'refreshed'
     else:
-        return 'missing'.format(url)
+        return 'missing {0}'.format(url)
 
 def bundle_active(bundle):
     '''
