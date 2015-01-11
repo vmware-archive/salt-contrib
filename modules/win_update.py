@@ -476,7 +476,7 @@ def list_updates(verbose=False,includes=None,retries=5,categories=None):
         
         '''
         
-        log.debug('categories to search for are: '.format(str(categories)))
+        log.debug('categories to search for are: {0}'.format(str(categories)))
         quidditch = PyWinUpdater()
         if categories:
                 quidditch.SetCategories(categories)
@@ -521,7 +521,7 @@ def download_updates(includes=None,retries=5,categories=None):
                 salt '*' win_updates.download_updates categories=['Critical Updates'] verbose
         
         '''
-        log.debug('categories to search for are: '.format(str(categories)))
+        log.debug('categories to search for are: {0}'.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
         quidditch.SetIncludes(includes)
@@ -575,7 +575,7 @@ def install_updates(cached=None,includes=None,retries=5,categories=None):
         
         '''
         
-        log.debug('categories to search for are: '.format(str(categories)))
+        log.debug('categories to search for are: {0}'.format(str(categories)))
         quidditch = PyWinUpdater()
         quidditch.SetCategories(categories)
         quidditch.SetIncludes(includes)
