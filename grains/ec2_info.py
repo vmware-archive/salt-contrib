@@ -32,10 +32,9 @@ def _get_ec2_hostinfo(path=""):
     """
     Recursive function that walks the EC2 metadata available to each minion.
     :param path: URI fragment to append to /latest/meta-data/
-    :param data: Dictionary containing the results from walking the AWS meta-data
 
-    All EC2 variables are prefixed with "ec2_" so they are grouped as grains and to
-    avoid collisions with other grain names.
+    Returns a nested dictionary containing all the EC2 metadata. All keys
+    are converted from dash case to snake case.
     """
     resp = _call_aws("/latest/meta-data/%s" % path).strip()
     d = {}
@@ -86,7 +85,7 @@ def _get_ec2_additional():
 
 def ec2_info():
     """
-    Collect some extra host information
+    Collect all ec2 grains into the 'ec2' key.
     """
     try:
         # First check that the AWS magic URL works. If it does
