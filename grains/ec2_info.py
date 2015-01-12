@@ -67,7 +67,10 @@ def _dash_to_snake_case(s):
 
 
 def _snake_caseify_dict(d):
-    return {_camel_to_snake_case(k): v for k, v in d.items()}
+    nd = {}
+    for k, v in d.items():
+        nd[_camel_to_snake_case(k)] = v
+    return nd
 
 
 def _get_ec2_additional():
