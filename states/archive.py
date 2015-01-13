@@ -101,7 +101,7 @@ def extracted(name, source, archive_format, tar_options=None, source_hash=None,
             log.debug("failed to download %s", source)
             return file_result
     else:
-        log.debug("Archive file {0} is already in cache", name)
+        log.debug("Archive file {0} is already in cache".format(name))
 
     __salt__['file.makedirs'](name)
     __salt__['file.mkdir'](name)
