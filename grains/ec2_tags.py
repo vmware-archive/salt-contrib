@@ -59,15 +59,11 @@ def _get_credentials():
         return AWS_CREDENTIALS
 
     # 2. Get from minion config
-    if "aws" in __opts__.get['ec2_tags']:
-        try:
-            aws = __opts__.get['ec2_tags']['aws']
-            return {
-                'access_key': aws['access_key'],
-                'secret_key': aws['secret_key']
-            }
-        except (KeyError, NameError):
-            pass
+    if '__opts__' in globals():
+        conf = __opts__.get('ec2_tags', {})
+        aws = conf.get('aws', {})
+        if aws.get('access_key') and aws.get('secret_key'):
+            return aws
 
     # 3. Get from environment
     access_key = os.environ.get('AWS_ACCESS_KEY') or os.environ.get('AWS_ACCESS_KEY_ID')
