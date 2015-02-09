@@ -49,7 +49,7 @@ AWS_CREDENTIALS = {
 
 def _get_instance_info():
     identity = boto.utils.get_instance_identity()['document']
-    return (identity['instanceId'], identity['region'])
+    return identity['instanceId'], identity['region']
 
 
 def _on_ec2():
@@ -58,21 +58,22 @@ def _on_ec2():
 
 
 def _get_credentials():
-    # 2. Get from minion config
+    creds = AWS_CREDENTIALS.copy()
+
+    # Minion config
     if '__opts__' in globals():
         conf = __opts__.get('ec2_tags', {})
         aws = conf.get('aws', {})
         if aws.get('access_key') and aws.get('secret_key'):
-            return aws
+            creds.update(aws)
 
     # 3. Get from environment
     access_key = os.environ.get('AWS_ACCESS_KEY') or os.environ.get('AWS_ACCESS_KEY_ID')
     secret_key = os.environ.get('AWS_SECRET_KEY') or os.environ.get('AWS_SECRET_ACCESS_KEY')
     if access_key and secret_key:
-        return dict(access_key=access_key, secret_key=secret_key)
+        creds.update(dict(access_key=access_key, secret_key=secret_key))
 
-    # 1. Get from static AWS_CREDENTIALS (Leave as None to use IAM role)
-    return AWS_CREDENTIALS
+    return creds
 
 
 def ec2_tags():
@@ -87,7 +88,7 @@ def ec2_tags():
         log.info("Not an EC2 instance, skipping")
         return None
 
-    (instance_id, region) = _get_instance_info()
+    instance_id, region = _get_instance_info()
     credentials = _get_credentials()
 
     # Connect to EC2 and parse the Roles tags for this instance
@@ -102,7 +103,7 @@ def ec2_tags():
             aws_secret_access_key=credentials['secret_key'],
         )
     except Exception, e:
-        log.error("Could not connect to AWS using specified credentials: %s", e)
+        log.error("Could not get AWS connection: %s", e)
         return None
 
     ec2_tags = {}
@@ -111,7 +112,7 @@ def ec2_tags():
                                           'resource-id': instance_id})
         for tag in tags:
             ec2_tags[tag.name] = tag.value
-    except IndexError, e:
+    except Exception, e:
         log.error("Couldn't retrieve instance tags: %s", e)
         return None
 
