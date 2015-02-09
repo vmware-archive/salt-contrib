@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 ec2_tags.py - exports all EC2 tags in an 'ec2_tags' grain
 
