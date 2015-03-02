@@ -333,5 +333,7 @@ def vdir_present(name, app, settings=None):
 
     if name == '/' and '/' not in app[0:-1]:
         return _resource_present('vdir', app, settings, app)
-    return _resource_present('vdir', app, settings, app+name)
+        
+    alt_name = app.rstrip('/') + name
+    return _resource_present('vdir', app, settings, alt_name)
 
