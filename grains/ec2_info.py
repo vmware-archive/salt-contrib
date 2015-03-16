@@ -41,7 +41,10 @@ def _get_ec2_hostinfo(path=""):
     for line in resp.split("\n"):
         if line[-1] != "/":
             call_response = _call_aws("/latest/meta-data/%s" % (path + line))
-            if call_response is not None:
+            # avoid setting empty grain
+            if call_response == '':
+                d[line] = None
+            elif call_response is not None:
                 line = _dash_to_snake_case(line)
                 try:
                     data = json.loads(call_response)
@@ -79,8 +82,14 @@ def _get_ec2_additional():
     architecture.
 
     """
-    data = json.loads(_call_aws("/latest/dynamic/instance-identity/document"))
-    return _snake_caseify_dict(data)
+    response = _call_aws("/latest/dynamic/instance-identity/document")
+    # _call_aws returns None for all non '200' reponses,
+    # catching that here would rule out AWS resource
+    if response:
+        data = json.loads(response)
+        return _snake_caseify_dict(data)
+    else:
+       raise httplib.BadStatusLine("Could not read EC2 metadata")
 
 
 def ec2_info():
@@ -88,16 +97,14 @@ def ec2_info():
     Collect all ec2 grains into the 'ec2' key.
     """
     try:
-        # First check that the AWS magic URL works. If it does
-        # we are running in AWS and will try to get more data.
-        _call_aws('/')
-    except (socket.timeout, socket.error, IOError):
-        return {}
-
-    try:
         grains = _get_ec2_additional()
         grains.update(_get_ec2_hostinfo())
         return {'ec2' : grains}
+
+    except httplib.BadStatusLine, error:
+        LOG.debug(error)
+        return {}
+
     except socket.timeout, serr:
         LOG.info("Could not read EC2 data (timeout): %s" % (serr))
         return {}
