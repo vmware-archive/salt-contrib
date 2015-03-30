@@ -120,7 +120,7 @@ def ec2_tags():
 
     # Provide ec2_tags_roles functionality
     if 'Roles' in ec2_tags:
-        ret['ec2_roles'] = tags['Roles'].split(',')
+        ret['ec2_roles'] = ec2_tags['Roles'].split(',')
 
     return ret
 
