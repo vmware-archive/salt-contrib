@@ -101,9 +101,9 @@ def _get_ec2_user_data():
     # _call_aws returns None for all non '200' reponses,
     # catching that here would rule out AWS resource
     if response:
-        if response[0] == '{':
+        try:
             return json.loads(response)
-        else:
+        except ValueError as e:
             return response
     else:
        raise httplib.BadStatusLine("Could not read EC2 user-data")
