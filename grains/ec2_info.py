@@ -92,12 +92,28 @@ def _get_ec2_additional():
        raise httplib.BadStatusLine("Could not read EC2 metadata")
 
 
+def _get_ec2_user_data():
+    """
+    Recursive call in _get_ec2_hostinfo() does not retrieve user-data.
+
+    """
+    response = _call_aws("/latest/user-data")
+    # _call_aws returns None for all non '200' reponses,
+    # catching that here would rule out AWS resource
+    if response:
+        data = json.loads(response)
+        return _snake_caseify_dict(data)
+    else:
+       raise httplib.BadStatusLine("Could not read EC2 user-data")
+
+
 def ec2_info():
     """
     Collect all ec2 grains into the 'ec2' key.
     """
     try:
         grains = _get_ec2_additional()
+        grains.update({'user-data': _get_ec2_user_data()})
         grains.update(_get_ec2_hostinfo())
         return {'ec2' : grains}
 
