@@ -7,7 +7,7 @@ To use it:
 
   1. Place ec2_tags.py in <salt_root>/_grains/
   2. Make sure boto version >= 2.8.0
-  3. There are three ways of supplying AWS credentials used to fetch instance tags:
+  3. There are four ways of supplying AWS credentials used to fetch instance tags:
 
     i. Define them in AWS_CREDENTIALS below
     ii. Define AWS_ACCESS_KEY and AWS_SECRET_KEY environment variables
@@ -17,7 +17,22 @@ To use it:
           aws:
             access_key: ABC123
             secret_key: abc123
-    iv. Use IAM roles
+    iv. Use IAM instance roles, the following policy will work:
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "Stmt1429127179000",
+                    "Effect": "Allow",
+                    "Action": [
+                        "ec2:DescribeTags"
+                    ],
+                    "Resource": [
+                        "*"
+                    ]
+                }
+            ]
+        }
 
   4. Test it
 
@@ -92,10 +107,6 @@ def ec2_tags():
     credentials = _get_credentials()
 
     # Connect to EC2 and parse the Roles tags for this instance
-    if not (credentials['access_key'] and credentials['secret_key']):
-        log.error("No AWS credentials found, see documentation for how to provide them.")
-        return None
-
     try:
         conn = boto.ec2.connect_to_region(
             region,
