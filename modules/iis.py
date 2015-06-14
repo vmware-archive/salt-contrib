@@ -46,9 +46,7 @@ def _resource_list(resource):
     '''
 
     ret = []
-    cmd_ret = __salt__['cmd.run_all']('"{0}" list {1}'.format(
-        appcmd, resource
-    ))
+    cmd_ret = __salt__['cmd.run_all']([appcmd, 'list', resource])
     if cmd_ret['retcode'] != 0:
         return False
 
@@ -71,9 +69,7 @@ def _resource_add(resource, name, settings=None, arg_name_override=None):
     if arg_name_override is None:
         arg_name_override = resource.lower()
 
-    cmd_ret = __salt__['cmd.run_all']('"{0}" add {1} /{2}.name:"{3}" {4}'.format(
-        appcmd, resource.upper(), arg_name_override, name, settings_params
-    ))
+    cmd_ret = __salt__['cmd.run_all']([appcmd, 'add', resource.upper(), '/{0}.name:{1}'.format(arg_name_override, name)] + settings_params)
     if cmd_ret['retcode'] != 0:
         log.error('failed creating {0}'.format(resource))
         log.debug(cmd_ret['stderr'])
@@ -88,9 +84,7 @@ def _resource_get_config(resource, name, settings):
 
     ret = {}
     for i in settings:
-        cmd_ret = __salt__['cmd.run_all']('"{0}" list {1} /{2}.name:"{3}" /text:{4}'.format(
-            appcmd, resource.upper(), resource.lower(), name, i
-        ))
+        cmd_ret = __salt__['cmd.run_all']([appcmd, 'list', resource.upper(), '/{0}.name:{1}'.format(resource.lower(), name), '/text:{0}'.format(i)])
         if cmd_ret['retcode'] != 0:
             log.error('can\'t get "{0}" from {1} "{2}"'.format(i, resource, name))
             return False
@@ -104,9 +98,7 @@ def _resource_set(resource, name, settings):
     '''
 
     settings_params = _serialize_settings(settings)
-    cmd_ret = __salt__['cmd.run_all']('"{0}" set {1} "{2}" {3}'.format(
-        appcmd, resource.upper(), name, settings_params
-    ))
+    cmd_ret = __salt__['cmd.run_all']([appcmd, 'set', resource.upper(), name] + settings_params)
     if cmd_ret['retcode'] != 0:
         log.error('failed configuring {0}'.format(resource))
         log.debug(cmd_ret['stderr'])
@@ -120,11 +112,11 @@ def _serialize_settings(settings):
     '''
 
     if not settings:
-        return ''
-    return ' '.join(map(
-        lambda (k, v): '/{0}:"{1}"'.format(k, v),
+        return []
+    return map(
+        lambda (k, v): '/{0}:{1}'.format(k, v),
         settings.iteritems()
-    ))
+    )
 
 
 ##############################
