@@ -139,5 +139,33 @@ def ec2_info():
         LOG.info("Could not read EC2 data (IOError): %s" % (serr))
         return {}
 
+
+def ec2_instance_id():
+    """
+    Set the top-level grain 'instance-id' per the grain expected
+    by pillar-ec2.
+    """
+    try:
+        instance_id = _get_ec2_hostinfo("instance-id/").values()[0]
+        return {'instance-id' : instance_id}
+
+    except httplib.BadStatusLine, error:
+        LOG.debug(error)
+        return {}
+
+    except socket.timeout, serr:
+        LOG.info("Could not read EC2 data (timeout): %s" % (serr))
+        return {}
+
+    except socket.error, serr:
+        LOG.info("Could not read EC2 data (error): %s" % (serr))
+        return {}
+
+    except IOError, serr:
+        LOG.info("Could not read EC2 data (IOError): %s" % (serr))
+        return {}
+
+
 if __name__ == "__main__":
     print ec2_info()
+    print ec2_instance_id()
