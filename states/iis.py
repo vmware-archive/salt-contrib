@@ -25,6 +25,8 @@ def __virtual__():
     return False
 
 
+#  return _resource_present('app', site, settings, site+"/")
+
 def _resource_present(resource, name, settings, alt_name=None):
     '''
     Generic State which make sure a resource is properly configured
@@ -45,7 +47,14 @@ def _resource_present(resource, name, settings, alt_name=None):
     }
 
     # Decide what to do
-    need_2_add = alt_name not in __salt__['iis.{0}_list'.format(resource)]()
+    # if no existing resources, should add the first one, need a 'try' block
+    try:
+        need_2_add = alt_name not in __salt__['iis.{0}_list'.format(resource)]()
+    except:
+        need_2_add = True
+
+
+
     need_2_config = {}
     if not need_2_add:
         for key, value in __salt__['iis.{0}_get_config'.format(resource)](alt_name, settings.keys()).iteritems():
@@ -74,7 +83,7 @@ def _resource_present(resource, name, settings, alt_name=None):
 
     # Else we need to adjust the configuration
     if not __salt__['iis.{0}_set'.format(resource)](alt_name, need_2_config):
-        ret['comment'] = 'could not configure {1} "{0}"'.format(name, resource)
+        ret['comment'] = 'could not configure {1} "{0}", settings: {2}'.format(alt_name, resource, need_2_config)
         ret['result'] = False
         return ret
     ret['comment'] = '{1} "{0}" configured'.format(name, resource)
@@ -82,7 +91,58 @@ def _resource_present(resource, name, settings, alt_name=None):
     return ret
 
 
-def pfx_present(name, password, reg='LOCAL_MACHINE\My', granted_users=None):
+def _resource_action(resource, name, action):
+    '''
+    Generic State which make sure a resource is properly configured
+    '''
+
+    action = action.lower()
+    resource = resource.lower()
+
+    ret = {
+        'name': name,
+        'result': True,
+        'changes': {},
+        'comment': ''
+    }
+    need_2_act = action in ["start", "stop", "delete"]
+
+    # For non existing resource, action can not be performed
+    try:
+        current_state  = __salt__['iis.{0}_get_config'.format(resource)]( name, {"state"})['state'].lower()
+    except:
+        if action == 'delete' :
+            ret['result'] = True
+            ret['comment'] = '{2}: Not existing {0} "{1}"'.format(resource, name, action.capitalize())
+        else:
+            ret['result'] = False
+            ret['comment'] = '{2}: Could not retrive {0} configuration over "{1}"'.format(resource, name, action.capitalize())
+        return ret
+
+
+    if current_state.find(action) != -1:
+        ret['comment'] = '{1} "{0}" has been already {2}ed before, no action'.format(name, resource, action)
+        ret['changes'][action] = name
+        return ret
+
+
+    if need_2_act:
+        if not __salt__['iis.{0}_action'.format(resource)](name, action):
+            ret['comment'] = 'Could not {2} "{0}" {1}'.format(name, resource, action)
+            ret['result'] = False
+            return ret
+        ret['comment'] = '{1} "{0}" {2}ed'.format(name, resource, action)
+        ret['changes'][action] = name
+        return ret
+    else:
+        ret['result'] = False
+        ret['comment'] = 'Not supported action: "{0}"'.format(action)
+        return ret
+    return ret
+
+
+
+def pfx_present(name, password=None, reg='LOCAL_MACHINE\My', granted_users=None):
     '''
     Install the PFX certificate
     grant permissions to the granted_users users
@@ -101,11 +161,14 @@ def pfx_present(name, password, reg='LOCAL_MACHINE\My', granted_users=None):
         install.pfx.certificate:
           iis.pfx_present:
             - name: c:\some.pfx
-            - password: somepass
+            - password: ""
             - reg: LOCAL_MACHINE\My
             - granted_users:
               - Network Service
     '''
+
+    if password is None:
+        password = ''
 
     ret = {
         'name': name,
@@ -128,9 +191,10 @@ def pfx_present(name, password, reg='LOCAL_MACHINE\My', granted_users=None):
 
     # Decide what to do
     pfx_data = __salt__['iis.get_data_from_pfx'](name, password)
+
     log.debug(pfx_data)
     if not pfx_data:
-        ret['comment'] = 'can\'t get the meta data from the PFX certificate'
+        ret['comment'] = 'can\'t get the meta data from the PFX certificate, pass:"{0}", pfx_data: {1}'.format(password, pfx_data)
         ret['result'] = False
         return ret
     subject = re.match('CN=(.*?), .*', pfx_data['Subject']).group(1)
@@ -178,9 +242,10 @@ def pfx_present(name, password, reg='LOCAL_MACHINE\My', granted_users=None):
     return ret
 
 
-def ssl_bind_builtin(name, port, appid='00000000-0000-0000-0000-000000000000'):
+def ssl_bind_builtin(name, port, appid='00000000-0000-0000-0000-000000000000', subjectPrefix='CN=WMSvc-'):
     '''
     Bind to ipport the builtin SSL certificate that comes with IIS
+    Subject prefix is availible by runnig power-shell: "Get-ChildItem cert:\localmachine\my"
 
     Example::
 
@@ -188,11 +253,12 @@ def ssl_bind_builtin(name, port, appid='00000000-0000-0000-0000-000000000000'):
           iis.ssl_bind_builtin:
             - name: 0.0.0.0
             - port: 443
+            - subjectPrefix: 'CN=WMSvc-'
     '''
 
     thumbprint = None
     for c in __salt__['iis.cert_list'](r'LOCAL_MACHINE\My', ['Thumbprint', 'Subject']):
-        if c['Subject'].startswith('CN=WMSvc-'):
+        if c['Subject'].startswith(subjectPrefix):
             thumbprint = c['Thumbprint']
             break
 
@@ -250,6 +316,7 @@ def ssl_bind(name, appid, address, port):
         ret['changes']['removed'] = 'replace current thumbprint={0}, appid={1}'.format(
             current_config['Certificate Hash'], current_config['Application ID']
         )
+
     ret['result'] = __salt__['iis.bind_ssl'](name, appid, address, port)
     if not ret['result']:
         ret['comment'] = 'failed to bind ssl certificate'
@@ -264,14 +331,32 @@ def apppool_present(name, settings=None):
 
     Example::
 
-        MyApp:
-          iis.apppool_present:
-            - settings:
-                managedRuntimeVersion: 4.0
-                processModel.loadUserProfile: True
+        MyAppPool:
+            iis.apppool_present:
+                  - name: "my_pool"
+                  - settings:
+                      managedRuntimeVersion: "v2.0"
+                      autoStart: "false"
+                      queueLength: 750
     '''
 
     return _resource_present('apppool', name, settings)
+
+
+def apppool_action(name, action):
+    '''
+    Start / Stop / Delete an application pool
+
+    Example::
+
+        MyApp_Stop:
+            iis.apppool_action:
+                  - name: my_pool
+                  - action: stop
+
+    '''
+
+    return _resource_action('apppool', name, action)
 
 
 def site_present(name, settings=None):
@@ -281,12 +366,34 @@ def site_present(name, settings=None):
     Example::
 
         MySite:
-          iis.site_present:
-            - settings:
-                bindings: https/*:443:
+            iis.site_present:
+                  - name: "mysite.com"
+                  - settings:
+                      bindings: "http/*:80:mysite.com,https/*:443:mysite.com"
+                      serverAutoStart: "true"
+                      physicalPath: '%SystemDrive%\inetpub\wwwroot\mysite.com'
+                      logFile.directory: '%SystemDrive%\inetpub\Log'
+                      ftpServer.serverAutoStart: false
+
     '''
 
     return _resource_present('site', name, settings)
+
+
+def site_action(name, action):
+    '''
+    Start / Stop / Restart / Delete an site
+
+    Example::
+
+        MyApp_Stop:
+            iis.site_action:
+                  - name: my_site
+                  - action: stop
+
+    '''
+
+    return _resource_action('site', name, action)
 
 
 def app_present(name, site, settings=None):
@@ -298,13 +405,14 @@ def app_present(name, site, settings=None):
         /myapp:
           iis.app_present:
             - site: mysite
+            - name: myapp
     '''
 
     if settings is None:
         settings = {}
-    settings['path'] = name
+        settings['path'] = "/"
 
-    return _resource_present('app', site, settings, site+name)
+    return _resource_present('app', site, settings, site+"/")
 
 
 def vdir_present(name, app, settings=None):
@@ -333,7 +441,49 @@ def vdir_present(name, app, settings=None):
 
     if name == '/' and '/' not in app[0:-1]:
         return _resource_present('vdir', app, settings, app)
-        
+
     alt_name = app.rstrip('/') + name
     return _resource_present('vdir', app, settings, alt_name)
 
+
+def backup_present(name, action, overwrite=True, iisBackupPath="C:\\Windows\\System32\\inetsrv\\backup"):
+    '''
+    Add / Delete / Restore a new IIS cconfigurations backup .
+
+    Example::
+
+        /myBackup:
+          iis.backup_present:
+            - name: MyNewBackup
+            - action: add
+            - overwrite: False
+    '''
+
+    ret = {
+        'name': name,
+        'result': True,
+        'changes': {},
+        'comment': ''
+    }
+
+
+    if overwrite is True and action is not "delete":
+        cmd_ret = __salt__['cmd.run'](
+            "$strFolderName=\"{0}\{1}\" ; If (Test-Path $strFolderName ) {2} Remove-Item -Recurse -Force $strFolderName {3}".format(iisBackupPath,name,"{","}"),
+            shell='powershell')
+
+
+    try:
+        backupExist = name in __salt__['iis.backup_list'.format(resource)]()
+    except:
+        backupExist = False
+
+
+    if not __salt__['iis.backup_action'](name, action) and backupExist:
+        ret['comment'] = 'Could not {0} a backup "{1}", check if configured to be overwriten.'.format(action, name)
+        ret['result'] = False
+        return ret
+
+    ret['comment'] = 'Backup {0} process of "{1}" has been finished successfully'.format(action, name)
+    ret['changes'][name] = action
+    return ret
