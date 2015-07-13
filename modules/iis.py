@@ -76,7 +76,6 @@ def _resource_add(resource, name, settings=None, arg_name_override=None):
         return False
     return True
 
-
 def _resource_get_config(resource, name, settings):
     '''
     Returns the configuration of the Resource
@@ -99,6 +98,26 @@ def _resource_set(resource, name, settings):
 
     settings_params = _serialize_settings(settings)
     cmd_ret = __salt__['cmd.run_all']([appcmd, 'set', resource.upper(), name] + settings_params)
+    if cmd_ret['retcode'] != 0:
+        log.error('failed configuring {0}'.format(resource))
+        log.debug(cmd_ret['stderr'])
+        return False
+    return True
+
+
+
+def _resource_action(resource, name, action, ignoreNonExist=False):
+    '''
+    Generic fanction to Start / Stop / Delete  the resource
+    '''
+
+    if  name not in _resource_list(resource) and ignoreNonExist == False:
+        log.error('not existing {0} {1}'.format(resource,name))
+        return False
+
+
+
+    cmd_ret = __salt__['cmd.run_all']([appcmd, action.upper(), resource.upper(), name])
     if cmd_ret['retcode'] != 0:
         log.error('failed configuring {0}'.format(resource))
         log.debug(cmd_ret['stderr'])
@@ -169,7 +188,7 @@ def cert_import_pfx(pfx, password):
     Import a PFX certificate bundle via CertUtil
     '''
 
-    cmd_ret = __salt__['cmd.run_all']('certutil -f -p "{0}" -importpfx "{1}"'.format(
+    cmd_ret = __salt__['cmd.run_all']('certutil -f -p {0} -importpfx {1}'.format(
         password, pfx
     ))
 
@@ -191,9 +210,10 @@ def cert_list(reg=r'LOCAL_MACHINE\My', fields=None):
         fields = ['Subject', 'Thumbprint', 'SerialNumber']
 
     out = __salt__['cmd.run'](
-        'Get-ChildItem Cert:{0} | format-list {1}'.format(reg, ','.join(fields)),
+        'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(reg, ','.join(fields),"{$_ -ne \"\"}", "{", "}"),
         shell='powershell'
     ).splitlines()
+
 
     current = {}
     for line in out:
@@ -217,12 +237,11 @@ def get_data_from_pfx(pfx, password):
 
     ret = {}
 
-    cmd_ret = __salt__['cmd.run_all']('certutil -p "{0}" -dump "{1}"'.format(
-        password, pfx
-    ))
+    cmd_ret = __salt__['cmd.run_all']('certutil -p {0} -dump {1}'.format(password, pfx))
+
 
     if cmd_ret['retcode'] != 0:
-        log.error('could get data from pfx bundle "{0}"'.format(pfx))
+        log.error('could get data from pfx bundle "{0}", password: "{1}"'.format(pfx,password))
         return False
 
     match = re.search('^Cert Hash\(sha1\): (.*)', cmd_ret['stdout'], re.MULTILINE)
@@ -353,6 +372,14 @@ def apppool_set(name, settings):
     return _resource_set('APPPOOL', name, settings)
 
 
+def apppool_action(name, action):
+    '''
+    start / stop / delete the application pool
+    '''
+
+    return _resource_action('APPPOOL', name, action)
+
+
 #############
 ### Sites ###
 #############
@@ -390,6 +417,15 @@ def site_set(name, settings):
     '''
 
     return _resource_set('SITE', name, settings)
+
+
+def site_action(name, action):
+    '''
+    start / stop / delete the site
+    '''
+
+    return _resource_action('SITE', name, action)
+
 
 
 ####################
@@ -431,10 +467,19 @@ def app_set(name, settings):
 
     return _resource_set('APP', name, settings)
 
+def app_action(name, action):
+    '''
+    start / stop / delete the application
+    '''
+
+    return _resource_action('APP', name, action)
+
+
 
 ############
 ### vDir ###
 ############
+
 
 def vdir_list():
     '''
@@ -470,3 +515,24 @@ def vdir_set(name, settings):
 
     return _resource_set('VDIR', name, settings)
 
+
+
+####################
+### IIS configuration Backups ###
+####################
+
+
+def backup_action(name, action):
+    '''
+    Add / Restore / delete IIS cconfigurations backup .
+
+    '''
+
+    return _resource_action("BACKUP", name, action, True)
+
+def backup_list():
+    '''
+    List the name of all the backup configurations
+    '''
+
+    return _resource_list('BACKUP')
