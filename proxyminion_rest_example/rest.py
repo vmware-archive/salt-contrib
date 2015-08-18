@@ -128,7 +128,7 @@ def index():
     '''
     Return an id for the salt-master
     '''
-    return 'rest_sample-localhost'
+    return { 'id': 'rest_sample-localhost' }
 
 
 @route('/')
