@@ -56,6 +56,9 @@
                   {{!packages_html}}
               </div>
           </div>
+
+        {{!form}}
+
       </div>
     </div>
 
