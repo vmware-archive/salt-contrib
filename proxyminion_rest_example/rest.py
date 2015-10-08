@@ -9,13 +9,14 @@
 
 import argparse
 import os
-from bottle import route, run, template, static_file
+from bottle import route, run, template, static_file, request
 
 PACKAGES = {'coreutils': '1.05'}
 SERVICES = {'apache': 'stopped', 'postgresql': 'stopped',
             'redbull': 'running'}
 INFO = {'os': 'RestExampleOS', 'kernel': '0.0000001',
         'housecat': 'Are you kidding?'}
+outage_mode = {'state': False}
 
 
 @route('/package/list')
@@ -131,6 +132,27 @@ def index():
     return { 'id': 'rest_sample-localhost' }
 
 
+def _get_form():
+    '''
+    Get the form depending on what state we are in
+    '''
+    form = None
+
+    if outage_mode['state']:
+        form = template('fix_outage')
+    else:
+        form = template('outage')
+
+    return form
+
+
+def _set_outage_mode(outage):
+    if outage:
+        outage_mode['state'] = True
+    else:
+        outage_mode['state'] = False
+
+
 @route('/')
 def index():
     '''
@@ -147,8 +169,22 @@ def index():
                                                                   PACKAGES[s])
     packages_html += '</table>'
 
+    # Always call before _get_form
+    _set_outage_mode(request.query.outage)
+
+    form = _get_form()
+
     return template('monitor',  packages_html=packages_html,
-                    services_html=services_html)
+                    services_html=services_html,
+                    form=form)
+
+
+@route('/beacon')
+def index():
+    '''
+    Return outage status
+    '''
+    return {'outage': outage_mode['state']}
 
 
 @route('/<filename:path>')
