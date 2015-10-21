@@ -4,7 +4,7 @@ cmdshell.py
 Simple CLI to test the Salt Proxy Minion.
 
 To test, setup an account on your machine, copy proxycmdshell to /usr/local/bin,
-add it to /etc/shells, and set proxycmdshell as the test account's user.
+add it to /etc/shells, and set proxycmdshell as the test account's shell.
 
 If you don't want to mess with your accounts you can setup an LXC container with
 ssh installed and enabled, and add the test account there.
