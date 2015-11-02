@@ -3,6 +3,7 @@
 
 import httplib
 import json
+import re
 
 def gce_ext_ip():
     """
@@ -30,6 +31,18 @@ def gce_tags():
     tags = json.loads(rsp.read())
     return {'tags': tags, 'roles': tags}
 
+def gce_zone():
+    """
+    Fetch the instance's zone.
+    """
+    h = httplib.HTTPConnection('metadata')
+    h.request('GET',
+        'computeMetadata/v1/instance/zone', ' ', {'X-Google-Metadata-Request': 'True'})
+    rsp = h.getresponse()
+    zone = re.search('/([^/]+)$', rsp.read()).groups()[0]
+    return {'zone': zone}
+
 if __name__ == '__main__':
     print gce_ext_ip()
     print gce_tags()
+    print gce_zone()
