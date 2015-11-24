@@ -211,7 +211,8 @@ def cert_list(reg=r'LOCAL_MACHINE\My', fields=None):
 
     out = __salt__['cmd.run'](
         'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(reg, ','.join(fields),"{$_ -ne \"\"}", "{", "}"),
-        shell='powershell'
+        shell='powershell',
+        python_shell=True
     ).splitlines()
 
 
