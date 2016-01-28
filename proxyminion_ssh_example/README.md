@@ -1,5 +1,5 @@
-cmdshell.py
-===========
+proxycmdshell
+=============
 
 Simple CLI to test the Salt Proxy Minion.
 
