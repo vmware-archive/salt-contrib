@@ -34,11 +34,12 @@ def render(jp_data, saltenv='base', sls='', **kws):
     if not isinstance(jp_data, string_types):
         jp_data = jp_data.read()
 
+    container = False
     if jp_data.startswith('#!'):
-        container = jp_data[:jp_data.find('\n')].split()[1]
+        args = jp_data[:jp_data.find('\n')].split()
+        if len(args) >= 2:
+            container = args[1]
         jp_data = jp_data[(jp_data.find('\n') + 1):]
-    else:
-        container = False
     if not jp_data.strip():
         return {}
     properties = jp()
