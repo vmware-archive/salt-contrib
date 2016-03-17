@@ -84,7 +84,7 @@ def index():
     '''
     List services
     '''
-    return SERVICES
+    return app.SERVICES
 
 
 @app.route('/service/start/<name>')
@@ -92,8 +92,8 @@ def index(name):
     '''
     Start a service
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'running'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'running'
         return {'comment': 'running', 'ret': True}
     else:
         return {'comment': 'not present', 'ret': False}
@@ -104,8 +104,8 @@ def index(name):
     '''
     Stop a service
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'stopped'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'stopped'
         return {'comment': 'stopped', 'ret': True}
     else:
         return {'comment': 'not present', 'ret': False}
@@ -117,7 +117,7 @@ def index(name):
     Is service running?
     '''
     try:
-        return {'comment': SERVICES[name], 'ret': True}
+        return {'comment': app.SERVICES[name], 'ret': True}
     except KeyError:
         return {'comment': 'not present', 'ret': False}
 
@@ -127,8 +127,8 @@ def index(name):
     '''
     Restart a "service"
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'running'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'running'
         return {'comment': 'restarted', 'ret': True}
     else:
         return {'comment': 'restart failed: not present', 'ret': False}
