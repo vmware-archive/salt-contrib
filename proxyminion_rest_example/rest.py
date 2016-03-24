@@ -200,11 +200,11 @@ def main():
     # parse command line options
     parser = argparse.ArgumentParser(description=
                                      'Start a simple REST web service on '
-                                     'localhost:8080 to respond to the rest_sample '
+                                     'localhost:8000 to respond to the rest_sample '
                                      'proxy minion')
     parser.add_argument('--address', default='127.0.0.1',
                         help='Start the REST server on this address')
-    parser.add_argument('--port', default=8080, type=int,
+    parser.add_argument('--port', default=8000, type=int,
                         help='Start the REST server on this port')
     args = parser.parse_args()
 
