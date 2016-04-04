@@ -54,7 +54,12 @@ def _get_ec2_hostinfo(path=""):
                         data = _snake_caseify_dict(data)
                     d[line] = data
                 except ValueError:
-                    d[line] = call_response_data
+                    if "\n" in call_response_data:
+                        d[line] = []
+                        for dline in call_response_data.split("\n"):
+                            d[line].append(dline)
+                    else:
+                        d[line] = call_response_data
             else:
                 return line
         else:
