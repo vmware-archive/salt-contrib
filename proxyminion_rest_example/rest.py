@@ -9,106 +9,132 @@
 
 import argparse
 import os
-from bottle import route, run, template, static_file, request
+from bottle import route, run, template, static_file, request, Bottle, redirect
 
-PACKAGES = {'coreutils': '1.05'}
-SERVICES = {'apache': 'stopped', 'postgresql': 'stopped',
+app = Bottle()
+
+app.PACKAGES = {'coreutils': '1.05'}
+app.UPGRADE_PACKAGES = {}
+
+app.SERVICES = {'apache': 'stopped', 'postgresql': 'stopped',
             'redbull': 'running'}
-INFO = {'os': 'RestExampleOS', 'kernel': '0.0000001',
+app.INFO = {'os': 'RestExampleOS', 'kernel': '0.0000001',
         'housecat': 'Are you kidding?'}
-outage_mode = {'state': False}
+app.outage_mode = {'state': False}
 
 
-@route('/package/list')
+
+@app.route('/package/uptodate')
 def index():
-    return PACKAGES
+    if app.UPGRADE_PACKAGES != {}:
+        return app.UPGRADE_PACKAGES
+
+    for k, v in app.PACKAGES.iteritems():
+        app.UPGRADE_PACKAGES[k] = str(float(v) + 1)
+
+    return app.UPGRADE_PACKAGES
 
 
-@route('/package/install/<name>/<version>')
+@app.route('/package/upgrade')
+def index():
+    if app.UPGRADE_PACKAGES == {}:
+        return {}
+    else:
+        app.PACKAGES = app.UPGRADE_PACKAGES
+        app.UPGRADE_PACKAGES = {}
+        return app.PACKAGES
+
+
+@app.route('/package/list')
+def index():
+    return app.PACKAGES
+
+
+@app.route('/package/install/<name>/<version>')
 def index(name, version):
     '''
     Install a package endpoint
     '''
-    PACKAGES[name] = version
+    app.PACKAGES[name] = version
     return {'comment': 'installed', 'ret': True}
 
 
-@route('/package/remove/<name>')
+@app.route('/package/remove/<name>')
 def index(name):
     '''
     Remove a package endpoint
     '''
-    PACKAGES.pop(name, None)
+    app.PACKAGES.pop(name, None)
     return {'comment': 'removed', 'ret': True}
 
 
-@route('/package/status/<name>')
+@app.route('/package/status/<name>')
 def index(name):
     '''
     Is packaged installed?
     '''
     try:
-        return PACKAGES[name]
+        return app.PACKAGES[name]
     except KeyError:
         return {'comment': 'not present', 'ret': False}
 
 
-@route('/service/list')
+@app.route('/service/list')
 def index():
     '''
     List services
     '''
-    return SERVICES
+    return app.SERVICES
 
 
-@route('/service/start/<name>')
+@app.route('/service/start/<name>')
 def index(name):
     '''
     Start a service
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'running'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'running'
         return {'comment': 'running', 'ret': True}
     else:
         return {'comment': 'not present', 'ret': False}
 
 
-@route('/service/stop/<name>')
+@app.route('/service/stop/<name>')
 def index(name):
     '''
     Stop a service
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'stopped'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'stopped'
         return {'comment': 'stopped', 'ret': True}
     else:
         return {'comment': 'not present', 'ret': False}
 
 
-@route('/service/status/<name>')
+@app.route('/service/status/<name>')
 def index(name):
     '''
     Is service running?
     '''
     try:
-        return {'comment': SERVICES[name], 'ret': True}
+        return {'comment': app.SERVICES[name], 'ret': True}
     except KeyError:
         return {'comment': 'not present', 'ret': False}
 
 
-@route('/service/restart/<name>')
+@app.route('/service/restart/<name>')
 def index(name):
     '''
     Restart a "service"
     '''
-    if name in SERVICES:
-        SERVICES[name] = 'running'
+    if name in app.SERVICES:
+        app.SERVICES[name] = 'running'
         return {'comment': 'restarted', 'ret': True}
     else:
         return {'comment': 'restart failed: not present', 'ret': False}
 
 
-@route('/ping')
+@app.route('/ping')
 def index():
     '''
     Are you there?
@@ -116,7 +142,7 @@ def index():
     return {'comment': 'pong', 'ret': True}
 
 
-@route('/info')
+@app.route('/info')
 def index():
     '''
     Return grains
@@ -124,7 +150,7 @@ def index():
     return INFO
 
 
-@route('/id')
+@app.route('/id')
 def index():
     '''
     Return an id for the salt-master
@@ -138,7 +164,7 @@ def _get_form():
     '''
     form = None
 
-    if outage_mode['state']:
+    if app.outage_mode['state']:
         form = template('fix_outage')
     else:
         form = template('outage')
@@ -148,29 +174,44 @@ def _get_form():
 
 def _set_outage_mode(outage):
     if outage:
-        outage_mode['state'] = True
+        app.outage_mode['state'] = True
     else:
-        outage_mode['state'] = False
+        app.outage_mode['state'] = False
 
+def _get_html():
 
-@route('/')
+    services_html = '<table class="table table-bordered">'
+    for s in app.SERVICES:
+        services_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
+                                                                  app.SERVICES[s])
+    services_html += '</table>'
+    packages_html = '<table class="table table-bordered">'
+    for s in app.PACKAGES:
+        packages_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
+                                                                  app.PACKAGES[s])
+    packages_html += '</table>'
+
+    return (services_html, packages_html)
+
+@app.route('/')
 def index():
     '''
     Show the status of the server
     '''
-    services_html = '<table class="table table-bordered">'
-    for s in SERVICES:
-        services_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
-                                                                  SERVICES[s])
-    services_html += '</table>'
-    packages_html = '<table class="table table-bordered">'
-    for s in PACKAGES:
-        packages_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
-                                                                  PACKAGES[s])
-    packages_html += '</table>'
+    services_html, packages_html = _get_html()
+    # services_html = '<table class="table table-bordered">'
+    # for s in app.SERVICES:
+    #     services_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
+    #                                                               app.SERVICES[s])
+    # services_html += '</table>'
+    # packages_html = '<table class="table table-bordered">'
+    # for s in app.PACKAGES:
+    #     packages_html += '<tr><td>{}</td><td>{}</td></tr>'.format(s,
+    #                                                               app.PACKAGES[s])
+    # packages_html += '</table>'
 
     # Always call before _get_form
-    _set_outage_mode(request.query.outage)
+    # _set_outage_mode(request.query.outage)
 
     form = _get_form()
 
@@ -179,15 +220,30 @@ def index():
                     form=form)
 
 
-@route('/beacon')
+@app.post('/outage')
+def outage():
+    app.outage_mode['state'] = not app.outage_mode['state']
+    redirect('/')
+
+
+@app.route('/beacon')
 def index():
     '''
     Return outage status
     '''
-    return {'outage': outage_mode['state']}
+    return {'outage': app.outage_mode['state']}
 
 
-@route('/<filename:path>')
+@app.route('/fix_outage')
+def index():
+    '''
+    "Fix" the outage
+    '''
+    app.outage_mode['state'] = False
+    return {'outage': app.outage_mode['state']}
+
+
+@app.route('/<filename:path>')
 def send_static(filename):
     '''
     Serve static files out of the same directory that
@@ -209,7 +265,7 @@ def main():
     args = parser.parse_args()
 
     # Start the Bottle server
-    run(host=args.address, port=args.port)
+    app.run(host=args.address, port=args.port)
 
 
 if __name__ == '__main__':
