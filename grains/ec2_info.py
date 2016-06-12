@@ -89,7 +89,10 @@ def _get_ec2_additional():
     # catching that here would rule out AWS resource
     if response.status == 200:
         response_data = response.read()
-        data = json.loads(response_data)
+        try:
+            data = json.loads(response_data)
+        except ValueError as e:
+            data = {}
         return _snake_caseify_dict(data)
     else:
        raise httplib.BadStatusLine("Could not read EC2 metadata")
