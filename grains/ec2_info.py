@@ -15,6 +15,16 @@ import json
 LOG = logging.getLogger(__name__)
 
 
+def _on_ec2()
+    """
+    Call AWS via httplib. Require correct path.
+    Host: 169.254.169.254
+
+    """
+    conn = httplib.HTTPConnection("169.254.169.254", 80, timeout=0.1)
+    return bool(conn)
+
+
 def _call_aws(url):
     """
     Call AWS via httplib. Require correct path.
@@ -169,5 +179,9 @@ def ec2_instance_id():
 
 
 if __name__ == "__main__":
-    print ec2_info()
-    print ec2_instance_id()
+    if _on_ec2():
+        print ec2_info()
+        print ec2_instance_id()
+    else:
+        log.info("Not an EC2 instance, skipping")
+        print ''
