@@ -149,8 +149,9 @@ def cert_list_permission(subject, reg=r'LOCAL_MACHINE\My'):
 
     ret = []
     cmd_ret = __salt__['cmd.run_all']('"{0}" -l -c "{1}" -s "{2}"'.format(
-        WinHttpCertCfg, reg, subject
-    ))
+        WinHttpCertCfg, reg, subject),
+        python_shell=True
+    )
 
     if cmd_ret['retcode'] != 0:
         log.error('could not find certificate for "{0}" in "{1}"'.format(subject, reg))
@@ -188,9 +189,10 @@ def cert_import_pfx(pfx, password):
     Import a PFX certificate bundle via CertUtil
     '''
 
-    cmd_ret = __salt__['cmd.run_all']('certutil -f -p {0} -importpfx {1}'.format(
-        password, pfx
-    ))
+    cmd_ret = __salt__['cmd.run_all']('certutil -f -p "{0}" -importpfx "{1}"'.format(
+        password, pfx),
+        python_shell=True
+    )
 
     if cmd_ret['retcode'] != 0:
         log.error('could not import pfx bundle "{0}"'.format(pfx))
@@ -237,8 +239,10 @@ def get_data_from_pfx(pfx, password):
 
     ret = {}
 
-    cmd_ret = __salt__['cmd.run_all']('certutil -p {0} -dump {1}'.format(password, pfx))
-
+    cmd_ret = __salt__['cmd.run_all']('certutil -p "{0}" -dump "{1}"'.format(
+        password, pfx),
+        python_shell=True
+    )
 
     if cmd_ret['retcode'] != 0:
         log.error('could get data from pfx bundle "{0}", password: "{1}"'.format(pfx,password))
