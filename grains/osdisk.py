@@ -1,5 +1,11 @@
-#!/usr/bin/env python
+# -*- coding:utf-8 -*-
 import os
+import platform
+
+try:
+    import wmi
+except ImportError:
+    pass
 
 def get_osdisk_stats():
     '''
@@ -9,11 +15,25 @@ def get_osdisk_stats():
     '''
     grains = {}
     grains['osdisk'] = {}
-    disk = os.statvfs("/")
-
-    capacity = disk.f_bsize * disk.f_blocks
-    available = disk.f_bsize * disk.f_bavail
-    used = disk.f_bsize * (disk.f_blocks - disk.f_bavail)
+    if platform.system() == 'Windows':
+        WMI = wmi.WMI()
+        for disk in WMI.Win32_LogicalDisk():
+            if disk.Size:
+                available = int(disk.FreeSpace)
+                size = int(disk.Size)
+                used = size - available
+                caption = disk.Caption
+                grains['osdisk'][caption] = {'available': round(available/1.073741824e9), 'used': round(used/1.073741824e9)}
+    elif platform.system() == 'Linux':
+        with open('/proc/mounts', 'r') as f:
+            mounts = [line.split()[1] for line in f.readlines()]
+        for caption in mounts:
+            disk = os.statvfs(caption)
+            if disk.f_blocks:
+                available = disk.f_bsize * disk.f_bavail
+                used = disk.f_bsize * (disk.f_blocks - disk.f_bavail)
+                grains['osdisk'][caption] = {'available': int(round(available/1.073741824e9)), 'used': int(round(used/1.073741824e9))}
+    return grains
 
     # print information in bytes
     #print used, available, capacity
@@ -24,8 +44,3 @@ def get_osdisk_stats():
     # print information in Gigabytes
     #print used/1.073741824e9, available/1.073741824e9, capacity/1.073741824e9
 
-    grains['osdisk']['used'] = int(round(used/1.073741824e9))
-    grains['osdisk']['available'] = int(round(available/1.073741824e9))
-    grains['osdisk']['capacity'] = int(round(capacity/1.073741824e9))
-
-    return grains
