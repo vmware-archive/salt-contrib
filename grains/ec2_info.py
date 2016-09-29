@@ -100,7 +100,7 @@ def _get_ec2_additional():
             data = {}
         return _snake_caseify_dict(data)
     else:
-       raise httplib.BadStatusLine("Could not read EC2 metadata")
+        raise httplib.BadStatusLine("Could not read EC2 metadata")
 
 
 def _get_ec2_user_data():
@@ -115,12 +115,12 @@ def _get_ec2_user_data():
         response_data = response.read()
         try:
             return json.loads(response_data)
-        except ValueError as e:
+        except ValueError:
             return response_data
     elif response.status == 404:
         return ''
     else:
-       raise httplib.BadStatusLine("Could not read EC2 user-data")
+        raise httplib.BadStatusLine("Could not read EC2 user-data")
 
 
 def ec2_info():
@@ -131,7 +131,7 @@ def ec2_info():
         grains = _get_ec2_additional()
         grains.update({'user-data': _get_ec2_user_data()})
         grains.update(_get_ec2_hostinfo())
-        return {'ec2' : grains}
+        return {'ec2': grains}
 
     except httplib.BadStatusLine, error:
         LOG.debug(error)
@@ -157,7 +157,7 @@ def ec2_instance_id():
     """
     try:
         instance_id = _get_ec2_hostinfo("instance-id/").values()[0]
-        return {'instance-id' : instance_id}
+        return {'instance-id': instance_id}
 
     except httplib.BadStatusLine, error:
         LOG.debug(error)
