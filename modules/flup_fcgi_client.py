@@ -371,7 +371,9 @@ class FCGIApp(object):
             if not line:
                 break
 
-            # TODO: Better error handling
+            # Some PHP version have broken document type header
+            if ":" not in line:
+                continue
             header, value = line.split(':', 1)
             header = header.strip().lower()
             value = value.strip()
