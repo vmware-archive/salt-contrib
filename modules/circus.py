@@ -29,6 +29,11 @@ def version():
 
         salt '*' circus.version
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     cmd = '{0} --version'.format(__detect_os())
     out = __salt__['cmd.run'](cmd)
     return out.split(' ')[1]
@@ -42,6 +47,11 @@ def list(watcher=None):
 
         salt '*' circus.list
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     return _list(watcher)
 
 
@@ -59,6 +69,11 @@ def dstats():
 
         salt '*' circus.dstats
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     cmd = '{0} dstats'.format(__detect_os())
     return __salt__['cmd.run'](cmd)
 
@@ -71,6 +86,11 @@ def stats(watcher=None, pid=None):
 
         salt '*' circus.stats mywatcher
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     if watcher and pid:
         arguments = '{0} {1}'.format(watcher, pid)
     elif watcher and not pid:
@@ -106,6 +126,11 @@ def status(watcher=None):
 
         salt '*' circus.status mywatcher
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     if watcher:
         arguments = ' status {0}'.format(watcher)
     else:
@@ -124,6 +149,11 @@ def signal(signal, opts=None):
 
         salt '*' circus.signal restart myworker
     """
+    salt.utils.warn_until(
+        'Oxygen',
+        'circus module is deprecated and is going to be replaced '
+        'with circusctl module.'
+    )
     valid_signals = ('start', 'stop', 'restart', 'reload', 'quit')
 
     if signal not in valid_signals:
