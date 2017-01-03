@@ -98,7 +98,9 @@ def _get_ec2_additional():
             data = json.loads(response_data)
         except ValueError as e:
             data = {}
-        return _snake_caseify_dict(data)
+        data = _snake_caseify_dict(data)
+        data.update({'instance_identity': {'document': response_data}})
+        return data
     else:
         raise httplib.BadStatusLine("Could not read EC2 metadata")
 
@@ -123,6 +125,24 @@ def _get_ec2_user_data():
         raise httplib.BadStatusLine("Could not read EC2 user-data")
 
 
+def _get_instance_identity():
+    """
+    Fill in the details from the instance identity info.
+
+    """
+    result = {}
+    response = _call_aws('/latest/dynamic/instance-identity/')
+    data = response.read()
+    for i in data.split('\n'):
+        if not i or i == 'document':  # document saved in _get_ec2_additional
+            continue
+
+        response = _call_aws('/latest/dynamic/instance-identity/%s' % i)
+        result[i] = response.read()
+
+    return result
+
+
 def ec2_info():
     """
     Collect all ec2 grains into the 'ec2' key.
@@ -131,6 +151,7 @@ def ec2_info():
         grains = _get_ec2_additional()
         grains.update({'user-data': _get_ec2_user_data()})
         grains.update(_get_ec2_hostinfo())
+        grains['instance_identity'].update(_get_instance_identity())
         return {'ec2': grains}
 
     except httplib.BadStatusLine, error:
