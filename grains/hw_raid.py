@@ -92,10 +92,13 @@ def raid_info():
 
             # for detected cards append kernel module info
             if pci_data:
-                pci_data.update(_kmod_info(pci_data['driver']))
+                try:
+                    pci_data.update(_kmod_info(pci_data['driver']))
+                    return {'raidcontroller': pci_data}
 
-                return {'raidcontroller': pci_data}
-
+                except (KeyError):
+                    log.debug('No RAID driver found')
+                    return {'raidcontroller': pci_data}
             else:
                 log.debug('No RAID controllers detected')
 
