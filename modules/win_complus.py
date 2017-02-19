@@ -9,6 +9,7 @@ Microsoft Component Service management via powershell module
 
 # Import python libs
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import logging
 import os
@@ -49,9 +50,16 @@ def __virtual__():
     '''
     Load only on Windows
     '''
-    if salt.utils.is_windows():
-        return __virtualname__
-    return (False, 'Module win_complus: module only works on Windows systems')
+    if not salt.utils.is_windows():
+        return (False, 'Module win_complus: module only works on Windows systems')
+    '''
+    Check if PowerShell is installed
+    '''
+    powershell_info = __salt__['cmd.shell_info']('powershell')
+    if not powershell_info['installed']:
+        return False, 'PowerShell not available'
+
+    return __virtualname__
 
 def _runps(func, as_json=False):
     '''
