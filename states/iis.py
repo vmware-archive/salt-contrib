@@ -13,6 +13,9 @@ Note:
 import logging
 import re
 
+# Import salt libs
+import salt.utils
+
 log = logging.getLogger(__name__)
 
 
@@ -20,7 +23,8 @@ def __virtual__():
     '''
     Load only on minions with the iis module
     '''
-    if 'iis.cert_list_permission' in __salt__:
+    if salt.utils.is_windows():
+    #if 'iis.cert_list_permission' in __salt__:
         return 'iis'
     return False
 
