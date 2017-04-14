@@ -19,7 +19,7 @@ app.UPGRADE_PACKAGES = {}
 app.SERVICES = {'apache': 'stopped', 'postgresql': 'stopped',
             'redbull': 'running'}
 app.INFO = {'os': 'RestExampleOS', 'kernel': '0.0000001',
-        'housecat': 'Are you kidding?'}
+        'housecat': 'Are you kidding?', 'osversion': '0.01'}
 app.outage_mode = {'state': False}
 
 
@@ -147,7 +147,7 @@ def index():
     '''
     Return grains
     '''
-    return INFO
+    return app.INFO
 
 
 @app.route('/id')
