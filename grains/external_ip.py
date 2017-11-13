@@ -19,7 +19,10 @@
 # Import Python Libs
 import contextlib
 import socket
-import urllib2
+try:
+    import urllib.request as urllib2
+except ImportError:
+    import urllib2
 
 # Import salt libs
 from salt.utils.validate.net import ipv4_addr as _ipv4_addr
