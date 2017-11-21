@@ -122,7 +122,7 @@ def ec2_tags():
         tags = conn.get_all_tags(filters={'resource-type': 'instance',
                                           'resource-id': instance_id})
         for tag in tags:
-            ec2_tags[tag.name] = tag.value
+            ec2_tags[tag.name.replace(':','-')] = tag.value
     except Exception, e:
         log.error("Couldn't retrieve instance tags: %s", e)
         return None
