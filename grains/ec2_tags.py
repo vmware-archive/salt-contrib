@@ -113,7 +113,7 @@ def ec2_tags():
             aws_access_key_id=credentials['access_key'],
             aws_secret_access_key=credentials['secret_key'],
         )
-    except Exception, e:
+    except Exception as e:
         log.error("Could not get AWS connection: %s", e)
         return None
 
@@ -123,7 +123,7 @@ def ec2_tags():
                                           'resource-id': instance_id})
         for tag in tags:
             ec2_tags[tag.name] = tag.value
-    except Exception, e:
+    except Exception as e:
         log.error("Couldn't retrieve instance tags: %s", e)
         return None
 
@@ -137,4 +137,4 @@ def ec2_tags():
 
 
 if __name__ == '__main__':
-    print ec2_tags()
+    print(ec2_tags())
