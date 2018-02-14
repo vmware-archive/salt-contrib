@@ -195,5 +195,5 @@ def ec2_instance_id():
 
 
 if __name__ == "__main__":
-    print(ec2_info())
+    print(json.dumps(ec2_info()))
     print(ec2_instance_id())
