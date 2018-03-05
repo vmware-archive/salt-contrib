@@ -80,7 +80,7 @@ def raid_info():
             hwinfo = subprocess.Popen('lspci -m'.split(), stdout=subprocess.PIPE)
 
             for line in hwinfo.stdout.readlines():
-                if 'RAID' in line:
+                if re.search('RAID|Serial Attached SCSI', line):
                     # sanitize the output and load it into a list
                     raw_fields = line.strip().split('"')
                     fields = [field for field in raw_fields if not (field == ' ' or field == '')]
