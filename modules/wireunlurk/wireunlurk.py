@@ -24,7 +24,7 @@ Usage:
               should be rebooted after disinfection.
 
     From Salt:
-        
+
         Drop this file in your master's /srv/salt/_modules directory
         or equivalent and execute a `salt '*' modules.sync_modules`
 
@@ -56,9 +56,9 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 '''
 
-__copyright__    = 'Copyright (c) 2014, SaltStack, Inc and Palo Alto Networks, Inc.'
-__author__       = 'C. R. Oldham, wxzjohn, Claud Xiao'
-__version__      = '1.1'
+__copyright__ = 'Copyright (c) 2014, SaltStack, Inc and Palo Alto Networks, Inc.'
+__author__ = 'C. R. Oldham, wxzjohn, Claud Xiao'
+__version__ = '1.1'
 
 
 import os
@@ -142,7 +142,7 @@ def _is_file_hidden(f):
 
     else:
         try:
-            proc = subprocess.Popen("ls -ldO '%s' | awk '{print $5}'" % f, shell=True, 
+            proc = subprocess.Popen("ls -ldO '%s' | awk '{print $5}'" % f, shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT)
             output = proc.stdout.read()
@@ -299,7 +299,6 @@ def scan(clean=False):
                     [!] http://researchcenter.paloaltonetworks.com/2014/11/wirelurker-new-era-os-x-ios-malware/
 
     '''
-    
 
     global SALT_RESULT
     output = 'wireunlurk Detector and cleaner (version %s)\n' % __version__
@@ -374,7 +373,7 @@ def scan(clean=False):
         else:
             log.debug('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             log.debug(SALT_RESULT)
-            return { 'return':SALT_RESULT, 'retcode':0, 'success':True }
+            return {'return': SALT_RESULT, 'retcode': 0, 'success': True}
     else:
         exit_code = 0
         if clean:
@@ -413,7 +412,7 @@ def scan(clean=False):
             return exit_code
         else:
             log.debug(SALT_RESULT)
-            return { 'return':SALT_RESULT, 'retcode':exit_code, 'success':exit_code == 0 }
+            return {'return': SALT_RESULT, 'retcode': exit_code, 'success': exit_code == 0}
 
 
 def usage():

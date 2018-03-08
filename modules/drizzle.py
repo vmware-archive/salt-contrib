@@ -152,7 +152,7 @@ def schemas():
 
     # Retriving the list of schemas
     cursor.execute('SHOW SCHEMAS')
-    for iter, count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
+    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
         schema = cursor.fetchone()
         ret_val[count] = schema[0]
 
@@ -251,7 +251,7 @@ def tables(schema):
     except MySQLdb.OperationalError:
         return 'Unknown Schema'
 
-    for iter,count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
+    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
         table = cursor.fetchone()
         ret_val[count] = table[0]
 
@@ -309,7 +309,7 @@ def plugins():
     # Fetching the plugins
     query = 'SELECT PLUGIN_NAME FROM DATA_DICTIONARY.PLUGINS WHERE IS_ACTIVE LIKE "YES"'
     cursor.execute(query)
-    for iter,count in zip(range(cursor.rowcount),range(1,cursor.rowcount+1)):
+    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
         table = cursor.fetchone()
         ret_val[count] = table[0]
 
@@ -317,10 +317,10 @@ def plugins():
     drizzle_db.close()
     return ret_val
 
-#TODO: Needs to add plugin_add() and plugin_remove() methods.
-#      However, only some of the plugins are dynamic at the moment.
-#      Remaining plugins need the server to be restarted.
-#      Hence, these methods can be hacked in the future!
+# TODO: Needs to add plugin_add() and plugin_remove() methods.
+#       However, only some of the plugins are dynamic at the moment.
+#       Remaining plugins need the server to be restarted.
+#       Hence, these methods can be hacked in the future!
 
 
 # Query functions
@@ -363,7 +363,7 @@ def query(schema, query):
             return 'Error in your SQL statement'
 
         # Checking whether the query is a SELECT
-        if re.search(r'\s*select',issue) is None:
+        if re.search(r'\s*select', issue) is None:
             result['Rows affected:'] = rows_affected
             ret_val[issue.lower()] = result
             result = {}

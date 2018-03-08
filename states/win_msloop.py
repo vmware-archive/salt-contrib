@@ -6,6 +6,7 @@ Description
     Manage Microsoft Loopback Adapters on Windows servers.
 '''
 
+
 def __virtual__():
     '''
     Load only on minions that have the win_msloop module.
@@ -13,6 +14,7 @@ def __virtual__():
     if 'win_msloop.get_interface_setting' in __salt__:
         return True
     return False
+
 
 def present(name):
     '''
@@ -40,6 +42,7 @@ def present(name):
         ret['result'] = __salt__['win_msloop.new_interface'](name)
     return ret
 
+
 def absent(name):
     '''
     Ensure the specified interface does not exist.
@@ -65,6 +68,7 @@ def absent(name):
                           'new': name}
         ret['result'] = __salt__['win_msloop.delete_interface'](name)
     return ret
+
 
 def interface_setting(name, interface, address_family, settings=None):
     '''
@@ -127,4 +131,3 @@ def interface_setting(name, interface, address_family, settings=None):
         ret['changes'] = ret_settings['changes']
         ret['result'] = True
     return ret
-

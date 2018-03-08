@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 ec2_tags.py - exports all EC2 tags in an 'ec2_tags' grain and splits 'Role' tag
               into a list on 'ec2_roles' grain.
@@ -45,14 +45,14 @@ Licensed under Apache License (https://raw.github.com/saltstack/salt/develop/LIC
 
 (Inspired by https://github.com/dginther/ec2-tags-salt-grain)
 """
+from __future__ import absolute_import
 
 import os
 import logging
-from distutils.version import StrictVersion
+from salt.utils.versions import StrictVersion
 
 import boto.ec2
 import boto.utils
-import salt.log
 
 log = logging.getLogger(__name__)
 
@@ -134,7 +134,3 @@ def ec2_tags():
         ret['ec2_roles'] = ec2_tags['Roles'].split(',')
 
     return ret
-
-
-if __name__ == '__main__':
-    print(ec2_tags())

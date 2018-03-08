@@ -2,9 +2,9 @@
 Management of bacula File Daemon Configuration
 ==============================================
 
-Configure Bacula file daemon to allow connections from a 
-particular Bacula director, set password credentials, as well as 
-the file daemon name and port that it runs on. Configure the 
+Configure Bacula file daemon to allow connections from a
+particular Bacula director, set password credentials, as well as
+the file daemon name and port that it runs on. Configure the
 messages that get returned to the director.
 
 .. code-block:: yaml
@@ -18,8 +18,9 @@ messages that get returned to the director.
         - fdport: 9102
         - messages: bacula-dir = all, !skipped, !restored
 '''
-    
-import re    
+
+from __future__ import absolute_import
+import re
 
 
 # Search Patterns
@@ -50,7 +51,7 @@ def _getParam(pname, config):
     if mp:
         return mp.group(pname)
     return None
-    
+
 
 def _getConfigParams(config):
     '''
@@ -77,7 +78,7 @@ def _getConfigParams(config):
         return None
 
     cparams['messages'] = _getParam('director', mconfig)
-    
+
     return cparams
 
 
@@ -95,7 +96,7 @@ def fdconfig(name,
         file daemon.
 
     dirpasswd
-        The password that the director must use to successfully 
+        The password that the director must use to successfully
         connect to the file daemon.
 
     fdname
@@ -107,20 +108,20 @@ def fdconfig(name,
     messages
         Define how and what messages to send to a director.
     '''
-    ret = {'name':name,
-           'changes':{},
-           'result':None,
-           'comment':'',}
+    ret = {'name': name,
+           'changes': {},
+           'result': None,
+           'comment': '', }
 
     config = ''
     with open(name) as f:
         config = f.read()
 
     if not config:
-        ret['comment'] = config #'Could not find {0}\n'.format(name)
+        ret['comment'] = config  # 'Could not find {0}\n'.format(name)
         ret['result'] = False
         return ret
-    
+
     cparams = _getConfigParams(config)
     if not cparams:
         ret['comment'] += 'Could not find configuration information.\n'
@@ -139,57 +140,57 @@ def fdconfig(name,
         changes['fdport'] = fdport
     if messages and messages != cparams['messages']:
         changes['messages'] = messages
-        
+
     if not changes:
         ret['comment'] += 'Bacula file daemon configuration is up to date.\n'
         ret['result'] = True
         return ret
 
     if __opts__['test']:
-        if changes.has_key('dirname'):
+        if 'dirname' in changes:
             ret['comment'] += \
                 'Director Name set to be changed to {0}\n'.format(dirname)
-        if changes.has_key('dirpasswd'):
+        if 'dirpasswd' in changes:
             ret['comment'] += \
                 'Director Password set to be changed to {0}\n'.format(dirpasswd)
-        if changes.has_key('fdname'):
+        if 'fdname' in changes:
             ret['comment'] += \
                 'File Daemon Name set to be changed to {0}\n'.format(fdname)
-        if changes.has_key('fdport'):
+        if 'fdport' in changes:
             ret['comment'] += \
                 'File Daemon Port set to be changed to {0}\n'.format(fdport)
-        if changes.has_key('messages'):
+        if 'messages' in changes:
             ret['comment'] += \
                 'Messages Director set to be changed to {0}\n'.format(messages)
         return ret
 
-    if changes.has_key('dirname') or changes.has_key('dirpasswd'):
+    if 'dirname' in changes or 'dirpasswd' in changes:
         dconfig = _getConfig(dirs, config)
-        if changes.has_key('dirname'):
-            dconfig = re.sub(r'Name = (.*)', 
+        if 'dirname' in changes:
+            dconfig = re.sub(r'Name = (.*)',
                              'Name = {0}'.format(dirname),
                              dconfig)
-        if changes.has_key('dirpasswd'):
+        if 'dirpasswd' in changes:
             dconfig = re.sub(r'Password = "(.*)"',
                              'Password = "{0}"'.format(dirpasswd),
                              dconfig)
         config = dirs.sub(dconfig, config)
         ret['changes']['Director'] = dconfig
 
-    if changes.has_key('fdname') or changes.has_key('fdport'):
+    if 'fdname' in changes or 'fdport' in changes:
         fdconfig = _getConfig(fd, config)
-        if changes.has_key('fdname'):
+        if 'fdname' in changes:
             fdconfig = re.sub(r'Name = (.*)',
                               'Name = {0}'.format(fdname),
                               fdconfig)
-        if changes.has_key('fdport'):
+        if 'fdport' in changes:
             fdconfig = re.sub(r'FDport = (.*)',
                               'FDport = {0}'.format(fdport),
                               fdconfig)
         config = fd.sub(fdconfig, config)
         ret['changes']['FileDaemon'] = fdconfig
 
-    if changes.has_key('messages'):
+    if 'messages' in changes:
         mconfig = _getConfig(msgs, config)
         mconfig = re.sub(r'director = (.*)',
                          'director = {0}'. format(messages),

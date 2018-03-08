@@ -49,10 +49,13 @@
 # won't be available, except for 'shell'.
 #
 #
+from __future__ import absolute_import
+
 __opts__ = {}
 
 import logging
 log = logging.getLogger(__name__)
+
 
 def __init__(opts):
     """Generate a state function for each ansible module found. """
@@ -69,8 +72,8 @@ def __init__(opts):
     try:
         ansmod = sys.modules[loaded_base_name+'.'+tag+'.'+modname]
     except KeyError:
-        log.warn("Make sure the %s salt module's been loaded correctly!" \
-                  % modname)
+        log.warn("Make sure the %s salt module's been loaded correctly!"
+                 % modname)
     else:
         # populate the state functions in this module
         mod = globals()
@@ -86,4 +89,3 @@ def shell(state, **kws):
     args = kws.pop('args', '')
     return command(state, args=args+'#USE_SHELL', **kws)
     # Note: command will be defined after module __init__
-

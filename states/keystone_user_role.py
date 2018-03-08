@@ -14,11 +14,13 @@ The keystone_user-role module is used to manage Keystone user-roles.
         - present
 '''
 
+
 def __virtual__():
     '''
     Only load if the keystone module is in __salt__
     '''
     return 'keystone_user_role' if 'keystone.user_role_add' in __salt__ else False
+
 
 def present(name, role, tenant):
     '''
@@ -29,26 +31,26 @@ def present(name, role, tenant):
     role
         The name of the role to apply to the user
     tenant
-        The name of the tenant 
+        The name of the tenant
     '''
     ret = {
             'name': name,
             'changes': {},
             'result': True,
             'comment': 'Role {0} is already presant on user {1}'.format(
-                    role, 
+                    role,
                     name,
                     )
             }
-    #Check if the user-role exists
+    # Check if the user-role exists
     for role_item in __salt__['keystone.user_role_list'](
-              user_name = name,
-              tenant_name = tenant,
+              user_name=name,
+              tenant_name=tenant,
               ):
         if role_item == role:
             return ret
 
-    #The tenant is not present, make it!
+    # The tenant is not present, make it!
     if __opts__['test']:
         ret['result'] = None
         ret['comment'] = (
@@ -56,9 +58,9 @@ def present(name, role, tenant):
                   ).format(name, role, tenant)
         return ret
     if __salt__['keystone.user_role_add'](
-              user_name = name,
-              role_name = role,
-              tenant_name = tenant,
+              user_name=name,
+              role_name=role,
+              tenant_name=tenant,
               ):
         ret['comment'] = 'User {0} now has role {1} on {2}'.format(
                   name, role, tenant)
@@ -69,6 +71,7 @@ def present(name, role, tenant):
         ret['result'] = False
 
     return ret
+
 
 def absent(name, role, tenant):
     '''
@@ -88,10 +91,10 @@ def absent(name, role, tenant):
             'comment': ''
             }
 
-    #Check if role exists and remove it
+    # Check if role exists and remove it
     for role_item in __salt__['keystone.user_role_list'](
-              user_name = name,
-              tenant_name = tenant
+              user_name=name,
+              tenant_name=tenant
               ):
         if role_item == role:
             if __opts__['test']:
@@ -100,19 +103,19 @@ def absent(name, role, tenant):
                           'User {0} role {1} is set to be removed from {2}'
                           ).format(name, role, tenant)
                 return ret
-                
+
             else:
                 __salt__['keystone.user_role_remove'](
-                      user_name = name,
-                      role_name = role,
-                      tenant_name = tenant,
+                      user_name=name,
+                      role_name=role,
+                      tenant_name=tenant,
                       )
                 ret['comment'] = (
                           'User {0} has had role {1} removed from {2}'
                           ).format(name, role, tenant)
                 ret['changes'][name] = 'Absent'
                 return ret
-    #fallback
+    # fallback
     ret['comment'] = (
             'User {0}\'s role {1} is not present on {2}, so it cannot be \
             removed').format(name, role, tenant)

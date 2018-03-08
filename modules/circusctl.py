@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 
 __virtualname__ = "circusctl"
 
+
 def __virtual__():
     '''
     Only load the module if circus is installed.

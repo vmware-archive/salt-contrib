@@ -53,8 +53,6 @@ def _resource_present(resource, name, settings, alt_name=None):
     except:
         need_2_add = True
 
-
-
     need_2_config = {}
     if not need_2_add:
         for key, value in __salt__['iis.{0}_get_config'.format(resource)](alt_name, settings.keys()).iteritems():
@@ -109,9 +107,9 @@ def _resource_action(resource, name, action):
 
     # For non existing resource, action can not be performed
     try:
-        current_state  = __salt__['iis.{0}_get_config'.format(resource)]( name, {"state"})['state'].lower()
+        current_state = __salt__['iis.{0}_get_config'.format(resource)](name, {"state"})['state'].lower()
     except:
-        if action == 'delete' :
+        if action == 'delete':
             ret['result'] = True
             ret['comment'] = '{2}: Not existing {0} "{1}"'.format(resource, name, action.capitalize())
         else:
@@ -119,12 +117,10 @@ def _resource_action(resource, name, action):
             ret['comment'] = '{2}: Could not retrive {0} configuration over "{1}"'.format(resource, name, action.capitalize())
         return ret
 
-
     if current_state.find(action) != -1:
         ret['comment'] = '{1} "{0}" has been already {2}ed before, no action'.format(name, resource, action)
         ret['changes'][action] = name
         return ret
-
 
     if need_2_act:
         if not __salt__['iis.{0}_action'.format(resource)](name, action):
@@ -139,7 +135,6 @@ def _resource_action(resource, name, action):
         ret['comment'] = 'Not supported action: "{0}"'.format(action)
         return ret
     return ret
-
 
 
 def pfx_present(name, password=None, reg='LOCAL_MACHINE\My', granted_users=None):
@@ -202,7 +197,7 @@ def pfx_present(name, password=None, reg='LOCAL_MACHINE\My', granted_users=None)
     for cert in __salt__['iis.cert_list'](reg, ['Thumbprint', 'Subject']):
         log.debug(cert)
         if pfx_data['Thumbprint'].upper() == cert['Thumbprint'].upper() and \
-                        pfx_data['Subject'].upper() == cert['Subject'].upper():
+                pfx_data['Subject'].upper() == cert['Subject'].upper():
             need_2_install = False
             granted = map(
                 lambda x: x.split('\\')[1].upper(),
@@ -466,18 +461,15 @@ def backup_present(name, action, overwrite=True, iisBackupPath="C:\\Windows\\Sys
         'comment': ''
     }
 
-
     if overwrite is True and action is not "delete":
         cmd_ret = __salt__['cmd.run'](
-            "$strFolderName=\"{0}\{1}\" ; If (Test-Path $strFolderName ) {2} Remove-Item -Recurse -Force $strFolderName {3}".format(iisBackupPath,name,"{","}"),
+            "$strFolderName=\"{0}\{1}\" ; If (Test-Path $strFolderName ) {2} Remove-Item -Recurse -Force $strFolderName {3}".format(iisBackupPath, name, "{", "}"),
             shell='powershell')
-
 
     try:
         backupExist = name in __salt__['iis.backup_list'.format(resource)]()
     except:
         backupExist = False
-
 
     if not __salt__['iis.backup_action'](name, action) and backupExist:
         ret['comment'] = 'Could not {0} a backup "{1}", check if configured to be overwriten.'.format(action, name)

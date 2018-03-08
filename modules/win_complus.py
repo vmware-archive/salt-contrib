@@ -22,8 +22,8 @@ import salt.utils
 _LOG = logging.getLogger(__name__)
 
 _accesslevels = {
-    'ApplicationLevel':0,
-    'ApplicationComponentLevel':1
+    'ApplicationLevel': 0,
+    'ApplicationComponentLevel': 1
 }
 
 _authentications = {
@@ -46,6 +46,7 @@ _impersonationlevels = {
 # Define the module's virtual name
 __virtualname__ = 'win_complus'
 
+
 def __virtual__():
     '''
     Load only on Windows
@@ -60,6 +61,7 @@ def __virtual__():
         return False, 'PowerShell not available'
 
     return __virtualname__
+
 
 def _runps(func, as_json=False):
     '''
@@ -82,6 +84,7 @@ def _runps(func, as_json=False):
 
 def test():
     return True
+
 
 def list_apps():
     '''
@@ -115,10 +118,10 @@ def list_apps():
     for item in items:
         ret[item['Name']] = {'key': item['Key'], 'valid': item['Valid']}
 
-
     if not ret:
         _LOG.warning('No apps found in output: %s', cmd_ret)
     return ret
+
 
 def create_app(name, description='', accesscheck=True, accesslevel='ApplicationLevel', authentication='Default', impersonationlevel='Anonymous', identity=None, password=None):
     '''
@@ -168,7 +171,7 @@ def create_app(name, description='', accesscheck=True, accesslevel='ApplicationL
         _LOG.debug("Application already present: %s", name)
         return True
 
-    ## TODO:Parámetros...
+    # TODO:Parámetros...
 
     pscmd.append(r"$oCOMAdminCatalog = New-Object -com 'COMAdmin.COMAdminCatalog';")
     pscmd.append(r"$oCOMApplications = $oCOMAdminCatalog.GetCollection('Applications');")
@@ -197,6 +200,7 @@ def create_app(name, description='', accesscheck=True, accesslevel='ApplicationL
             return True
     _LOG.error('Unable to create application: %s', name)
     return False
+
 
 def remove_app(name):
     '''

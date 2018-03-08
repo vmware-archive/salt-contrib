@@ -6,6 +6,7 @@ Description
     Manage Microsoft Component Services.
 '''
 
+
 def __virtual__():
     '''
     Load only on minions that have the win_complus module.
@@ -14,12 +15,14 @@ def __virtual__():
         return True
     return False
 
+
 def test(name):
     ret = {'name': name,
            'changes': {},
            'comment': str(),
            'result': None}
     return ret
+
 
 def present(name, description='', accesscheck=True, accesslevel='ApplicationLevel', authentication='Default', impersonationlevel='Anonymous', identity=None, password=None):
     '''
@@ -99,6 +102,7 @@ def present(name, description='', accesscheck=True, accesslevel='ApplicationLeve
                                                         authentication, impersonationlevel,
                                                         identity, password)
     return ret
+
 
 def absent(name):
     '''

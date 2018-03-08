@@ -24,24 +24,28 @@ import salt.utils.url
 log = logging.getLogger(__name__)
 
 HASHES = [
-            ['sha512',128],
-            ['sha384',96],
-            ['sha256',64],
-            ['sha224',56],
-            ['sha1',40],
-            ['md5',32],
+            ['sha512', 128],
+            ['sha384', 96],
+            ['sha256', 64],
+            ['sha224', 56],
+            ['sha1', 40],
+            ['md5', 32],
          ]
 
-def  __virtual__():
+
+def __virtual__():
     return True
 
-def _error(ret,err_msg):
+
+def _error(ret, err_msg):
     ret['result'] = False
     ret['comment'] = err_msg
     return ret
 
+
 def _get_bkroot():
     return os.path.join(__salt__['config.get']('cachedir'), 'file_backup')
+
 
 def __clean_tmp(sfn):
     if sfn.startswith(tempfile.gettempdir()):
@@ -50,6 +54,7 @@ def __clean_tmp(sfn):
         in_roots = any(sfn.startswith(root) for root in all_roots)
         if os.path.exists(sfn) and not in_roots:
             os.remove(sfn)
+
 
 def render(
         template,
@@ -78,7 +83,7 @@ def render(
     sfn = ''
     source_sum = {}
     if template and source:
-        sfn = __salt__['cp.cache_file'](source,saltenv)
+        sfn = __salt__['cp.cache_file'](source, saltenv)
     if not sfn or not os.path.exists(sfn):
         return sfn, {}, 'Source file {0!r} not found'.format(source)
     if template in salt.utils.templates.TEMPLATE_REGISTRY:
@@ -99,8 +104,8 @@ def render(
         return sfn, {}, ('Specified template format {0} is not supported').format(template)
 
     if data['result']:
-       sfn = data['data']
-    myfile=open(sfn)
-    mydata=myfile.read()
+        sfn = data['data']
+    myfile = open(sfn)
+    mydata = myfile.read()
     __clean_tmp(sfn)
     return mydata

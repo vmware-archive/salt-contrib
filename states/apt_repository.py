@@ -9,7 +9,7 @@ Handle Debian, Ubuntu and other Debian based distribution APT repositories
 
 '''
 
-
+from __future__ import absolute_import
 import urlparse
 
 from salt import exceptions, utils

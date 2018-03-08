@@ -6,6 +6,7 @@ import salt.utils
 
 UNSUPPORTED = ('Windows')
 
+
 def __virtual__():
     '''
     Only supported on POSIX-like systems
@@ -18,9 +19,9 @@ def __virtual__():
 def halt():
     '''
     Halt a running system
-    
+
     CLI Example::
-    
+
         salt '*' system.halt
     '''
     cmd = 'halt'
@@ -31,9 +32,9 @@ def halt():
 def init(runlevel):
     '''
     Change the system runlevel on sysV compatible systems
-    
+
     CLI Example::
-    
+
         salt '*' system.init 3
     '''
     cmd = 'init {0}'.format(runlevel)
@@ -44,9 +45,9 @@ def init(runlevel):
 def poweroff():
     '''
     Poweroff a running system
-    
+
     CLI Example::
-    
+
         salt '*' system.poweroff
     '''
     cmd = 'poweroff'
@@ -57,9 +58,9 @@ def poweroff():
 def reboot():
     '''
     Reboot the system using the 'reboot' command
-    
+
     CLI Example::
-    
+
         salt '*' system.reboot
     '''
     cmd = 'reboot'
@@ -70,12 +71,11 @@ def reboot():
 def shutdown():
     '''
     Shutdown a running system
-    
+
     CLI Example::
-    
+
         salt '*' system.shutdown
     '''
     cmd = 'shutdown'
     ret = __salt__['cmd.run'](cmd)
     return ret
-

@@ -14,11 +14,13 @@ The keystone_user module is used to manage Keystone users.
         - present
 '''
 
+
 def __virtual__():
     '''
     Only load if the keystone module is in __salt__
     '''
     return 'keystone_user' if 'keystone.user_create' in __salt__ else False
+
 
 def present(name, password, email, tenant, enabled):
     '''
@@ -41,17 +43,17 @@ def present(name, password, email, tenant, enabled):
             'result': True,
             'comment': ('User {0} is already presant, ').format(name)
             }
-    #Check if the user exists
+    # Check if the user exists
     if ('Error' in (__salt__['keystone.user_get'](name=name))):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'User {0} is set to be added.'.format(name)
         elif __salt__['keystone.user_create'](
-                name, 
-                password, 
-                email, 
-                tenant_id = __salt__['keystone.tenant_get'](
-                        name=tenant)[tenant]['id'], 
+                name,
+                password,
+                email,
+                tenant_id=__salt__['keystone.tenant_get'](
+                        name=tenant)[tenant]['id'],
                 enabled=enabled):
             ret['comment'] = 'The user {0} has been added.'.format(name)
             ret['changes'][name] = 'Present'
@@ -60,7 +62,7 @@ def present(name, password, email, tenant, enabled):
             ret['result'] = False
             return ret
 
-    #Check the rest of the settings:
+    # Check the rest of the settings:
     if __salt__['keystone.user_get'](name=name)[name]['email'] != email:
         if __opts__['test']:
             ret['result'] = None
@@ -68,11 +70,11 @@ def present(name, password, email, tenant, enabled):
                     ' User {0} is set to have email updated to {1}.'
                     ).format(name, email)
         elif __salt__['keystone.user_update'](
-                id = __salt__['keystone.user_get'](
+                id=__salt__['keystone.user_get'](
                         name=name)[name]['id'],
-                name = name,
-                email = email,
-                enabled = enabled,
+                name=name,
+                email=email,
+                enabled=enabled,
                 ):
             ret['comment'] += (
                     ' User {0} has had its email updated to {1}.'
@@ -92,10 +94,10 @@ def present(name, password, email, tenant, enabled):
                     ' User {0} is set to have status updated to {1}.'
                     ).format(name, enabled)
         elif __salt__['keystone.user_update'](
-                id = __salt__['keystone.user_get'](name=name)[name]['id'],
-                name = name, 
-                email = email, 
-                enabled = enabled,
+                id=__salt__['keystone.user_get'](name=name)[name]['id'],
+                name=name,
+                email=email,
+                enabled=enabled,
                 ):
             ret['comment'] += (
                     'The user {0} has had its status updated to {1}'
@@ -109,6 +111,7 @@ def present(name, password, email, tenant, enabled):
             return ret
 
     return ret
+
 
 def absent(name):
     '''
@@ -124,7 +127,7 @@ def absent(name):
             'comment': ''
             }
 
-    #Check if user exists and remove it
+    # Check if user exists and remove it
     if not ('Error' in (__salt__['keystone.user_get'](name=name))):
         if __opts__['test']:
             ret['result'] = None
@@ -134,7 +137,7 @@ def absent(name):
             ret['comment'] = 'User {0} has been removed'.format(name)
             ret['changes'][name] = 'Absent'
             return ret
-    #fallback
+    # fallback
     ret['comment'] = (
             'User {0} is not present, so it cannot be removed'
             ).format(name)

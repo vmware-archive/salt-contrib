@@ -4,12 +4,15 @@
 RabbitMQ plugins module
 '''
 
+from __future__ import absolute_import
+
 import logging
 import re
 
 from salt import exceptions, utils
 
 log = logging.getLogger(__name__)
+
 
 def __virtual__():
     '''
@@ -22,6 +25,7 @@ def __virtual__():
         name = False
     return name
 
+
 def _convert_env(env):
     output = {}
     if env:
@@ -29,6 +33,7 @@ def _convert_env(env):
             k, v = var.split('=')
             output[k] = v
     return output
+
 
 def _rabbitmq_plugins(command, runas=None, env=()):
     cmdline = 'rabbitmq-plugins {command}'.format(command=command)
@@ -41,6 +46,7 @@ def _rabbitmq_plugins(command, runas=None, env=()):
         return ret['stdout']
     else:
         return False
+
 
 def list(runas=None, env=()):
     '''
@@ -62,14 +68,16 @@ def list(runas=None, env=()):
             log.warning("line '%s' is invalid", line)
     return plugins
 
+
 def enable(name, runas=None, env=()):
     '''
     Turn on a rabbitmq plugin
     '''
-    return _rabbitmq_plugins('enable %s' % name, runas=runas, env=env)
+    return _rabbitmq_plugins('enable {0}'.format(name), runas=runas, env=env)
+
 
 def disable(name, runas=None, env=()):
     '''
     Turn off a rabbitmq plugin
     '''
-    return _rabbitmq_plugins('disable %s' % name, runas=runas, env=env)
+    return _rabbitmq_plugins('disable {0}'.format(name), runas=runas, env=env)

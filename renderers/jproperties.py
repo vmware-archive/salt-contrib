@@ -5,6 +5,7 @@ http://aphor.github.io/jproperties_salt_renderer/
 '''
 
 from __future__ import absolute_import
+from salt.ext import six
 
 # Import 3rd party libs
 try:
@@ -22,7 +23,7 @@ def render(jp_data, saltenv='base', sls='', **kws):
     Accepts Java Properties as a string or as a file object and runs it through the jproperties
     parser. Uses the jproperties package https://pypi.python.org/pypi/jproperties so please
     "pip install jproperties" to use this renderer.
-    
+
     Returns a flat dictionary by default:
       {'some.java.thing': 'whatever'}
     If using a 'shebang' "#!jproperties" header on the first line, an argument can be optionally
@@ -45,6 +46,6 @@ def render(jp_data, saltenv='base', sls='', **kws):
     properties = jp()
     properties.load(jp_data)
     if container:
-      return {container: dict([(k,properties[k]) for k in properties.iterkeys()])}
+        return {container: dict([(k, properties[k]) for k in six.iterkeys(properties)])}
     else:
-      return dict([(k,properties[k]) for k in properties.iterkeys()])
+        return dict([(k, properties[k]) for k in six.iterkeys(properties)])

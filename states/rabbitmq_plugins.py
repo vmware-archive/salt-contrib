@@ -5,7 +5,10 @@
 RabbitMQ plugins state
 '''
 
+from __future__ import absolute_import
+
 from salt import exceptions, utils
+
 
 def __virtual__():
     '''
@@ -17,6 +20,7 @@ def __virtual__():
     except exceptions.CommandNotFoundError:
         name = False
     return name
+
 
 def disabled(name, runas=None, env=None):
     '''
@@ -51,6 +55,7 @@ def disabled(name, runas=None, env=None):
         ret['comment'] = 'Could not disable plugin.'
     return ret
 
+
 def enabled(name, runas=None, env=None):
     '''
     Make sure that a plugin is enabled.
@@ -58,11 +63,11 @@ def enabled(name, runas=None, env=None):
     name
         The name of the plugin to enable
     '''
+    ret = {'name': name, 'result': None, 'comment': '', 'changes': {}}
     if __opts__['test']:
         ret['comment'] = 'The plugin {0} would have been enabled'.format(name)
         return ret
 
-    ret = {'name': name, 'result': None, 'comment': '', 'changes': {}}
     plugins = __salt__['rabbitmq_plugins.list'](env=env, runas=runas)
     if name not in plugins:
         ret['result'] = True

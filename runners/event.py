@@ -2,6 +2,8 @@
 '''
 A backport of the state.event runner in Helium for earlier Salt versions
 '''
+from __future__ import absolute_import
+
 # Import pytohn libs
 from __future__ import print_function
 
@@ -14,6 +16,7 @@ import sys
 import salt.utils.event
 
 logger = logging.getLogger(__name__)
+
 
 def event(tagmatch='*', count=1, quiet=False, sock_dir=None):
     '''

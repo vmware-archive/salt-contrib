@@ -27,9 +27,9 @@ except KeyError:
     pass
 
 
-#########################
-### Private Functions ###
-#########################
+#####################
+# Private Functions #
+#####################
 
 def __virtual__():
     '''
@@ -76,6 +76,7 @@ def _resource_add(resource, name, settings=None, arg_name_override=None):
         return False
     return True
 
+
 def _resource_get_config(resource, name, settings):
     '''
     Returns the configuration of the Resource
@@ -105,17 +106,14 @@ def _resource_set(resource, name, settings):
     return True
 
 
-
 def _resource_action(resource, name, action, ignoreNonExist=False):
     '''
     Generic fanction to Start / Stop / Delete  the resource
     '''
 
-    if  name not in _resource_list(resource) and ignoreNonExist == False:
-        log.error('not existing {0} {1}'.format(resource,name))
+    if name not in _resource_list(resource) and ignoreNonExist is False:
+        log.error('not existing {0} {1}'.format(resource, name))
         return False
-
-
 
     cmd_ret = __salt__['cmd.run_all']([appcmd, action.upper(), resource.upper(), name])
     if cmd_ret['retcode'] != 0:
@@ -138,9 +136,10 @@ def _serialize_settings(settings):
     )
 
 
-##############################
-### Certificate Management ###
-##############################
+##########################
+# Certificate Management #
+##########################
+
 
 def cert_list_permission(subject, reg=r'LOCAL_MACHINE\My'):
     '''
@@ -212,10 +211,9 @@ def cert_list(reg=r'LOCAL_MACHINE\My', fields=None):
         fields = ['Subject', 'Thumbprint', 'SerialNumber']
 
     out = __salt__['cmd.run'](
-        'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(reg, ','.join(fields),"{$_ -ne \"\"}", "{", "}"),
+        'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(reg, ','.join(fields), "{$_ -ne \"\"}", "{", "}"),
         shell='powershell'
     ).splitlines()
-
 
     current = {}
     for line in out:
@@ -245,7 +243,7 @@ def get_data_from_pfx(pfx, password):
     )
 
     if cmd_ret['retcode'] != 0:
-        log.error('could get data from pfx bundle "{0}", password: "{1}"'.format(pfx,password))
+        log.error('could get data from pfx bundle "{0}", password: "{1}"'.format(pfx, password))
         return False
 
     match = re.search('^Cert Hash\(sha1\): (.*)', cmd_ret['stdout'], re.MULTILINE)
@@ -265,9 +263,10 @@ def get_data_from_pfx(pfx, password):
     return ret
 
 
-####################
-### SSL Bindings ###
-####################
+################
+# SSL Bindings #
+################
+
 
 def bind_list(address='0.0.0.0', port=443):
     '''
@@ -337,9 +336,10 @@ def unbind_ssl(address='0.0.0.0', port=443):
     return True
 
 
-#########################
-### Application Pools ###
-#########################
+#####################
+# Application Pools #
+#####################
+
 
 def apppool_list():
     '''
@@ -384,9 +384,10 @@ def apppool_action(name, action):
     return _resource_action('APPPOOL', name, action)
 
 
-#############
-### Sites ###
-#############
+#########
+# Sites #
+#########
+
 
 def site_list():
     '''
@@ -431,10 +432,9 @@ def site_action(name, action):
     return _resource_action('SITE', name, action)
 
 
-
-####################
-### Applications ###
-####################
+################
+# Applications #
+################
 
 
 def app_list():
@@ -471,6 +471,7 @@ def app_set(name, settings):
 
     return _resource_set('APP', name, settings)
 
+
 def app_action(name, action):
     '''
     start / stop / delete the application
@@ -479,10 +480,9 @@ def app_action(name, action):
     return _resource_action('APP', name, action)
 
 
-
-############
-### vDir ###
-############
+########
+# vDir #
+########
 
 
 def vdir_list():
@@ -520,10 +520,9 @@ def vdir_set(name, settings):
     return _resource_set('VDIR', name, settings)
 
 
-
-####################
-### IIS configuration Backups ###
-####################
+#############################
+# IIS configuration Backups #
+#############################
 
 
 def backup_action(name, action):
@@ -533,6 +532,7 @@ def backup_action(name, action):
     '''
 
     return _resource_action("BACKUP", name, action, True)
+
 
 def backup_list():
     '''

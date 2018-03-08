@@ -1,11 +1,15 @@
 # -*- coding:utf-8 -*-
+from __future__ import absolute_import
+
 import os
 import platform
+import salt.utils
 
 try:
     import wmi
 except ImportError:
     pass
+
 
 def get_osdisk_stats():
     '''
@@ -25,7 +29,7 @@ def get_osdisk_stats():
                 caption = disk.Caption
                 grains['osdisk'][caption] = {'available': round(available/1.073741824e9), 'used': round(used/1.073741824e9)}
     elif platform.system() == 'Linux':
-        with open('/proc/mounts', 'r') as f:
+        with salt.utils.fopen('/proc/mounts', 'r') as f:
             mounts = [line.split()[1] for line in f.readlines()]
         for caption in mounts:
             disk = os.statvfs(caption)
@@ -35,12 +39,11 @@ def get_osdisk_stats():
                 grains['osdisk'][caption] = {'available': int(round(available/1.073741824e9)), 'used': int(round(used/1.073741824e9))}
     return grains
 
-    # print information in bytes
-    #print used, available, capacity
-    # print information in Kilobytes
-    #print used/1024, available/1024, capacity/1024
-    # print information in Megabytes
-    #print used/1.048576e6, available/1.048576e6, capacity/1.048576e6
-    # print information in Gigabytes
-    #print used/1.073741824e9, available/1.073741824e9, capacity/1.073741824e9
-
+    #  print information in bytes
+    # print used, available, capacity
+    #  print information in Kilobytes
+    # print used/1024, available/1024, capacity/1024
+    #  print information in Megabytes
+    # print used/1.048576e6, available/1.048576e6, capacity/1.048576e6
+    #  print information in Gigabytes
+    # print used/1.073741824e9, available/1.073741824e9, capacity/1.073741824e9

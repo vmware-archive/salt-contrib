@@ -29,4 +29,3 @@ def exif(image):
         comps = line.split(':')
         ret[comps[0].strip()] = comps[1].strip()
     return ret
-

@@ -13,6 +13,7 @@ __outputter__ = {
                 'restart': 'txt'
                 }
 
+
 def __virtual__():
     '''
     Check to see if vzctl and vzlist are installed and load module
@@ -21,6 +22,7 @@ def __virtual__():
         return 'vzctl'
     return False
 
+
 def version():
     '''
     Return version from vzctl --version
@@ -28,9 +30,10 @@ def version():
     CLI Example::
 
     salt '*' vzctl.version
-    ''' 
+    '''
     out = __salt__['cmd.run']('vzctl --version')
     return out
+
 
 def vzlist():
     '''
@@ -42,6 +45,7 @@ def vzlist():
     '''
     out = __salt__['cmd.run']('vzlist -a')
     return out
+
 
 def execute(ctid=None,
           option=None):
@@ -56,7 +60,7 @@ def execute(ctid=None,
         return "Error: No container ID specified."
     if not option:
         return "Error: No option parameter specified."
-	
+
     ret, error = _checkCtid(ctid)
 
     if ret:
@@ -68,6 +72,7 @@ def execute(ctid=None,
         return output
     else:
         return error
+
 
 def start(ctid=None,
         option=None):
@@ -86,7 +91,7 @@ def start(ctid=None,
     '''
     if not ctid:
         return "Error: No container ID specified."
-	
+
     ret, error = _checkCtid(ctid)
 
     if ret:
@@ -98,6 +103,7 @@ def start(ctid=None,
         return output
     else:
         return error
+
 
 def stop(ctid=None,
          option=None):
@@ -116,7 +122,7 @@ def stop(ctid=None,
     '''
     if not ctid:
         return "Error: No container ID specified."
-	
+
     ret, error = _checkCtid(ctid)
 
     if ret:
@@ -128,6 +134,7 @@ def stop(ctid=None,
         return output
     else:
         return error
+
 
 def restart(ctid=None,
             option=None):
@@ -159,6 +166,7 @@ def restart(ctid=None,
     else:
         return error
 
+
 def _checkCtid(ctid):
     '''
     Checks to see if the ctid is a valid number
@@ -169,6 +177,7 @@ def _checkCtid(ctid):
     except:
         return False, "Error: ctid is not a number."
 
+
 def _runCommand(
                command,
                ctid,
@@ -178,10 +187,10 @@ def _runCommand(
     Use salt to run the command and output.
     '''
     if option is None:
-        cmd = 'vzctl {0} {1}'.format(command,ctid)
+        cmd = 'vzctl {0} {1}'.format(command, ctid)
         out = __salt__['cmd.run'](cmd)
         return out
     else:
-        cmd = 'vzctl {0} {1} --{2}'.format(command,ctid,option)
+        cmd = 'vzctl {0} {1} --{2}'.format(command, ctid, option)
         out = __salt__['cmd.run'](cmd)
         return out

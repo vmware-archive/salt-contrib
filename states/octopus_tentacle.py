@@ -181,6 +181,7 @@ def trusted(name, thumbprint, reset=False, instance=_DEFAULT_INSTANCE):
             ret['comment'] = 'Config failed to include server thumbprint: {0}'.format(thumbprint)
     return ret
 
+
 def registered(name, server, envs, roles, api_key, user=None, password=None, port=10943,
                comms=_DEFAULT_COMMS, instance=_DEFAULT_INSTANCE):
     '''

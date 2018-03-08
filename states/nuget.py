@@ -8,6 +8,7 @@ Description
 # Import python libs
 import os
 
+
 def __virtual__():
     '''
     Load only on minions that have the nuget module.
@@ -15,6 +16,7 @@ def __virtual__():
     if 'nuget.install' in __salt__:
         return True
     return False
+
 
 def installed(name, version, target, sources, exclude_version=False):
     '''
@@ -46,4 +48,3 @@ def installed(name, version, target, sources, exclude_version=False):
                           'new': dir_name}
         ret['result'] = __salt__['nuget.install'](name, version, target, *sources, **kwargs)
     return ret
-

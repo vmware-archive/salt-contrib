@@ -15,6 +15,7 @@
     Currently opens more connections than I'd like, but there's no way to get
     an all-in-one/recursive response from the metadata service
 '''
+from __future__ import absolute_import
 
 import logging
 import requests
@@ -37,6 +38,7 @@ def __virtual__():
     except Exception as e:
         return False
 
+
 def vultr():
     '''
     Return Vultr metadata.
@@ -49,7 +51,3 @@ def vultr():
             vultr[i] = sess.get(MD_BASE_URI + i).content
 
     return {'vultr': vultr}
-
-
-if __name__ == '__main__':
-    print vultr()
