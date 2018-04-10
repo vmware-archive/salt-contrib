@@ -14,12 +14,11 @@ import subprocess
 from subprocess import PIPE
 from string import maketrans
 
-log = logging.getLogger(__name__)
-
 from ansible.utils import parse_json
 import ansible.module_common as ans_common
 import ansible.constants as ans_consts
 
+log = logging.getLogger(__name__)
 
 # Module configuration. Set these in the minion configuration file.
 __opts__ = {
@@ -27,7 +26,7 @@ __opts__ = {
     'ansible.modules_dir': ans_consts.DEFAULT_MODULE_PATH
 }
 
-__outputter__ = { 'run_mod': 'txt' }
+__outputter__ = {'run_mod': 'txt'}
 
 # Path to the dir containing ansible module files.
 ANSIBLE_MOD_DIR = '/Users/jkuan/work/ansible/library'
@@ -43,7 +42,7 @@ MOD_NAME_TRANS_TABLE = maketrans('. -', '___')
 VIRTUAL_MODS = set("shell fetch raw template".split())
 
 # To keep track of the translated ansible module names and their original forms
-STATE_NAMES = {} # { state_name: mod_name }
+STATE_NAMES = {}  # { state_name: mod_name }
 
 # These keys will be removed from the state call arguments dict before
 # passing it as arguments to an ansible module.
@@ -55,12 +54,12 @@ def __init__(opts):
     key = 'ansible.modules_dir'
     ANSIBLE_MOD_DIR = opts.get(key, __opts__[key])
     try:
-        mods = [ os.path.basename(p) for p in os.listdir(ANSIBLE_MOD_DIR) ]
+        mods = [os.path.basename(p) for p in os.listdir(ANSIBLE_MOD_DIR)]
     except OSError:
         log.error("You might want to set `ansible.modules_dir' to "
                   "an Ansible modules directory in your minion config.")
         raise
-    mods = filter(lambda name: \
+    mods = filter(lambda name:
                 MOD_NAME_PATTERN.match(name) and name not in VIRTUAL_MODS,
                 mods)
     for i, name in enumerate(mods):
@@ -93,10 +92,10 @@ def run(modpath, argline, argdict=None, raise_exc=False):
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         with open(modpath) as modfile:
-            tmp.write(modfile.read() \
-                .replace(ans_common.REPLACER, ans_common.MODULE_COMMON) \
+            tmp.write(modfile.read()
+                .replace(ans_common.REPLACER, ans_common.MODULE_COMMON)
                 .replace(ans_common.REPLACER_ARGS, repr(argline))
-            )
+                      )
         tmp.flush()
         os.chmod(tmp.name, 0700)
         proc = subprocess.Popen([tmp.name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -141,5 +140,3 @@ def _state_func(state, **kws):
     if ret.get('changed', True):
         ret['changes'] = dict(ansible=output)
     return ret
-
-

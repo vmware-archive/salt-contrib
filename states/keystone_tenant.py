@@ -14,11 +14,13 @@ The keystone_tenant module is used to manage Keystone tenants.
         - present
 '''
 
+
 def __virtual__():
     '''
     Only load if the keystone module is in __salt__
     '''
     return 'keystone_tenant' if 'keystone.tenant_create' in __salt__ else False
+
 
 def present(name):
     '''
@@ -33,11 +35,11 @@ def present(name):
             'result': True,
             'comment': 'Tenant {0} is already presant'.format(name)
             }
-    #Check if the tenant exists
+    # Check if the tenant exists
     if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
         return ret
 
-    #The tenant is not present, make it!
+    # The tenant is not present, make it!
     if __opts__['test']:
         ret['result'] = None
         ret['comment'] = 'Tenant {0} is set to be added'.format(name)
@@ -50,6 +52,7 @@ def present(name):
         ret['result'] = False
 
     return ret
+
 
 def absent(name):
     '''
@@ -65,7 +68,7 @@ def absent(name):
             'comment': ''
             }
 
-    #Check if tenant exists and remove it
+    # Check if tenant exists and remove it
     if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
         if __opts__['test']:
             ret['result'] = None
@@ -75,7 +78,7 @@ def absent(name):
             ret['comment'] = 'Tenant {0} has been removed'.format(name)
             ret['changes'][name] = 'Absent'
             return ret
-    #fallback
+    # fallback
     ret['comment'] = (
             'Tenant {0} is not present, so it cannot be removed'
             ).format(name)

@@ -3,6 +3,10 @@ language: python
 python:
   - '2.7'
 
+check_lint:
+  - pip install -r test-requirements.txt --use-mirrors
+  - pylint --rcfile=.pylintrc --disable=W1307,str-format-in-logging grains modules renderers returners runners states
+
 before_install:
   - sudo apt-get update
   - sudo apt-get install --fix-broken --ignore-missing -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" swig rabbitmq-server ruby

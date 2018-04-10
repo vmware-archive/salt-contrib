@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Salt Module to manage Apache Service Mix
 
@@ -19,17 +20,21 @@ Note:
   But it will remove the bundles configure in the feature it self
 '''
 
+from __future__ import absolute_import
+
 # libs
 import time
+
 
 def __virtual__():
     '''
     Load the module by default
     '''
-    
+
     return 'smx'
 
-def _parse_list(list=[]):
+
+def _parse_list(list=None):
     '''
     Used to parse the result off the list commands.
     for example:
@@ -38,22 +43,23 @@ def _parse_list(list=[]):
     '''
     ret = []
     for line in list:
-        line = line.replace(']','')
-        line = line.replace('[','')
+        line = line.replace(']', '')
+        line = line.replace('[', '')
         ret.append(line)
-    
+
     return ret
+
 
 def run(cmd='shell:logout'):
     '''
     execute a command in the servicemix console
     will return an array of the STDOUT
-    
+
     CLI Examples::
-        
+
         salt '*' smx.run 'osgi:list'
     '''
-    
+
     # Get command from grains, if are not set default to modules.config.option
     try:
         user = __grains__['smx']['user']
@@ -70,90 +76,96 @@ def run(cmd='shell:logout'):
                 return []
         except Exception:
             return []
-    
-    ret = __salt__['cmd.run']( "'{0}' -u '{1}' -p '{2}' '{3}'".format(bin, user, password, cmd) ).splitlines()
-    if len(ret) > 0 and ret[0].startswith('client: JAVA_HOME not set'):
+
+    ret = __salt__['cmd.run']("'{0}' -u '{1}' -p '{2}' '{3}'".format(bin, user, password, cmd)).splitlines()
+    if ret and ret[0].startswith('client: JAVA_HOME not set'):
         ret.pop(0)
     return ret
+
 
 def status():
     '''
     Test if the servicemix daemon is running
-    
+
     CLI Examples::
-        
+
         salt '*' smx.status
     '''
     return run('osgi:list | head -n 1 | grep -c ^START') == ['1']
 
+
 def is_repo(url):
     '''
     check if the URL is configured as a feature repository
-    
+
     CLI Examples::
-        
+
         salt '*' smx.is_repo http://salt/smxrepo/repo.xml
     '''
-    
+
     return run('features:listurl | grep -c " {0}$"'.format(url)) == ['1']
+
 
 def feature_addurl(url):
     '''
     Add the url as a feature repository
-    
+
     CLI Examples::
-        
+
         salt '*' smx.features_addurl http://salt/smxrepo/repo.xml
     '''
-    
+
     if is_repo(url):
         return 'present'
-    
+
     run('features:addurl {0}'.format(url))
     if is_repo(url):
         return 'new'
     else:
         return 'missing'
 
+
 def feature_removeurl(url):
     '''
     Remove the url as a feature repository
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_removeurl http://salt/smxrepo/repo.xml
     '''
-        
-    if is_repo(url) == False:
+
+    if not is_repo(url):
         return 'absent url {0}'.format(url)
     else:
         run('features:removeurl {0}'.format(url))
-        if is_repo(url) == False:
+        if not is_repo(url):
             return 'removed {0}'.format(url)
         else:
             return 'failed {0}'.format(url)
 
+
 def feature_refreshurls():
     '''
     Refresh all the feature repositories
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_refreshurls
     '''
-    
+
     for line in run('features:listurl | grep -v "^ Loaded"'):
         url = line.split()[1]
         if feature_refreshurl(url) != 'refreshed':
             return 'error refreshing {0}'.format(url)
     return 'refreshed'
 
+
 def feature_refreshurl(url):
     '''
     Refresh the feature repository
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_refreshurl http://salt/smxrepo/repo.xml
     '''
     if is_repo(url):
@@ -162,199 +174,209 @@ def feature_refreshurl(url):
     else:
         return 'missing {0}'.format(url)
 
+
 def bundle_active(bundle):
     '''
     check if the bundle is active
-    
+
     CLI Examples::
-        
+
         salt '*' smx.bundle_active 'some.bundle.name'
     '''
-    
+
     for line in _parse_list(run('osgi:list -s -u | grep Active')):
         lst = line.split()
         if bundle == lst[-1]:
-             return True
-    
+            return True
+
     return False
+
 
 def nonactive_bundles(bundles=''):
     '''
     return a list of non-active bundles from the csv list
-    
+
     CLI Examples::
-        
+
         salt '*' smx.nonactive_bundles 'some.bundle.name,some.other.name'
     '''
-    
+
     ret = []
     for b in bundles.split(','):
-        if bundle_active(b) == False:
+        if not bundle_active(b):
             ret.append(b)
     return ','.join(ret)
+
 
 def bundle_exists(bundle):
     '''
     check if the bundle exists
-    
+
     CLI Examples::
-        
+
         salt '*' smx.bundle_exists 'some.bundle.name'
     '''
-    
+
     for line in _parse_list(run('osgi:list -s -u')):
         lst = line.split()
         if bundle == lst[-1]:
-             return True
-    
+            return True
+
     return False
+
 
 def bundle_start(bundle):
     '''
     start the bundle
-    
+
     CLI Examples::
-        
+
         salt '*' smx.bundle_start 'some.bundle.name'
     '''
-    
-    if bundle_exists(bundle) == False:
+
+    if not bundle_exists(bundle):
         return 'missing'
-    
+
     run('osgi:start {0}'.format(bundle))
-    
+
     if bundle_active(bundle):
         return 'active'
     else:
         return 'error'
 
+
 def bundle_stop(bundle):
     '''
     stop the bundle
-    
+
     CLI Examples::
-        
+
         salt '*' smx.bundle_stop 'some.bundle.name'
     '''
-    
-    if bundle_exists(bundle) == False:
+
+    if not bundle_exists(bundle):
         return 'missing'
-    
+
     run('osgi:stop {0}'.format(bundle))
-    
-    if bundle_active(bundle) == False:
+
+    if not bundle_active(bundle):
         return 'stopped'
     else:
         return 'error'
 
+
 def is_feature_installed(feature, version=''):
     '''
     check if the feature is installed
-    
+
     CLI Examples::
-        
+
         salt '*' smx.is_feature_installed 'myFeature'
         salt '*' smx.is_feature_installed 'myFeature' '1.1.0'
     '''
-    
+
     for line in _parse_list(run('features:list -i')):
         lst = line.split()
         if version:
             if version == lst[1] and feature == lst[2]:
                 return True
         else:
-             if feature == lst[2]:
-                 return True
-    
+            if feature == lst[2]:
+                return True
+
     return False
+
 
 def is_feature_installed_latest(feature):
     '''
     check if the feature is installed
-    
+
     CLI Examples::
-        
+
         salt '*' smx.is_feature_installed_latest 'myFeature'
     '''
-    
+
     latest = '0'
     feature_refreshurls()
     for line in _parse_list(run('features:list')):
         lst = line.split()
         if lst[2] == feature:
-            latest = max(str(lst[1]),latest)
-    
+            latest = max(str(lst[1]), latest)
+
     return is_feature_installed(feature, str(latest))
+
 
 def feature_install(feature, version='', bundles='', wait4bundles=5):
     '''
     Install a feature.
-    
+
     a third optional arguments is a csv list of bundle names
       that should be in Active mode after the feature installation to validate
       (in the format of osgi:list -s command)
     a forth argument is a time in seconds to check the bundles if active
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_install 'myFeature'
         salt '*' smx.feature_install 'myFeature' '1.0.0'
         salt '*' smx.feature_install 'myFeature' '1.2.3' 'com.sun.jersey.core,some.other.bundle' 10
     '''
-    
+
     if version:
         feature_fullname = '/'.join([feature, version])
     else:
         feature_fullname = feature
-    
-    if is_feature_installed(feature, version) == False:
+
+    if not is_feature_installed(feature, version):
         feature_refreshurls()
         run('features:install {0}'.format(feature_fullname))
-        if is_feature_installed(feature, version) == False:
+        if not is_feature_installed(feature, version):
             return 'failed'
-    
+
     if bundles != '':
         time.sleep(wait4bundles)
     errBundles = nonactive_bundles(bundles)
-    
-    if len(errBundles) == 0:
+
+    if errBundles:
         return 'installed'
     else:
         return 'failed, non Active bundles: {0}'.format(','.join(errBundles))
-    
+
+
 def feature_remove(feature, version=''):
     '''
     Uninstall the feature
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_remove name-of-feature
         salt '*' smx.feature_remove name-of-feature 1.1.1
     '''
-        
-    if is_feature_installed(feature, version) == False:
+
+    if not is_feature_installed(feature, version):
         return 'absent'
-    
+
     if version:
         feature_fullname = '/'.join([feature, version])
     else:
         feature_fullname = feature
-    
+
     run('features:uninstall {0}'.format(feature_fullname))
     if is_feature_installed(feature, version):
         return 'error'
     else:
         return 'removed'
 
+
 def feature_remove_all_versions(feature):
     '''
     Uninstall the feature in all its versions
-    
+
     CLI Examples::
-        
+
         salt '*' smx.feature_remove_all_versions name-of-feature
     '''
-    
+
     removed = ""
     for line in _parse_list(run('features:list -i')):
         lst = line.split()
@@ -362,7 +384,7 @@ def feature_remove_all_versions(feature):
             removed += " {0}".format(lst[1])
             if feature_remove(feature, lst[1]) == 'error':
                 return 'error removing {0}'.format('/'.join([feature, lst[1]]))
-    
+
     if removed:
         return 'removed: {0}'.format(removed)
     else:

@@ -28,6 +28,7 @@ _LOG = logging.getLogger(__name__)
 # Define the module's virtual name
 __virtualname__ = 'nuget'
 
+
 def __virtual__():
     '''
     Only works on Windows systems that have NuGet.
@@ -38,6 +39,7 @@ def __virtual__():
         else:
             _LOG.debug('Unable to find executable: nuget.exe')
     return False
+
 
 def install(name, version, target, *sources, **kwargs):
     '''
@@ -99,6 +101,7 @@ def install(name, version, target, *sources, **kwargs):
     _LOG.error('Unable to execute command: %s\nError: %s', command, cmd_ret['stderr'])
     return False
 
+
 def list_pkgs(*sources):
     '''
     Get the packages and versions available from the provided URLs.
@@ -140,11 +143,12 @@ def list_pkgs(*sources):
         if len(items) > 1:
             package, version = items
 
-            if not package in ret:
+            if package not in ret:
                 _LOG.debug('Found package: %s', package)
                 ret[package] = list()
             ret[package].append(version)
     return ret
+
 
 def get_locals(name='all'):
     '''
@@ -181,13 +185,14 @@ def get_locals(name='all'):
             ret[resource] = location
     return ret
 
+
 def clear_locals(name='all'):
     '''
     Clear the cached resource and locations.
 
     name: The local resource - global-packages, http-cache, packages-cache, or all.
 
-    Returns a boolean representing whether clearing the cache succeeded. 
+    Returns a boolean representing whether clearing the cache succeeded.
 
     CLI Example:
 
@@ -214,4 +219,3 @@ def clear_locals(name='all'):
             return True
     _LOG.error('Unable to clear cached resources.')
     return False
-

@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
 """
     Return grains information about available hardware RAID controllers.
 """
+from __future__ import absolute_import
 
 import subprocess
 import re
 import platform
 import logging
+from salt.ext.six.moves import zip
 
 
 __author__ = "Ivan Adam Vari"
@@ -96,7 +99,7 @@ def raid_info():
                     pci_data.update(_kmod_info(pci_data['driver']))
                     return {'raidcontroller': pci_data}
 
-                except (KeyError):
+                except KeyError:
                     log.debug('No RAID driver found')
                     return {'raidcontroller': pci_data}
             else:
@@ -107,4 +110,3 @@ def raid_info():
 
     else:
         log.debug('Not supported OS "{0}"'.format(platform.system()))
-

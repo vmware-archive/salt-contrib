@@ -11,7 +11,7 @@ Module for handling openstack keystone calls.
         keystone.tenant_id: f80919baedab48ec8931f200c65a50df
         keystone.insecure: False   #(optional)
         keystone.auth_url: 'http://127.0.0.1:5000/v2.0/'
-        
+
         OR (for token based authentication)
 
         keystone.token: 'ADMIN'
@@ -28,6 +28,7 @@ try:
 except ImportError:
     pass
 
+
 def __virtual__():
     '''
     Only load this module if keystone
@@ -37,12 +38,13 @@ def __virtual__():
         return 'keystone'
     return False
 
+
 __opts__ = {}
 
 
 def auth():
     '''
-    Set up keystone credentials.  
+    Set up keystone credentials.
 
     Only intended to be used within Keystone-enabled modules.
     '''
@@ -70,6 +72,7 @@ def auth():
                 'insecure': insecure,
                 }
     return client.Client(**kwargs)
+
 
 def ec2_credentials_get(id=None,       # pylint: disable-msg=C0103
                         name=None,
@@ -193,6 +196,7 @@ def role_get(id=None, name=None):  # pylint: disable-msg=C0103
             }
     return ret
 
+
 def role_create(name):
     '''
     Create a role (keystone role-create)
@@ -207,6 +211,7 @@ def role_create(name):
             name=name,
             )
     return role_get(item.id)
+
 
 def role_delete(id=None, name=None):  # pylint: disable-msg=C0103
     '''
@@ -229,8 +234,9 @@ def role_delete(id=None, name=None):  # pylint: disable-msg=C0103
     kstone.roles.delete(id)
     ret = 'Role ID {0} deleted'.format(id)
     if name:
-      ret += ' ({0})'.format(name)
+        ret += ' ({0})'.format(name)
     return ret
+
 
 def role_list():
     '''
@@ -327,6 +333,7 @@ def tenant_get(id=None, name=None):  # pylint: disable-msg=C0103
             }
     return ret
 
+
 def tenant_create(name, description=None, enabled=True):
     '''
     Create a tenant (keystone tenant-create)
@@ -343,6 +350,7 @@ def tenant_create(name, description=None, enabled=True):
             enabled=enabled,
             )
     return tenant_get(item.id)
+
 
 def tenant_delete(id=None, name=None):  # pylint: disable-msg=C0103
     '''
@@ -365,8 +373,9 @@ def tenant_delete(id=None, name=None):  # pylint: disable-msg=C0103
     kstone.tenants.delete(id)
     ret = 'Tenant ID {0} deleted'.format(id)
     if name:
-      ret += ' ({0})'.format(name)
+        ret += ' ({0})'.format(name)
     return ret
+
 
 def tenant_list():
     '''
@@ -589,12 +598,13 @@ def user_role_list(user_id=None,
     except NotFound:
         return {}
 
+
 def user_role_add(user_id=None,
-                   user_name=None,
-                   role_id=None,
-                   role_name=None,
-                   tenant_id=None,
-                   tenant_name=None):
+                user_name=None,
+                role_id=None,
+                role_name=None,
+                tenant_id=None,
+                tenant_name=None):
     '''
     Add a role to a user (keystone user_roles-add)
 
@@ -626,14 +636,15 @@ def user_role_add(user_id=None,
     if not user_id and not tenant_id and not role_id:
         return {'Error': 'Unable to resolve user, role or tenant id'}
     item = kstone.roles.add_user_role(user_id, role_id, tenant_id)
-    return user_role_list(user_id = user_id, tenant_id = tenant_id)
+    return user_role_list(user_id=user_id, tenant_id=tenant_id)
+
 
 def user_role_remove(user_id=None,
-                   user_name=None,
-                   role_id=None,
-                   role_name=None,
-                   tenant_id=None,
-                   tenant_name=None):
+                    user_name=None,
+                    role_id=None,
+                    role_name=None,
+                    tenant_id=None,
+                    tenant_name=None):
     '''
     Removes a role for a user (keystone user_roles-remove)
 
@@ -676,6 +687,7 @@ def user_role_remove(user_id=None,
         ret += '({0}) '.format(tenant_name)
     return ret
 
+
 def _item_list():
     '''
     Template for writing list functions
@@ -689,30 +701,29 @@ def _item_list():
     ret = []
     for item in kstone.items.list():
         ret.append(item.__dict__)
-        #ret[item.name] = {
+        # ret[item.name] = {
         #        'id': item.id,
         #        'name': item.name,
         #        }
     return ret
 
-
-    #The following is a list of functions that need to be incorporated in the
-    #keystone module. This list should be updated as functions are added.
+    # The following is a list of functions that need to be incorporated in the
+    # keystone module. This list should be updated as functions are added.
     #
-    #ec2-credentials-create
+    # ec2-credentials-create
     #                    Create EC2-compatibile credentials for user per tenant
-    #ec2-credentials-delete
+    # ec2-credentials-delete
     #                    Delete EC2-compatibile credentials
-    #endpoint-create     Create a new endpoint associated with a service
-    #endpoint-delete     Delete a service endpoint
-    #role-create         Create new role
-    #role-delete         Delete role
-    #service-create      Add service to Service Catalog
-    #service-delete      Delete service from Service Catalog
-    #tenant-update       Update tenant name, description, enabled status
-    #user-role-add       Add role to user
-    #user-role-remove    Remove role from user
-    #discover            Discover Keystone servers and show authentication
+    # endpoint-create     Create a new endpoint associated with a service
+    # endpoint-delete     Delete a service endpoint
+    # role-create         Create new role
+    # role-delete         Delete role
+    # service-create      Add service to Service Catalog
+    # service-delete      Delete service from Service Catalog
+    # tenant-update       Update tenant name, description, enabled status
+    # user-role-add       Add role to user
+    # user-role-remove    Remove role from user
+    # discover            Discover Keystone servers and show authentication
     #                    protocols and
-    #bootstrap           Grants a new role to a new user on a new tenant, after
+    # bootstrap           Grants a new role to a new user on a new tenant, after
     #                    creating each.

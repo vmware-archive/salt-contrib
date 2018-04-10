@@ -39,6 +39,7 @@ import logging
 # Import Salt libs
 import salt.utils.jid
 import salt.returners
+from salt.ext import six
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ def _get_options(ret=None):
 
 def _return_states(connection, data, host, port):
     if data.get('fun') == 'state.sls' or data.get('fun') == 'state.highstate':
-        for state_name, state in data.get('return').iteritems():
+        for state_name, state in six.iteritems(data.get('return')):
             # Add extra data to state event
             state.update({'state_name': state_name,
                           'state_id': state_name.split('_|-')[1],

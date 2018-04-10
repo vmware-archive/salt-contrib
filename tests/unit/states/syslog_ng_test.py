@@ -13,11 +13,11 @@ from salttesting import skipIf, TestCase
 from salttesting.helpers import ensure_in_syspath
 from salttesting.mock import NO_MOCK, NO_MOCK_REASON, MagicMock, patch
 
-ensure_in_syspath('../../')
-
 from salt.states import syslog_ng
 from salt.modules import syslog_ng as syslog_ng_module
-import salt 
+import salt
+
+ensure_in_syspath('../../')
 
 syslog_ng.__salt__ = {}
 syslog_ng_module.__salt__ = {}
@@ -283,7 +283,7 @@ GIVEN_CONFIG = {
                   );
                };
 """
-    ) 
+    )
 
 }
 

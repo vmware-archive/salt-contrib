@@ -19,16 +19,19 @@ try:
 except ImportError:
     HAS_DEPS = False
 
+
 def __virtual__():
     if not HAS_DEPS:
         return False
     return 'cloudflare'
 
+
 def _pyflare_obj():
     '''
     Return a new Pyflare object given API credentials provided via pillar
     '''
-    return Pyflare(__salt__['pillar.get']('cloudflare:email',''), __salt__['pillar.get']('cloudflare:apikey',''))
+    return Pyflare(__salt__['pillar.get']('cloudflare:email', ''), __salt__['pillar.get']('cloudflare:apikey', ''))
+
 
 def _get_ip_by_cidr(cidr):
     '''
@@ -68,6 +71,7 @@ def _get_ip_by_iface(iface, rec_type):
 
     return __salt__['network.interfaces']()[iface][iface_type][0]['address']
 
+
 def _existing_record(zone, rec_name, type):
     '''
     Searches for (and returns) an existing record of given zone, record name, and type.
@@ -77,10 +81,11 @@ def _existing_record(zone, rec_name, type):
             return rec
     return None
 
+
 def _interpret_name(rec_name):
     '''
-    Returns a "host" section for a DNS record by substituting values for any 
-    supported 
+    Returns a "host" section for a DNS record by substituting values for any
+    supported
     '''
     if '%M' in rec_name:
         return rec_name.replace('%M', __salt__['grains.get']('id', ''))
@@ -89,6 +94,7 @@ def _interpret_name(rec_name):
             return rec_name.replace('%H', __salt__['grains.get']('host', ''))
         else:
             return __salt__['grains.get']('host', '')
+
 
 def add_record(zone=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False, **kwargs):
     '''
@@ -105,7 +111,7 @@ def add_record(zone=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False, 
 
         salt '*' cloudflare.add_record example.com cidr=10.0.0.0/8
 
-    By default, the minion's ``host`` grain will be used for the host portion of the DNS record. 
+    By default, the minion's ``host`` grain will be used for the host portion of the DNS record.
     However, you may modify this by using '%H' within a string passed as ``rec_name``:
 
     .. code-block:: bash
@@ -132,9 +138,9 @@ def add_record(zone=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False, 
         return 'ERROR: you must provide a DNS zone.'
     if len(set(ip_sources) & set(kwargs.keys())) != 1:
         return 'ERROR: you must provide a source for IP address (one of %s)' % ', '.join(ip_sources)
-    if type not in ['A','AAAA']:
+    if type not in ['A', 'AAAA']:
         return 'ERROR: record type must be A or AAAA.'
-    
+
     content = None
     if 'iface' in kwargs:
         content = _get_ip_by_iface(kwargs['iface'], type)
@@ -158,6 +164,7 @@ def add_record(zone=None, rec_name='%H', type='A', ttl=1, edit_if_exists=False, 
         cf.rec_new(zone, type, name, content, ttl=ttl)
         msgs = ["added %s record: %s.%s => %s" % (type, name, zone, content)]
     return msgs
+
 
 def del_record(zone=None, rec_name='%H', type='A'):
     '''

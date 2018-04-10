@@ -6,9 +6,9 @@ A module for managing webalizer web statistics
 :platform: RedHat, Debian Families
 :depends: webalizer cron
 
-Assumes that the appropriate web server configuration and access 
-controls have already been configured. Will generate a script 
-for updating webalizer and will use it with cron to enable automatic 
+Assumes that the appropriate web server configuration and access
+controls have already been configured. Will generate a script
+for updating webalizer and will use it with cron to enable automatic
 updates.
 '''
 
@@ -19,7 +19,7 @@ import re
 
 # Scripts and paths
 
-webalizer_update='''#!/bin/bash
+webalizer_update = '''#!/bin/bash
 /usr/bin/webalizer -c {0}
 '''
 
@@ -108,7 +108,7 @@ def configure(domain, logfile, period='hourly'):
         with open(webalizer_scr_path, 'w') as f:
             f.write(update)
             os.chmod(webalizer_scr_path, 0700)
-    
+
         # Set up cron
         if period == 'hourly':
             if not os.path.exists(webalizer_hourly):
@@ -120,14 +120,14 @@ def configure(domain, logfile, period='hourly'):
         return True
 
     return False
-            
-    
+
+
 def disable():
     '''
     Disable automatic updates.
 
     CLI_Example::
-    
+
         salt 'server' webalizer.disable
     '''
     _remove(webalizer_hourly)
@@ -140,7 +140,7 @@ def update():
     Update webalizer stats immediately.
 
     CLI_Example::
-    
+
         salt 'server' webalizer.update
     '''
     result = _runcmd(webalizer_scr_path)
@@ -148,5 +148,3 @@ def update():
         # We have a return code, must be an error
         return False
     return True
-
-

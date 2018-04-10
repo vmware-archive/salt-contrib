@@ -15,6 +15,7 @@
 
     Which ever reports a valid IP first
 '''
+from __future__ import absolute_import
 
 # Import Python Libs
 import contextlib

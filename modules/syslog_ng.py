@@ -636,7 +636,7 @@ def set_binary_path(name):
     old = __SYSLOG_NG_BINARY_PATH
     _SYSLOG_NG_BINARY_PATH = name
     changes = _format_changes(old, name)
-    return _format_state_result(name, result=True,changes=changes)
+    return _format_state_result(name, result=True, changes=changes)
 
 
 def set_config_file(name):

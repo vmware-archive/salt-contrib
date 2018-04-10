@@ -14,6 +14,7 @@
     Note that not all datacenters were supported when this feature was first
     released.
 '''
+from __future__ import absolute_import
 
 # Import Python Libs
 import requests

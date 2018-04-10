@@ -25,13 +25,14 @@ import logging
 import salt.utils
 
 from salt.exceptions import (
-    CommandExecutionError, 
-    MinionError, 
-    SaltInvocationError, 
+    CommandExecutionError,
+    MinionError,
+    SaltInvocationError,
     TimedProcTimeoutError
 )
 
 log = logging.getLogger(__name__)
+
 
 def __virtual__():
     '''
@@ -41,6 +42,7 @@ def __virtual__():
     if salt.utils.which(cmd):
         return 'cdpr'
     return False
+
 
 def _parse_output(cdpr_out):
     '''
@@ -67,11 +69,12 @@ def _parse_output(cdpr_out):
     # I hope this isn't too brittle
     ret['device_id'] = outlines[-5].split()[-1:]
     ret['addresses'] = outlines[-3].split()[-1:]
-    ret['port_id']   = outlines[-1].split()[-1:]
+    ret['port_id'] = outlines[-1].split()[-1:]
     return ret
 
+
 # TODO verbosity not yet supported because we can't parse it yet
-#def listen(device=None, timeout=61, verbosity=None):
+# def listen(device=None, timeout=61, verbosity=None):
 def listen(device=None, timeout=61):
     '''
     Runs the CDPR tool, and returns its output in a dict, or
@@ -84,7 +87,7 @@ def listen(device=None, timeout=61):
         salt '*' cdpr.listen eth0 120
     '''
 
-    if device == None or device == "":
+    if device is None or device == "":
         device = 'any'
 
     cmd = 'cdpr -d {0}'.format(device)

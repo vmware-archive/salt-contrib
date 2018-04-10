@@ -1,16 +1,17 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Get some grains information that is only available in Amazon AWS
 Author: Erik Günther, J C Lawrence <claw@kanga.nu>, Mark McGuire
 """
+from __future__ import absolute_import
+
 import logging
 import socket
 import json
 try:
     from http.client import HTTPConnection, BadStatusLine
 except ImportError:
-    from httplib import HTTPConnection, BadStatusLine
+    from salt.ext.six.moves.http_client import HTTPConnection, BadStatusLine
 
 
 # Set up logging
@@ -34,7 +35,7 @@ def _get_ec2_hostinfo(path=""):
     Returns a nested dictionary containing all the EC2 metadata. All keys
     are converted from dash case to snake case.
     """
-    resp = _call_aws("/latest/meta-data/%s" % path)
+    resp = _call_aws("/latest/meta-data/{0}".format(path))
     resp_data = resp.read().decode('utf-8').strip()
     d = {}
     for line in resp_data.split("\n"):
@@ -43,7 +44,7 @@ def _get_ec2_hostinfo(path=""):
         if path == "instance-id/":
             return {'instance-id': line}
         if line[-1] != "/":
-            call_response = _call_aws("/latest/meta-data/%s" % (path + line))
+            call_response = _call_aws("/latest/meta-data/{0}".format(path + line))
             call_response_data = call_response.read().decode('utf-8')
             # avoid setting empty grain
             if call_response_data == '':
@@ -136,7 +137,7 @@ def _get_instance_identity():
         if not i or i == 'document':  # document saved in _get_ec2_additional
             continue
 
-        response = _call_aws('/latest/dynamic/instance-identity/%s' % i)
+        response = _call_aws('/latest/dynamic/instance-identity/{0}'.format(i))
         result[i] = response.read()
 
     return result
@@ -158,15 +159,15 @@ def ec2_info():
         return {}
 
     except socket.timeout as serr:
-        LOG.info("Could not read EC2 data (timeout): %s" % (serr))
+        LOG.info("Could not read EC2 data (timeout): {0}".format(serr))
         return {}
 
     except socket.error as serr:
-        LOG.info("Could not read EC2 data (error): %s" % (serr))
+        LOG.info("Could not read EC2 data (error): {0}".format(serr))
         return {}
 
     except IOError as serr:
-        LOG.info("Could not read EC2 data (IOError): %s" % (serr))
+        LOG.info("Could not read EC2 data (IOError): {0}".format(serr))
         return {}
 
 
@@ -184,18 +185,13 @@ def ec2_instance_id():
         return {}
 
     except socket.timeout as serr:
-        LOG.info("Could not read EC2 data (timeout): %s" % (serr))
+        LOG.info("Could not read EC2 data (timeout): {0}".format(serr))
         return {}
 
     except socket.error as serr:
-        LOG.info("Could not read EC2 data (error): %s" % (serr))
+        LOG.info("Could not read EC2 data (error): {0}".format(serr))
         return {}
 
     except IOError as serr:
-        LOG.info("Could not read EC2 data (IOError): %s" % (serr))
+        LOG.info("Could not read EC2 data (IOError): {0}".format(serr))
         return {}
-
-
-if __name__ == "__main__":
-    print(ec2_info())
-    print(ec2_instance_id())

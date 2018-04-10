@@ -94,4 +94,3 @@ def directory(name, recurse=False, indent=0, file_filter='*', dir_filter='*'):
         if not recurse:
             break
     return
-

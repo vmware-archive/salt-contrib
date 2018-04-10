@@ -8,7 +8,7 @@ A module for managing awstats web statsicics in static mode
 
 Assumes that the appropriate web server configuration and access
 controls have already been configured. Will generate a script for
-updating awstats static files, and will use it with cron to enable 
+updating awstats static files, and will use it with cron to enable
 automatic updates.
 
 '''
@@ -127,7 +127,7 @@ def configure(domain, logfile, period="hourly"):
         with open(awstats_scr_path, 'w') as f:
             f.write(update)
             os.chmod(awstats_scr_path, 0700)
-        
+
         # Set up cron
         if period == 'hourly':
             if not os.path.exists(awstats_hourly):
@@ -146,7 +146,7 @@ def disable():
     Disable automatic updates.
 
     CLI_Example::
-    
+
         salt 'server' awstats.disable
     '''
     _remove(awstats_hourly)
@@ -167,4 +167,3 @@ def update():
         # We have a return code, must be an error
         return False
     return True
-    

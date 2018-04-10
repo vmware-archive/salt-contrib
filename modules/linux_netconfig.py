@@ -5,11 +5,13 @@ Module to gather network configuration from Linux hosts
 import re
 import subprocess
 
+
 def __virtual__():
     """
     Only run on Linux systems
     """
     return 'netconfig' if __grains__['kernel'] == 'Linux' else False
+
 
 # num name flags extra link addr brd
 LINK_MATCHER = re.compile(r"""
@@ -61,7 +63,6 @@ NEIGH_MATCHER = re.compile(r"""
     """, re.X | re.M)
 
 
-
 def _int_if_possible(string):
     """
     PRIVATE METHOD
@@ -72,13 +73,15 @@ def _int_if_possible(string):
     except ValueError:
         return string
 
+
 def _dict_from_spaced_kv(string):
     """
     PRIVATE METHOD
     Turns a string "foo bar baz 0 trailing" into {'foo':'bar','baz':0}
     """
     list = string.split(' ')
-    return dict([(list[n],_int_if_possible(list[n+1])) for n in range(0,len(list)/2*2,2)])
+    return dict([(list[n], _int_if_possible(list[n+1])) for n in range(0, len(list)/2*2, 2)])
+
 
 def _structured_link(match):
     """
@@ -91,13 +94,14 @@ def _structured_link(match):
         'flags': match.group('flags').split(","),
         'link':  match.group('link'),
         'addr':  match.group('addr'),
-        'brd':   match.group('brd') })
+        'brd':   match.group('brd')})
 
     extra = match.group('extra')
     if extra:
         res[1]['settings'] = _dict_from_spaced_kv(extra)
 
     return res
+
 
 def _structured_addr(match):
     """
@@ -111,7 +115,7 @@ def _structured_addr(match):
         'scope': match.group('scope'),
     })
 
-    brd   = match.group('brd')
+    brd = match.group('brd')
     alias = match.group('alias')
     extra = match.group('extra')
 
@@ -124,6 +128,7 @@ def _structured_addr(match):
 
     return res
 
+
 def _structured_neigh(match):
     """
     PRIVATE METHOD
@@ -131,13 +136,14 @@ def _structured_neigh(match):
     """
     identifier = (match.group('addr'), match.group('dev'))
     infos = {}
-    state  = match.group('state')
+    state = match.group('state')
     lladdr = match.group('lladdr')
     if state:
         infos['state'] = state
     if lladdr:
         infos['lladdr'] = lladdr
     return identifier, infos
+
 
 def _structured_links_output(output):
     """
@@ -152,6 +158,7 @@ def _structured_links_output(output):
             res[name] = infos
 
     return res
+
 
 def _structured_addresses_output(output):
     """
@@ -168,6 +175,7 @@ def _structured_addresses_output(output):
 
     return res
 
+
 def _structured_neigh_output(output):
     """
     PRIVATE METHOD
@@ -182,12 +190,14 @@ def _structured_neigh_output(output):
 
     return res
 
+
 def links():
     """
     Return information about all network links on the system
     """
     output = __salt__['cmd.run']('ip -o link show')
     return _structured_links_output(output)
+
 
 def link(name):
     """
@@ -198,6 +208,7 @@ def link(name):
     if match:
         return _structured_link(LINK_MATCHER.match(output))
 
+
 def addresses_with_options(options):
     """
     Return information about addresses for a given "ip addr show" set of options
@@ -206,11 +217,13 @@ def addresses_with_options(options):
     output = __salt__['cmd.run']('ip -o addr show {0}'.format(options))
     return _structured_addresses_output(output)
 
+
 def addresses():
     """
     Return information about addresses for all network links on the system
     """
     return addresses_with_options('')
+
 
 def addresses_for(name):
     """
@@ -220,6 +233,7 @@ def addresses_for(name):
     if parsed.has_key(name):
         return parsed[name]
 
+
 def neighbours_with_options(options):
     """
     Return information about neighbours for a given "ip neigh show" set of options
@@ -228,17 +242,20 @@ def neighbours_with_options(options):
     output = __salt__['cmd.run']('ip -o neigh show {0}'.format(options))
     return _structured_neigh_output(output)
 
+
 def neighbours():
     """
     Return information about all known neighbours
     """
     return neighbours_with_options('')
 
+
 def neighbours_for(name):
     """
     Return information about neighbours for a given network link on the system
     """
     return neighbours_with_options('dev {0}'.format(name))
+
 
 def all_neighbours():
     """

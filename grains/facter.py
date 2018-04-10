@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 import salt.utils
 import salt.modules.puppet
 import salt.modules.cmdmod
 
 import logging
 import json
+from salt.ext import six
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +40,7 @@ def facter():
         except (KeyError, ValueError):
             log.critical('Failed to load json facter data')
             return {}
-        for key, value in facts.iteritems():
+        for key, value in six.iteritems(facts):
             # Prefix fact names with 'facter_', so it doesn't
             # conflict with existing or future grain names.
             grain = 'facter_{0}'.format(key)

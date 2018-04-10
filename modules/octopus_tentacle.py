@@ -543,6 +543,7 @@ def get_registration(server, api_key):
 
     return ret
 
+
 def set_registration(server, envs, roles, api_key, user=None, password=None, port=10943,
                      comms=_DEFAULT_COMMS, instance=_DEFAULT_INSTANCE):
     '''
@@ -618,6 +619,7 @@ def set_registration(server, envs, roles, api_key, user=None, password=None, por
         return True
     _LOG.error('Unable to execute command: %s\nError: %s', cmd, cmd_ret['stderr'])
     return False
+
 
 def set_deregistration(server, api_key, user=None, password=None, instance=_DEFAULT_INSTANCE):
     '''

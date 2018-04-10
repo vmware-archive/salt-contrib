@@ -316,6 +316,7 @@ def latest_version(*names, **kwargs):
         return ret[names[0]]
     return ret
 
+
 # available_version is being deprecated
 available_version = latest_version
 

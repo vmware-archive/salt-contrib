@@ -5,6 +5,7 @@ Support for FAHClient
 import os
 import salt.utils
 
+
 def __virtual__():
     '''
     Only load the module if FAHClient is installed
@@ -17,7 +18,7 @@ def __virtual__():
 def version():
     '''
     Return FAHClient version
-    
+
     CLI Example::
 
         salt '*' fahclient.version
@@ -30,29 +31,29 @@ def version():
 def user(name):
     '''
     Configure FAHClient username
-    
+
     CLI Example::
 
         salt '*' fahclient.username <username>
     '''
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
-        __salt__['file.sed'](filename, '<user value=".*"/>', 
+        __salt__['file.sed'](filename, '<user value=".*"/>',
             '<user value="{0}"/>'.format(name))
     return name
-    
+
 
 def team(team):
     '''
     Configure FAHClient team
-    
+
     CLI Example::
 
         salt '*' fahclient.team <team number>
     '''
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
-        __salt__['file.sed'](filename, '<team value=".*"/>', 
+        __salt__['file.sed'](filename, '<team value=".*"/>',
             '<team value="{0}"/>'.format(team))
     return team
 
@@ -60,14 +61,14 @@ def team(team):
 def passkey(passkey):
     '''
     Configure FAHClient passkey
-    
+
     CLI Example::
-    
+
         salt '*' fahclient.passkey <passkey>
     '''
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
-        __salt__['file.sed'](filename, '<passkey value=".*"/>', 
+        __salt__['file.sed'](filename, '<passkey value=".*"/>',
             '<passkey value="{0}"/>'.format(passkey))
     return passkey
 
@@ -75,14 +76,14 @@ def passkey(passkey):
 def power(power):
     '''
     Configure FAHClient power setting
-    
+
     CLI Example::
-    
+
         salt '*' fahclient.power [<off>|<idle light>|<idle>|<light>|<medium>|<full>]
     '''
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
-        __salt__['file.sed'](filename, '<power value=".*"/>', 
+        __salt__['file.sed'](filename, '<power value=".*"/>',
             '<power value="{0}"/>'.format(power))
     return power
 
@@ -90,10 +91,10 @@ def power(power):
 def start():
     '''
     Start the FAHClient
-    
+
     CLI Example::
 
-	    salt '*' fahclient.start
+        salt '*' fahclient.start
     '''
     ret = __salt__['service.start']('FAHClient')
     return ret
@@ -102,7 +103,7 @@ def start():
 def stop():
     '''
     Stop the FAHClient
-    
+
     CLI Example::
 
         salt '*' fahclient.stop
@@ -114,7 +115,7 @@ def stop():
 def restart():
     '''
     Restart the FAHClient
-    
+
     CLI Example::
 
         salt '*' fahclient.restart
@@ -126,7 +127,7 @@ def restart():
 def reload():
     '''
     Restart the FAHClient
-    
+
     CLI Example::
 
         salt '*' fahclient.reload
@@ -138,7 +139,7 @@ def reload():
 def status():
     '''
     Restart the FAHClient
-    
+
     CLI Example::
 
         salt '*' fahclient.status

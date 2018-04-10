@@ -34,6 +34,7 @@ _LOG = logging.getLogger(__name__)
 # Define the module's virtual name
 __virtualname__ = 'win_msloop'
 
+
 def __virtual__():
     '''
     Only works on Windows systems that have WMI and DevCon.
@@ -47,6 +48,7 @@ def __virtual__():
         else:
             _LOG.debug('Unable to load dependencies.')
     return False
+
 
 def _get_address_family_as_int(name):
     '''
@@ -62,6 +64,7 @@ def _get_address_family_as_int(name):
 
     _LOG.debug('Address family int: %s', address_family_mapping[name])
     return address_family_mapping[name]
+
 
 def _interface_name_is_valid(name):
     '''
@@ -80,6 +83,7 @@ def _interface_name_is_valid(name):
         raise SaltInvocationError(('Interface name exceeded maximum length of {}'
                                    ' characters.').format(max_length))
     return False
+
 
 def _list_interfaces(name=None, as_instance_id=False):
     '''
@@ -119,6 +123,7 @@ def _list_interfaces(name=None, as_instance_id=False):
         _LOG.debug('No valid interfaces found.')
     return ret
 
+
 def get_interface(name, as_instance_id=False):
     '''
     Get the display name or instance id for the provided interface.
@@ -148,6 +153,7 @@ def get_interface(name, as_instance_id=False):
             ret = interfaces[0]
     return ret
 
+
 def get_interfaces():
     '''
     Get the display names for all valid interfaces.
@@ -162,6 +168,7 @@ def get_interfaces():
     '''
 
     return _list_interfaces()
+
 
 def get_interface_setting(interface, address_family, *args):
     '''
@@ -201,6 +208,7 @@ def get_interface_setting(interface, address_family, *args):
         except (AttributeError, IndexError) as error:
             _LOG.error('Error getting MSFT_NetIPInterface: %s', error)
     return ret
+
 
 def set_interface_setting(interface, address_family, **kwargs):
     '''
@@ -272,6 +280,7 @@ def set_interface_setting(interface, address_family, **kwargs):
         return True
     return False
 
+
 def rename_interface(current_name, name):
     '''
     Change the display name of the interface specified.
@@ -326,6 +335,7 @@ def rename_interface(current_name, name):
     else:
         _LOG.error('Interface not present: %s', current_name)
     return False
+
 
 def new_interface(name):
     '''
@@ -386,6 +396,7 @@ def new_interface(name):
             _LOG.error('Unable to execute command: %s', command)
     return False
 
+
 def delete_interface(name):
     '''
     Remove an interface with the display name provided.
@@ -418,4 +429,3 @@ def delete_interface(name):
         _LOG.debug('Interface already absent: %s', name)
         return True
     return False
-

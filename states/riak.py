@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 '''
 Support for riak$
 '''
+from __future__ import absolute_import
 
 import salt.utils
+
 
 def __virtual__():
     '''
@@ -20,7 +23,7 @@ def running():
     '''
     ret = {'name': 'riak', 'result': None, 'comment': '', 'changes': {}}
     is_up = __salt__['riak.is_up']()
-    if is_up == False:
+    if not is_up:
         if __salt__['riak.start']():
             ret['result'] = True
             ret['changes']['riak'] = "Riak started"

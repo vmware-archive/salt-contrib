@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Original file:
+# https://github.com/saltstack/salt/blob/develop/salt/utils/pyobjects.py
 '''
 Backport of Evan Borgstrom's pyobjects renderer.
 
@@ -7,19 +9,18 @@ https://github.com/saltstack/salt/blob/develop/salt/renderers/pyobjects.py
 
 To use, copy this file to the _renderers directory within your file roots
 (e.g., /srv/salt/_renderers/pybojects.py) and execute:
-'''
 
-# Original file:
-# https://github.com/saltstack/salt/blob/develop/salt/utils/pyobjects.py
-'''
 :maintainer: Evan Borgstrom <evan@borgstrom.ca>
 
 Pythonic object interface to creating state data, see the pyobjects renderer
 for more documentation.
 '''
+from __future__ import absolute_import
+
 from collections import namedtuple
 
 from salt.utils.odict import OrderedDict
+from salt.ext import six
 
 REQUISITES = ('require', 'watch', 'use', 'require_in', 'watch_in', 'use_in')
 
@@ -55,7 +56,7 @@ class StateRegistry(object):
     def salt_data(self):
         states = OrderedDict([
             (id_, states_)
-            for id_, states_ in self.states.iteritems()
+            for id_, states_ in six.iteritems(self.states)
         ])
 
         if self.includes:
@@ -64,7 +65,7 @@ class StateRegistry(object):
         if self.extends:
             states['extend'] = OrderedDict([
                 (id_, states_)
-                for id_, states_ in self.extends.iteritems()
+                for id_, states_ in six.iteritems(self.extends)
             ])
 
         self.empty()
@@ -79,7 +80,7 @@ class StateRegistry(object):
 
         if id_ in attr:
             if state.full_func in attr[id_]:
-                raise DuplicateState("A state with id '%s', type '%s' exists" % (
+                raise DuplicateState("A state with id '{0}', type '{1}' exists".format(
                     id_,
                     state.full_func
                 ))
@@ -87,7 +88,7 @@ class StateRegistry(object):
             attr[id_] = OrderedDict()
 
         # if we have requisites in our stack then add them to the state
-        if len(self.requisites) > 0:
+        if self.requisites:
             for req in self.requisites:
                 if req.requisite not in state.kwargs:
                     state.kwargs[req.requisite] = []
@@ -153,9 +154,9 @@ class StateFactory(object):
         self.valid_funcs = valid_funcs
 
     def __getattr__(self, func):
-        if len(self.valid_funcs) > 0 and func not in self.valid_funcs:
-            raise InvalidFunction("The function '%s' does not exist in the "
-                                  "StateFactory for '%s'" % (func, self.module))
+        if self.valid_funcs and func not in self.valid_funcs:
+            raise InvalidFunction("The function '{0}' does not exist in the "
+                                  "StateFactory for '{1}'".format(func, self.module))
 
         def make_state(id_, **kwargs):
             return State(
@@ -228,15 +229,15 @@ class State(object):
         # have consistent ordering for tests
         return [
             {k: kwargs[k]}
-            for k in sorted(kwargs.iterkeys())
+            for k in sorted(six.iterkeys(kwargs))
         ]
 
     @property
     def full_func(self):
-        return "%s.%s" % (self.module, self.func)
+        return "{0}.{1}".format(self.module, self.func)
 
     def __str__(self):
-        return "%s = %s:%s" % (self.id_, self.full_func, self.attrs)
+        return "{0} = {1}:{2}".format(self.id_, self.full_func, self.attrs)
 
     def __call__(self):
         return {
@@ -271,7 +272,7 @@ class SaltObject(object):
         # now transform using namedtuples
         self.mods = {}
         for mod in _mods:
-            mod_object = namedtuple('%sModule' % mod.capitalize(),
+            mod_object = namedtuple('{0}Module'.format(mod.capitalize()),
                                     _mods[mod].keys())
 
             self.mods[mod] = mod_object(**_mods[mod])
@@ -508,14 +509,14 @@ def render(template, saltenv='base', sls='',
             part.capitalize()
             for part in mod.split('_')
         ])
-        mod_cmd = "%s = StateFactory('%s', registry=_registry, valid_funcs=['%s'])" % (
+        mod_cmd = "{0} = StateFactory('{1}', registry=_registry, valid_funcs=['{2}'])".format(
             mod_camel, mod,
             "','".join(_st_funcs[mod])
         )
         if sys.version > 3:
             exec(mod_cmd, _st_globals, _st_locals)
         else:
-            exec mod_cmd in _st_globals, _st_locals
+            exec(mod_cmd, _st_globals, _st_locals)
         _globals[mod_camel] = _st_locals[mod_camel]
 
     # add our include and extend functions
@@ -545,6 +546,6 @@ def render(template, saltenv='base', sls='',
     if sys.version > 3:
         exec(template.read(), _globals, _locals)
     else:
-        exec template.read() in _globals, _locals
+        exec(template.read(), _globals, _locals)
 
     return _registry.salt_data()

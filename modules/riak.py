@@ -1,12 +1,16 @@
+# -*- coding: utf-8 -*-
 '''
 Support for riak
 '''
+from __future__ import absolute_import
 
 import salt.utils
+
 
 __outputter__ = {
     'signal': 'txt',
 }
+
 
 def __virtual__():
     '''
@@ -29,13 +33,13 @@ def version():
     cmd = 'riak version'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     return msgs[0]
 
 
 def ping():
-    if is_up() == True:
+    if is_up():
         return "pong"
     else:
         return ""
@@ -68,9 +72,9 @@ def start():
     cmd = 'riak start'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
-    if len(msgs) == 0 or msgs[0] == "Node is already running!":
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
+    if not msgs or msgs[0] == "Node is already running!":
         return True
     else:
         return False
@@ -88,8 +92,8 @@ def stop():
     cmd = 'riak stop'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0] in ("ok", "Node is not running!"):
         return True
     else:
@@ -108,8 +112,8 @@ def restart():
     cmd = 'riak restart'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0] == "ok":
         return True
     else:
@@ -129,11 +133,11 @@ def cluster_join(node):
     '''
     if len(node.split("@")) != 2:
         return False
-    cmd = 'riak-admin cluster join %s' % node
+    cmd = 'riak-admin cluster join {0}'.format(node)
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0].startswith("Success"):
         return True
     else:
@@ -142,7 +146,7 @@ def cluster_join(node):
 
 def cluster_leave(node=None, force=False):
     '''
-    Instruct this node to hand off its data partitions, leave the cluster and 
+    Instruct this node to hand off its data partitions, leave the cluster and
     shutdown.
 
     node
@@ -150,8 +154,8 @@ def cluster_leave(node=None, force=False):
         If this is not supplied, the node will attempt to remove itself.
 
     force
-        Remove <node> from the cluster without first handing off data 
-        partitions. This command is designed for crashed, unrecoverable nodes, 
+        Remove <node> from the cluster without first handing off data
+        partitions. This command is designed for crashed, unrecoverable nodes,
         and should be used with caution.
 
     CLI Example::
@@ -160,16 +164,16 @@ def cluster_leave(node=None, force=False):
     '''
     if node is not None and len(node.split("@")) != 2:
         return False
-    if force == False:
+    if not force:
         cmd = 'riak-admin cluster leave'
     else:
         cmd = 'riak-admin cluster force-remove'
     if node is not None:
-        cmd = '%s %s' % (cmd, node)
+        cmd = '{0} {1}'.format(cmd, node)
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0].startswith("Success"):
         return True
     else:
@@ -188,8 +192,8 @@ def cluster_replace(node1, node2, force=False):
         The full node name, in the form user@ip-address
 
     force
-        Remove <node> from the cluster without first handing off data 
-        partitions. This command is designed for crashed, unrecoverable nodes, 
+        Remove <node> from the cluster without first handing off data
+        partitions. This command is designed for crashed, unrecoverable nodes,
         and should be used with caution.
 
     CLI Example::
@@ -198,11 +202,11 @@ def cluster_replace(node1, node2, force=False):
     '''
     if len(node1.split("@")) != 2 and len(node2.split("@")) != 2:
         return False
-    cmd = 'riak-admin cluster replace %s %s' % (node1, node2)
+    cmd = 'riak-admin cluster replace {0} {1}'.format(node1, node2)
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0].startswith("Success"):
         return True
     else:
@@ -220,8 +224,8 @@ def cluster_plan():
     cmd = 'riak-admin cluster plan'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0] == "There are no staged changes":
         return None
     else:
@@ -239,8 +243,8 @@ def cluster_clear():
     cmd = 'riak-admin cluster clear'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0] == "Cleared staged cluster changes":
         return True
     else:
@@ -258,8 +262,8 @@ def cluster_commit():
     cmd = 'riak-admin cluster commit'
     out = __salt__['cmd.run'](cmd).split('\n')
     msgs = [line for line in out if not line.startswith("!!!!")]
-    if len(msgs) > 0 and msgs[0].startswith("Attempting"):
-        del(msgs[0])
+    if msgs and msgs[0].startswith("Attempting"):
+        del msgs[0]
     if msgs[0].startswith("You must verify the plan"):
         return cluster_plan()
     else:
@@ -276,7 +280,7 @@ def ringready():
     '''
     cmd = 'riak-admin ringready'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) > 0 and out[0].startswith("TRUE"):
+    if out and out[0].startswith("TRUE"):
         return True
     else:
         return False
@@ -284,7 +288,7 @@ def ringready():
 
 def ring_status():
     '''
-    Outputs the current claimant, its status, ringready, pending ownership 
+    Outputs the current claimant, its status, ringready, pending ownership
     handoffs and a list of unreachable nodes.
 
     CLI Example::
@@ -296,7 +300,7 @@ def ring_status():
     out = out[1:len(out)]
     ret = []
     for line in out:
-        if len(line) > 0 and line[:1] != "=" and line[:1] != " ":
+        if line and line[:1] != "=" and line[:1] != " ":
             ret.append(line)
     return ret
 
@@ -314,7 +318,7 @@ def member_status():
     out = out[1:len(out)]
     ret = []
     for line in out:
-        if len(line) > 0 and line[:1] != "=" and line[:1] != "-":
+        if line and line[:1] != "=" and line[:1] != "-":
             ret.append(line)
     return ret
 
@@ -345,7 +349,7 @@ def diag():
     '''
     cmd = 'riak-admin diag'
     out = __salt__['cmd.run'](cmd).split('\n')
-    if len(out) == 1 and len(out[0]) == 0:
+    if len(out) == 1 and not out[0]:
         return "Nothing to report"
     else:
         return out

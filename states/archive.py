@@ -7,10 +7,13 @@ Archive states
 
 '''
 
+from __future__ import absolute_import
+
 import logging
 import os
 
 log = logging.getLogger(__name__)
+
 
 def extracted(name, source, archive_format, tar_options=None, source_hash=None,
               if_missing=None):
@@ -112,8 +115,8 @@ def extracted(name, source, archive_format, tar_options=None, source_hash=None,
     else:
         log.debug("Untar %s in %s", filename, name)
         files = __salt__['archive.tar'](options='xv{0}f'.format(tar_options),
-                            tarfile=filename, dest=name)
-    if len(files) > 0:
+                                        tarfile=filename, dest=name)
+    if not files:
         ret['result'] = True
         ret['changes']['directories_created'] = [name]
         if if_missing != name:

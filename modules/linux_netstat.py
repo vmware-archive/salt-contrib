@@ -1,10 +1,12 @@
 __virtualname__ = 'netconfig'
 
+
 def __virtual__():
     """
     Only run on Linux systems
     """
     return 'netstat' if __grains__['kernel'] == 'Linux' else False
+
 
 def s():
     """
@@ -13,7 +15,7 @@ def s():
     """
     stats = {}
     lines = open('/proc/net/netstat').readlines() + \
-            open('/proc/net/snmp').readlines()
+        open('/proc/net/snmp').readlines()
 
     currently_in_header_line = True
     for line in lines:
