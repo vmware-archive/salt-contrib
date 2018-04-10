@@ -91,8 +91,8 @@ def _gather_update_categories(updateCollection):
 
 class PyWinUpdater:
     def __init__(self, categories=None, skipUI=True, skipDownloaded=True,
-                skipInstalled=True, skipReboot=False, skipPresent=True,
-                softwareUpdates=True, driverUpdates=False, skipHidden=True):
+                 skipInstalled=True, skipReboot=False, skipPresent=True,
+                 softwareUpdates=True, driverUpdates=False, skipHidden=True):
         log.debug('CoInitializing the pycom system')
         pythoncom.CoInitialize()
 
@@ -366,8 +366,8 @@ class PyWinUpdater:
         elif include == 'driver':
             self.driverUpdates = state
         log.debug('new search state: \n\tUI: {0}\n\tDownload: {1}\n\tInstalled: {2}\n\treboot :{3}\n\tPresent: {4}\n\tsoftware: {5}\n\tdriver: {6}'.format(
-                self.skipUI, self.skipDownloaded, self.skipInstalled, self.skipReboot,
-                self.skipPresent, self.softwareUpdates, self.driverUpdates))
+            self.skipUI, self.skipDownloaded, self.skipInstalled, self.skipReboot,
+            self.skipPresent, self.softwareUpdates, self.driverUpdates))
 
     def __str__(self):
         updates = []

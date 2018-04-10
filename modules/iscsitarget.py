@@ -204,7 +204,7 @@ def _add_lun(tid, lun, path, iotype='blockio'):
     out = __salt__['cmd.retcode'](cmd)
     if out:
         log.error('ietadm({0}) Could not attach logical volume to target {1}'.format(
-                out, path))
+            out, path))
         return False
     return True
 

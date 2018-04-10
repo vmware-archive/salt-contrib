@@ -182,7 +182,8 @@ def create_app(name, description='', accesscheck=True, accesslevel='ApplicationL
     pscmd.append(r"$oCOMApplication.Value('ApplicationAccessChecksEnabled') = {0};".format(int(accesscheck)))
     pscmd.append(r"$oCOMApplication.Value('AccessChecksLevel') = {0};".format(_accesslevels[accesslevel]))
     pscmd.append(r"$oCOMApplication.Value('Authentication') = {0};".format(_authentications[authentication]))
-    pscmd.append(r"$oCOMApplication.Value('ImpersonationLevel') = {0};".format(_impersonationlevels[impersonationlevel]))
+    pscmd.append(r"$oCOMApplication.Value('ImpersonationLevel') = {0};".format(
+        _impersonationlevels[impersonationlevel]))
 
     if identity:
         pscmd.append(r"$oCOMApplication.Value('Identity') = '{0}';".format(identity))

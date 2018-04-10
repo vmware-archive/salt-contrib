@@ -39,7 +39,7 @@ def user(name):
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
         __salt__['file.sed'](filename, '<user value=".*"/>',
-            '<user value="{0}"/>'.format(name))
+                             '<user value="{0}"/>'.format(name))
     return name
 
 
@@ -54,7 +54,7 @@ def team(team):
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
         __salt__['file.sed'](filename, '<team value=".*"/>',
-            '<team value="{0}"/>'.format(team))
+                             '<team value="{0}"/>'.format(team))
     return team
 
 
@@ -69,7 +69,7 @@ def passkey(passkey):
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
         __salt__['file.sed'](filename, '<passkey value=".*"/>',
-            '<passkey value="{0}"/>'.format(passkey))
+                             '<passkey value="{0}"/>'.format(passkey))
     return passkey
 
 
@@ -84,7 +84,7 @@ def power(power):
     filename = '/etc/fahclient/config.xml'
     if os.path.exists(filename):
         __salt__['file.sed'](filename, '<power value=".*"/>',
-            '<power value="{0}"/>'.format(power))
+                             '<power value="{0}"/>'.format(power))
     return power
 
 

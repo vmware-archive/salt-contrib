@@ -5,13 +5,13 @@ Salt module to manage openvz hosts through vzctl and vzlist.
 import salt.utils
 
 __outputter__ = {
-                'version': 'txt',
-                'vzlist': 'txt',
-                'execute': 'txt',
-                'start': 'txt',
-                'stop': 'txt',
-                'restart': 'txt'
-                }
+    'version': 'txt',
+    'vzlist': 'txt',
+    'execute': 'txt',
+    'start': 'txt',
+    'stop': 'txt',
+    'restart': 'txt'
+}
 
 
 def __virtual__():
@@ -48,7 +48,7 @@ def vzlist():
 
 
 def execute(ctid=None,
-          option=None):
+            option=None):
     '''
     Execute a command on a container.
 
@@ -65,17 +65,17 @@ def execute(ctid=None,
 
     if ret:
         output = _runCommand(
-                            "exec",
-                            ctid,
-                            option
-                            )
+            "exec",
+            ctid,
+            option
+        )
         return output
     else:
         return error
 
 
 def start(ctid=None,
-        option=None):
+          option=None):
     '''
     Start a container.
 
@@ -96,10 +96,10 @@ def start(ctid=None,
 
     if ret:
         output = _runCommand(
-                             "start",
-                             ctid,
-                             option
-                             )
+            "start",
+            ctid,
+            option
+        )
         return output
     else:
         return error
@@ -127,10 +127,10 @@ def stop(ctid=None,
 
     if ret:
         output = _runCommand(
-                            "stop",
-                            ctid,
-                            option
-                            )
+            "stop",
+            ctid,
+            option
+        )
         return output
     else:
         return error
@@ -158,10 +158,10 @@ def restart(ctid=None,
 
     if ret:
         output = _runCommand(
-                            "restart",
-                            ctid,
-                            option
-                            )
+            "restart",
+            ctid,
+            option
+        )
         return output
     else:
         return error
@@ -179,10 +179,10 @@ def _checkCtid(ctid):
 
 
 def _runCommand(
-               command,
-               ctid,
-               option
-               ):
+    command,
+    ctid,
+    option
+):
     '''
     Use salt to run the command and output.
     '''

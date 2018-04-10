@@ -172,6 +172,7 @@ class NamedStatement(Statement):
     '''
     It represents a configuration statement, which has a name, e.g. a source.
     '''
+
     def __init__(self, type, id='', options=None):
         super(NamedStatement, self).__init__(type, id, options, has_name=True)
 

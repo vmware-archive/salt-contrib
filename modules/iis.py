@@ -69,7 +69,8 @@ def _resource_add(resource, name, settings=None, arg_name_override=None):
     if arg_name_override is None:
         arg_name_override = resource.lower()
 
-    cmd_ret = __salt__['cmd.run_all']([appcmd, 'add', resource.upper(), '/{0}.name:{1}'.format(arg_name_override, name)] + settings_params)
+    cmd_ret = __salt__['cmd.run_all']([appcmd, 'add', resource.upper(
+    ), '/{0}.name:{1}'.format(arg_name_override, name)] + settings_params)
     if cmd_ret['retcode'] != 0:
         log.error('failed creating {0}'.format(resource))
         log.debug(cmd_ret['stderr'])
@@ -84,7 +85,8 @@ def _resource_get_config(resource, name, settings):
 
     ret = {}
     for i in settings:
-        cmd_ret = __salt__['cmd.run_all']([appcmd, 'list', resource.upper(), '/{0}.name:{1}'.format(resource.lower(), name), '/text:{0}'.format(i)])
+        cmd_ret = __salt__['cmd.run_all']([appcmd, 'list', resource.upper(
+        ), '/{0}.name:{1}'.format(resource.lower(), name), '/text:{0}'.format(i)])
         if cmd_ret['retcode'] != 0:
             log.error('can\'t get "{0}" from {1} "{2}"'.format(i, resource, name))
             return False
@@ -211,7 +213,8 @@ def cert_list(reg=r'LOCAL_MACHINE\My', fields=None):
         fields = ['Subject', 'Thumbprint', 'SerialNumber']
 
     out = __salt__['cmd.run'](
-        'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(reg, ','.join(fields), "{$_ -ne \"\"}", "{", "}"),
+        'If (Test-Path certlist.out ) {3} Remove-Item -Recurse -Force certlist.out {4} ; Get-ChildItem Cert:{0} | format-list {1} | Out-File certlist.out -append -width 1000 ; cat certlist.out | where {2}'.format(
+            reg, ','.join(fields), "{$_ -ne \"\"}", "{", "}"),
         shell='powershell'
     ).splitlines()
 

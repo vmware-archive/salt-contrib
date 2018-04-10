@@ -63,7 +63,7 @@ def list(runas=None, env=()):
             plugins[match.group('name')] = {
                 'version': match.group('version'),
                 'state': match.group('state'),
-                }
+            }
         else:
             log.warning("line '%s' is invalid", line)
     return plugins

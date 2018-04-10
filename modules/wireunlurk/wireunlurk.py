@@ -143,8 +143,8 @@ def _is_file_hidden(f):
     else:
         try:
             proc = subprocess.Popen("ls -ldO '%s' | awk '{print $5}'" % f, shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT)
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
             output = proc.stdout.read()
             proc.communicate()
             return output.find('hidden') != -1
@@ -197,7 +197,7 @@ def _clean_launchd(launchd_plists):
     for pl in launchd_plists:
         try:
             output = subprocess.check_output(['/bin/launchctl', 'unload', pl],
-                                            stderr=subprocess.STDOUT).rstrip()
+                                             stderr=subprocess.STDOUT).rstrip()
             results[pl] = 'launchctl unload: {0}'.format(output)
         except subprocess.CalledProcessError, e:
             results[pl] = 'launchctl unload: {0}'.format(e.output)
@@ -231,7 +231,6 @@ def _clean(mal_files, infected_apps, BACKUP_DIR):
 
 
 def scan(clean=False):
-
     '''
     Salt execution module to detect and remove WireLurker.
 

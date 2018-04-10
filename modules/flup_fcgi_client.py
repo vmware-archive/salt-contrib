@@ -210,9 +210,9 @@ class Record(object):
 
         if __debug__:
             _debug(9, 'read: fd = %d, type = %d, requestId = %d, '
-                'contentLength = %d' %
-                (sock.fileno(), self.type, self.requestId,
-                self.contentLength))
+                   'contentLength = %d' %
+                   (sock.fileno(), self.type, self.requestId,
+                    self.contentLength))
 
         if self.contentLength:
             try:
@@ -254,9 +254,9 @@ class Record(object):
 
         if __debug__:
             _debug(9, 'write: fd = %d, type = %d, requestId = %d, '
-                'contentLength = %d' %
-                (sock.fileno(), self.type, self.requestId,
-                self.contentLength))
+                   'contentLength = %d' %
+                   (sock.fileno(), self.type, self.requestId,
+                    self.contentLength))
 
         header = struct.pack(FCGI_Header, self.version, self.type,
                              self.requestId, self.contentLength,
