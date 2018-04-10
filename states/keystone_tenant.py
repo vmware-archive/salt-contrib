@@ -30,11 +30,11 @@ def present(name):
         The name of the tenant to manage
     '''
     ret = {
-            'name': name,
-            'changes': {},
-            'result': True,
-            'comment': 'Tenant {0} is already presant'.format(name)
-            }
+        'name': name,
+        'changes': {},
+        'result': True,
+        'comment': 'Tenant {0} is already presant'.format(name)
+    }
     # Check if the tenant exists
     if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
         return ret
@@ -62,11 +62,11 @@ def absent(name):
         The name of the tenant to remove
     '''
     ret = {
-            'name': name,
-            'changes': {},
-            'result': True,
-            'comment': ''
-            }
+        'name': name,
+        'changes': {},
+        'result': True,
+        'comment': ''
+    }
 
     # Check if tenant exists and remove it
     if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
@@ -80,6 +80,6 @@ def absent(name):
             return ret
     # fallback
     ret['comment'] = (
-            'Tenant {0} is not present, so it cannot be removed'
-            ).format(name)
+        'Tenant {0} is not present, so it cannot be removed'
+    ).format(name)
     return ret
