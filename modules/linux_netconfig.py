@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Module to gather network configuration from Linux hosts
 """

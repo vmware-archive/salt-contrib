@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 A module for managing awstats web statsicics in static mode
 

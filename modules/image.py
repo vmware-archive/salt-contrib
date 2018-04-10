@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Parse EXIF data from images using exiv2
 '''

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 A module for managing webalizer web statistics
 

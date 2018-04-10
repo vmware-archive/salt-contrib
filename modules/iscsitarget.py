@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Module that provides functions to manipulate iSCSI Enterprise Targets
 that are backed by LVM.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 This module allows Jinja to include lines one or more files into a Jinja template.
 

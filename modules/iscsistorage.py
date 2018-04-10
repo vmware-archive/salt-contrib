@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 A module to push the configuration for iSCSI shares to front end servers using
 storage pools manged by libvirt.

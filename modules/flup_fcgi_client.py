@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # pylint: disable=W0622
 
 # Copyright (c) 2006 Allan Saddi <allan@saddi.com>

@@ -1,4 +1,6 @@
-"""Salt module that lets you invoke Ansible modules.
+# -*- coding: utf-8 -*-
+"""
+Salt module that lets you invoke Ansible modules.
 
 Requires Ansible installed on minion servers. (ie, the command:
 "python -c 'import ansible'" should be successful)
