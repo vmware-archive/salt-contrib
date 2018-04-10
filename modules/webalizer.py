@@ -51,7 +51,7 @@ def _remove(fpath):
     '''
     try:
         os.unlink(fpath)
-    except OSError, e:
+    except OSError as e:
         # Ignore if file does not exist
         if e.errno != 2:
             raise OSError(e)

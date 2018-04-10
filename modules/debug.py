@@ -8,12 +8,6 @@ import tempfile
 
 import salt.ext.six as six
 
-try:
-    import grp
-    import pwd
-except ImportError:
-    pass
-
 # salty libs
 import salt.utils
 import salt.utils.find

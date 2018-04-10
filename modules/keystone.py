@@ -23,7 +23,6 @@ Module for handling openstack keystone calls.
 HAS_KEYSTONE = False
 try:
     from keystoneclient.v2_0 import client
-    from keystoneclient.exceptions import ClientException
     from keystoneclient.exceptions import NotFound
     HAS_KEYSTONE = True
 except ImportError:

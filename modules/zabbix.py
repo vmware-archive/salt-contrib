@@ -4,16 +4,11 @@ zabbix module for salt
 ============================
 
 The user module is used to config zabbix
-
 '''
 
 # Import python libs
+from __future__ import absolute_import
 import logging
-import sys
-
-# Import salt libs
-import salt.utils
-
 from zapi import *
 
 log = logging.getLogger(__name__)
@@ -54,12 +49,12 @@ def _host(name, hostgroups, interface="127.0.0.1", templates=None):
     for hostgroup in hostgroups:
         _hostgroup(hostgroup)
     hgs = zapi.Hostgroup.find({"name": hostgroups})
-    hgids = map(lambda x: {'groupid': x['groupid']}, hgs)
+    hgids = [{'groupid': x['groupid']} for x in hgs]
 
     tpids = []
     if templates:
         tps = zapi.Template.find({"name": templates})
-        tpids = map(lambda x: {'templateid': x['templateid']}, tps)
+        tpids = [{'templateid': x['templateid']} for x in tps]
 
     if not zapi.Host.find({"name": name}):
         zapi.Host.create({
@@ -362,7 +357,7 @@ def _user(name, lastname, firstname, passwd, usergroups, sendto, usertype="3", m
     for usergroup in usergroups:
         _usergroup(usergroup)
     ugs = zapi.Usergroup.find({"name": usergroups})
-    ugids = map(lambda x: {'usrgrpid': x['usrgrpid']}, ugs)
+    ugids = [{'usrgrpid': x['usrgrpid']} for x in ugs]
 
     if not zapi.User.find({"alias": name}):
         zapi.User.create({"alias": name, "name": lastname, "surname": firstname,

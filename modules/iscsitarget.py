@@ -225,7 +225,7 @@ def _config_add_lun(config, fiqn, lun, vg_, name, iotype='blockio'):
         tgt = [x__ for x__ in tgts if fiqn in clines[x__]]
         if tgt:
             t__ = tgt[0] + 1
-            while (t__ < len(clines) and clines[t__].lstrip().startswith('Lun')):
+            while t__ < len(clines) and clines[t__].lstrip().startswith('Lun'):
                 t__ += 1
             clines.insert(t__, nlun)
         else:
@@ -260,7 +260,7 @@ def _config_delete_lun(config, fiqn, lun, rtarget=False):
         if tgt:
             # Delete just the LUN
             t__ = tgt[0] + 1
-            while (t__ < len(clines) and clines[t__].lstrip().startswith('Lun')):
+            while t__ < len(clines) and clines[t__].lstrip().startswith('Lun'):
                 if 'Lun {0}'.format(lun) in clines[t__]:
                     del clines[t__]
                 else:

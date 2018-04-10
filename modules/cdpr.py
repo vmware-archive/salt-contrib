@@ -26,7 +26,6 @@ import salt.utils
 
 from salt.exceptions import (
     CommandExecutionError,
-    MinionError,
     SaltInvocationError,
     TimedProcTimeoutError
 )

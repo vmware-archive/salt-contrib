@@ -12,11 +12,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import logging
-import os
 
 # Import salt libs
-from salt.ext.six.moves import range
-from salt.exceptions import SaltInvocationError
 import salt.utils
 
 _LOG = logging.getLogger(__name__)

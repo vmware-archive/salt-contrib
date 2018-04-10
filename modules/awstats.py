@@ -14,10 +14,11 @@ automatic updates.
 
 '''
 
+from __future__ import absolute_import
 from subprocess import Popen, PIPE
 import os
 import re
-
+import salt.utils
 
 # Script for updating awstats static pages
 
@@ -65,7 +66,7 @@ def _remove(fpath):
     '''
     try:
         os.unlink(fpath)
-    except OSError, e:
+    except OSError as e:
         # Ignore if file does not exist
         if e.errno != 2:
             raise OSError(e)
@@ -112,11 +113,11 @@ def configure(domain, logfile, period="hourly"):
         awconfig = '/etc/awstats/awstats.{0}.conf'.format(domain)
 
         # Generate a valid awstats configuration file
-        with open(model) as f:
+        with salt.utils.fopen(model) as f:
             config = f.read()
             config = sd.sub('SiteDomain="{0}"'.format(domain), config)
             config = lf.sub('LogFile="{0}"'.format(logfile), config)
-            with open(awconfig, 'w') as f1:
+            with salt.utils.fopen(awconfig, 'w') as f1:
                 f1.write(config)
 
         # Generate an appropriate update script, store in /usr/local/bin
@@ -125,9 +126,9 @@ def configure(domain, logfile, period="hourly"):
                                        awstats,
                                        awstats_static)
 
-        with open(awstats_scr_path, 'w') as f:
+        with salt.utils.fopen(awstats_scr_path, 'w') as f:
             f.write(update)
-            os.chmod(awstats_scr_path, 0700)
+            os.chmod(awstats_scr_path, 0o700)
 
         # Set up cron
         if period == 'hourly':

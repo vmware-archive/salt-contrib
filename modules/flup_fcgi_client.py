@@ -25,9 +25,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
-# $Id$
 
+from __future__ import absolute_import
 __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
@@ -35,7 +34,6 @@ import select  # @UnresolvedImport
 import struct
 import socket
 import errno
-import types
 
 __all__ = ['FCGIApp']
 
@@ -144,13 +142,13 @@ def encode_pair(name, value):
     if nameLength < 128:
         s = chr(nameLength)
     else:
-        s = struct.pack('!L', nameLength | 0x80000000L)
+        s = struct.pack('!L', nameLength | 0x80000000)
 
     valueLength = len(value)
     if valueLength < 128:
         s += chr(valueLength)
     else:
-        s += struct.pack('!L', valueLength | 0x80000000L)
+        s += struct.pack('!L', valueLength | 0x80000000)
 
     return s + name + value
 
@@ -180,7 +178,7 @@ class Record(object):
         while length:
             try:
                 data = sock.recv(length)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
@@ -238,7 +236,7 @@ class Record(object):
         while length:
             try:
                 sent = sock.send(data)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
@@ -399,7 +397,7 @@ class FCGIApp(object):
         if self._connect is not None:
             # The simple case. Create a socket and connect to the
             # application.
-            if isinstance(self._connect, types.StringTypes):
+            if isinstance(self._connect, str):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 sock.connect(self._connect)
             elif hasattr(socket, 'create_connection'):

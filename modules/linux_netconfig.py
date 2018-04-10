@@ -4,7 +4,6 @@ Module to gather network configuration from Linux hosts
 """
 
 import re
-import subprocess
 
 
 def __virtual__():
