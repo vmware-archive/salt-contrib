@@ -37,7 +37,7 @@ def present(name):
         'comment': 'Tenant {0} is already presant'.format(name)
     }
     # Check if the tenant exists
-    if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
+    if 'Error' not in __salt__['keystone.tenant_get'](name=name):
         return ret
 
     # The tenant is not present, make it!
@@ -70,7 +70,7 @@ def absent(name):
     }
 
     # Check if tenant exists and remove it
-    if not ('Error' in (__salt__['keystone.tenant_get'](name=name))):
+    if 'Error' not in __salt__['keystone.tenant_get'](name=name):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'Tenant {0} is set to be removed'.format(name)

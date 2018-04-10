@@ -115,7 +115,7 @@ def fdconfig(name,
            'comment': '', }
 
     config = ''
-    with open(name) as f:
+    with salt.utils.fopen(name) as f:
         config = f.read()
 
     if not config:
@@ -199,7 +199,7 @@ def fdconfig(name,
         ret['changes']['Messages'] = mconfig
         config = msgs.sub(mconfig, config)
 
-    with open(name, 'w') as f:
+    with salt.utils.fopen(name, 'w') as f:
         f.write(config)
 
     ret['comment'] += 'Updated bacula file daemon settings.\n'

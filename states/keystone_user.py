@@ -45,7 +45,7 @@ def present(name, password, email, tenant, enabled):
         'comment': ('User {0} is already presant, ').format(name)
     }
     # Check if the user exists
-    if ('Error' in (__salt__['keystone.user_get'](name=name))):
+    if 'Error' in __salt__['keystone.user_get'](name=name):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'User {0} is set to be added.'.format(name)
@@ -129,7 +129,7 @@ def absent(name):
     }
 
     # Check if user exists and remove it
-    if not ('Error' in (__salt__['keystone.user_get'](name=name))):
+    if 'Error' not in __salt__['keystone.user_get'](name=name):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'User {0} is set to be removed'.format(name)

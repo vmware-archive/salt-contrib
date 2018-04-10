@@ -7,8 +7,6 @@ except ImportError:
 
 import urllib2
 import subprocess
-import re
-import time
 
 
 class ZabbixAPIException(Exception):
