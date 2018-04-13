@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Management of Keystone users.
 =============================
@@ -38,13 +39,13 @@ def present(name, password, email, tenant, enabled):
         Whether or not the user is enabled
     '''
     ret = {
-            'name': name,
-            'changes': {},
-            'result': True,
-            'comment': ('User {0} is already presant, ').format(name)
-            }
+        'name': name,
+        'changes': {},
+        'result': True,
+        'comment': ('User {0} is already presant, ').format(name)
+    }
     # Check if the user exists
-    if ('Error' in (__salt__['keystone.user_get'](name=name))):
+    if 'Error' in __salt__['keystone.user_get'](name=name):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'User {0} is set to be added.'.format(name)
@@ -53,7 +54,7 @@ def present(name, password, email, tenant, enabled):
                 password,
                 email,
                 tenant_id=__salt__['keystone.tenant_get'](
-                        name=tenant)[tenant]['id'],
+                    name=tenant)[tenant]['id'],
                 enabled=enabled):
             ret['comment'] = 'The user {0} has been added.'.format(name)
             ret['changes'][name] = 'Present'
@@ -67,23 +68,23 @@ def present(name, password, email, tenant, enabled):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] += (
-                    ' User {0} is set to have email updated to {1}.'
-                    ).format(name, email)
+                ' User {0} is set to have email updated to {1}.'
+            ).format(name, email)
         elif __salt__['keystone.user_update'](
                 id=__salt__['keystone.user_get'](
-                        name=name)[name]['id'],
+                    name=name)[name]['id'],
                 name=name,
                 email=email,
                 enabled=enabled,
-                ):
+        ):
             ret['comment'] += (
-                    ' User {0} has had its email updated to {1}.'
-                    ).format(name, email)
+                ' User {0} has had its email updated to {1}.'
+            ).format(name, email)
             ret['changes'][email] = 'Present'
         else:
             ret['comment'] = (
-                    'Failed to update user {0}\'s email to {1}.'
-                    ).format(name, email)
+                'Failed to update user {0}\'s email to {1}.'
+            ).format(name, email)
             ret['result'] = False
             return ret
 
@@ -91,22 +92,22 @@ def present(name, password, email, tenant, enabled):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] += (
-                    ' User {0} is set to have status updated to {1}.'
-                    ).format(name, enabled)
+                ' User {0} is set to have status updated to {1}.'
+            ).format(name, enabled)
         elif __salt__['keystone.user_update'](
                 id=__salt__['keystone.user_get'](name=name)[name]['id'],
                 name=name,
                 email=email,
                 enabled=enabled,
-                ):
+        ):
             ret['comment'] += (
-                    'The user {0} has had its status updated to {1}'
-                    ).format(name, enabled)
+                'The user {0} has had its status updated to {1}'
+            ).format(name, enabled)
             ret['changes'][enabled] = 'Present'
         else:
             ret['comment'] = (
-                    'Failed to update user {0}\'s status to {1}'
-                    ).format(name, enabled)
+                'Failed to update user {0}\'s status to {1}'
+            ).format(name, enabled)
             ret['result'] = False
             return ret
 
@@ -121,14 +122,14 @@ def absent(name):
         The name of the user to remove
     '''
     ret = {
-            'name': name,
-            'changes': {},
-            'result': True,
-            'comment': ''
-            }
+        'name': name,
+        'changes': {},
+        'result': True,
+        'comment': ''
+    }
 
     # Check if user exists and remove it
-    if not ('Error' in (__salt__['keystone.user_get'](name=name))):
+    if 'Error' not in __salt__['keystone.user_get'](name=name):
         if __opts__['test']:
             ret['result'] = None
             ret['comment'] = 'User {0} is set to be removed'.format(name)
@@ -139,6 +140,6 @@ def absent(name):
             return ret
     # fallback
     ret['comment'] = (
-            'User {0} is not present, so it cannot be removed'
-            ).format(name)
+        'User {0} is not present, so it cannot be removed'
+    ).format(name)
     return ret

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 try:
     import simplejson as json
@@ -7,8 +7,6 @@ except ImportError:
 
 import urllib2
 import subprocess
-import re
-import time
 
 
 class ZabbixAPIException(Exception):
@@ -30,9 +28,9 @@ class ZabbixAPI(object):
         self.__user = user
         self.__password = password
         self._zabbix_api_object_list = ('Action', 'Alert', 'APIInfo', 'Application', 'DCheck', 'DHost', 'DRule',
-                'DService', 'Event', 'Graph', 'Grahpitem', 'History', 'Host', 'Hostgroup', 'Image', 'Item',
-                'Maintenance', 'Map', 'Mediatype', 'Proxy', 'Screen', 'Script', 'Template', 'Trigger', 'User',
-                'Usergroup', 'Usermacro', 'Usermedia')
+                                        'DService', 'Event', 'Graph', 'Grahpitem', 'History', 'Host', 'Hostgroup', 'Image', 'Item',
+                                        'Maintenance', 'Map', 'Mediatype', 'Proxy', 'Screen', 'Script', 'Template', 'Trigger', 'User',
+                                        'Usergroup', 'Usermacro', 'Usermedia')
 
     def __getattr__(self, name):
         if name not in self._zabbix_api_object_list:
@@ -82,7 +80,8 @@ class ZabbixAPI(object):
     '''
     @staticmethod
     def zabbixGet(ip, key):
-        zabbix_get = subprocess.Popen('/usr/local/zabbix/bin/zabbix_get -s %s -k %s' % (ip, key), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        zabbix_get = subprocess.Popen('/usr/local/zabbix/bin/zabbix_get -s %s -k %s' %
+                                      (ip, key), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         result, err = zabbix_get.communicate()
         if err:
             return 'ERROR'

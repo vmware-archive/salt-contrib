@@ -6,6 +6,7 @@ Description
     Manage Microsoft NuGet package installation on Windows servers.
 '''
 # Import python libs
+from __future__ import absolute_import
 import os
 
 

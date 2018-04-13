@@ -1,54 +1,56 @@
-# A salt ansible state module that lets you use ansible
-# modules as salt states like this:
-#
-# test_1:
-#   ansible.command:
-#     - args: /bin/ls -la
-#     - chdir: /Users/jkuan
-#
-# test_2:
-#   ansible.shell:
-#     - args: echo 'hohoho' > ~/hoho.txt
-#
-# test_3:
-#   ansible:
-#     - setup
-#
-# test_4:
-#   ansible.file:
-#     - path: /etc/hosts
-#     - dest: ~/hhh.txt
-#     - mode: 644
-#
-# test_5:
-#   ansible.easy_install:
-#     - name_: sphinx
-#
-# The special 'args' argument is used for specifying the arguments
-# to the ansible module. 'name=value' arguments can also be specified
-# separately as shown in the example(test_4). It's also possible to
-# mix 'args' and '- name: value' in a state, and in which case, the
-# name-value's will be appended to 'args' as 'name=value' pairs.
-#
-# To work around salt's use of '- name' in state specification, if
-# an ansible module has a 'name' argument, then it must be written
-# as 'name_' if it is to be specified separately from 'args'.
-#
-# See the ansmod.py salt module for more information.
-#
-# To set it up, you'll need ansible installed on minion machines
-# so that salt can run ansible locally on the machines. Make sure
-# cd / && python -c 'import ansible' succeeds.
-#
-# Currently, you might also need to define the ansible.modules_dir
-# property in your minion configuration file. It should to be set
-# to your ansible/library/, where the ansible modules resides.
-#
-# Note: Not all ansible modules will be available. Those that are
-# handled specially(eg, template, fetch, raw, shell) by ansible
-# won't be available, except for 'shell'.
-#
-#
+# -*- coding: utf-8 -*-
+'''
+A salt ansible state module that lets you use ansible
+modules as salt states like this:
+
+test_1:
+  ansible.command:
+    - args: /bin/ls -la
+    - chdir: /Users/jkuan
+
+test_2:
+  ansible.shell:
+    - args: echo 'hohoho' > ~/hoho.txt
+
+test_3:
+  ansible:
+    - setup
+
+test_4:
+  ansible.file:
+    - path: /etc/hosts
+    - dest: ~/hhh.txt
+    - mode: 644
+
+test_5:
+  ansible.easy_install:
+    - name_: sphinx
+
+The special 'args' argument is used for specifying the arguments
+to the ansible module. 'name=value' arguments can also be specified
+separately as shown in the example(test_4). It's also possible to
+mix 'args' and '- name: value' in a state, and in which case, the
+name-value's will be appended to 'args' as 'name=value' pairs.
+
+To work around salt's use of '- name' in state specification, if
+an ansible module has a 'name' argument, then it must be written
+as 'name_' if it is to be specified separately from 'args'.
+
+See the ansmod.py salt module for more information.
+
+To set it up, you'll need ansible installed on minion machines
+so that salt can run ansible locally on the machines. Make sure
+cd / && python -c 'import ansible' succeeds.
+
+Currently, you might also need to define the ansible.modules_dir
+property in your minion configuration file. It should to be set
+to your ansible/library/, where the ansible modules resides.
+
+Note: Not all ansible modules will be available. Those that are
+handled specially(eg, template, fetch, raw, shell) by ansible
+won't be available, except for 'shell'.
+'''
+
 from __future__ import absolute_import
 
 __opts__ = {}

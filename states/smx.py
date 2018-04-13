@@ -86,9 +86,9 @@ def feature_installed_latest(name, bundles=''):
         return feature_installed(name, version, bundles)
     else:
         return {'name': name,
-           'result': False,
-           'changes': {},
-           'comment': 'could not get latest version of the feature'}
+                'result': False,
+                'changes': {},
+                'comment': 'could not get latest version of the feature'}
 
 
 def feature_installed(name, version, bundles=''):
@@ -144,6 +144,7 @@ def feature_installed(name, version, bundles=''):
         ret['comment'] += ', could not install feature'
     else:
         ret['result'] = False
-        ret['comment'] += ', the following bundles are not Active {0}'.format(__salt__['smx.nonactive_bundles'](bundles))
+        ret['comment'] += ', the following bundles are not Active {0}'.format(
+            __salt__['smx.nonactive_bundles'](bundles))
 
     return ret

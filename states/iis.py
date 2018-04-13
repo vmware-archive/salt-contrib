@@ -114,7 +114,8 @@ def _resource_action(resource, name, action):
             ret['comment'] = '{2}: Not existing {0} "{1}"'.format(resource, name, action.capitalize())
         else:
             ret['result'] = False
-            ret['comment'] = '{2}: Could not retrive {0} configuration over "{1}"'.format(resource, name, action.capitalize())
+            ret['comment'] = '{2}: Could not retrive {0} configuration over "{1}"'.format(
+                resource, name, action.capitalize())
         return ret
 
     if current_state.find(action) != -1:
@@ -189,7 +190,8 @@ def pfx_present(name, password=None, reg='LOCAL_MACHINE\My', granted_users=None)
 
     log.debug(pfx_data)
     if not pfx_data:
-        ret['comment'] = 'can\'t get the meta data from the PFX certificate, pass:"{0}", pfx_data: {1}'.format(password, pfx_data)
+        ret['comment'] = 'can\'t get the meta data from the PFX certificate, pass:"{0}", pfx_data: {1}'.format(
+            password, pfx_data)
         ret['result'] = False
         return ret
     subject = re.match('CN=(.*?), .*', pfx_data['Subject']).group(1)
@@ -463,7 +465,8 @@ def backup_present(name, action, overwrite=True, iisBackupPath="C:\\Windows\\Sys
 
     if overwrite is True and action is not "delete":
         cmd_ret = __salt__['cmd.run'](
-            "$strFolderName=\"{0}\{1}\" ; If (Test-Path $strFolderName ) {2} Remove-Item -Recurse -Force $strFolderName {3}".format(iisBackupPath, name, "{", "}"),
+            "$strFolderName=\"{0}\{1}\" ; If (Test-Path $strFolderName ) {2} Remove-Item -Recurse -Force $strFolderName {3}".format(
+                iisBackupPath, name, "{", "}"),
             shell='powershell')
 
     try:
