@@ -4,16 +4,11 @@ zabbix module for salt
 ============================
 
 The user module is used to config zabbix
-
 '''
 
 # Import python libs
+from __future__ import absolute_import
 import logging
-import sys
-
-# Import salt libs
-import salt.utils
-
 from zapi import *
 
 log = logging.getLogger(__name__)
@@ -54,12 +49,12 @@ def _host(name, hostgroups, interface="127.0.0.1", templates=None):
     for hostgroup in hostgroups:
         _hostgroup(hostgroup)
     hgs = zapi.Hostgroup.find({"name": hostgroups})
-    hgids = map(lambda x: {'groupid': x['groupid']}, hgs)
+    hgids = [{'groupid': x['groupid']} for x in hgs]
 
     tpids = []
     if templates:
         tps = zapi.Template.find({"name": templates})
-        tpids = map(lambda x: {'templateid': x['templateid']}, tps)
+        tpids = [{'templateid': x['templateid']} for x in tps]
 
     if not zapi.Host.find({"name": name}):
         zapi.Host.create({
@@ -67,16 +62,16 @@ def _host(name, hostgroups, interface="127.0.0.1", templates=None):
             "groups": hgids,
             "templates": tpids,
             "interfaces": [{"type": "1", "main": "1", "useip": "1",
-                        "ip": interface, "dns": "", "port": "10050"}]
-            })
+                            "ip": interface, "dns": "", "port": "10050"}]
+        })
     else:
         zapi.Host.update({
             "hostid": zapi.Host.find({"name": name})[0]["hostid"],
             "groups": hgids,
             "templates": tpids,
-#            "interfaces":[{"type":"1","main":"1","useip":"1",
-#                        "ip":interface,"dns":"","port":"10050"}]
-            })
+            #            "interfaces":[{"type":"1","main":"1","useip":"1",
+            #                        "ip":interface,"dns":"","port":"10050"}]
+        })
 
     if not zapi.Host.find({"name": name}):
         return False
@@ -160,13 +155,13 @@ def _item(name, key, template, application, itemtype=0, valuetype=0, datatype=0,
 
     if not zapi.Item.find({"name": name, "key_": key, "hostid": tpid, "application": appid}):
         zapi.Item.create({"name": name, "key_": key, "hostid": tpid, "applications": [appid],
-                "type": itemtype, "value_type": valuetype, "data_type": datatype,
-                "delta": delta, "delay": delay})
+                          "type": itemtype, "value_type": valuetype, "data_type": datatype,
+                          "delta": delta, "delay": delay})
     else:
         itemid = zapi.Item.find({"name": name, "key_": key, "hostid": tpid, "application": appid})[0]["itemid"]
         zapi.Item.update({"itemid": itemid,
-                "type": itemtype, "value_type": valuetype, "data_type": datatype,
-                "delta": delta, "delay": delay})
+                          "type": itemtype, "value_type": valuetype, "data_type": datatype,
+                          "delta": delta, "delay": delay})
 
     if not zapi.Item.find({"name": name, "key_": key, "hostid": tpid, "application": appid}):
         return False
@@ -287,19 +282,20 @@ def _graph(name, width, height, template, application, keys, graphtype=0, ymax_t
     for key in keys:
         if not zapi.Item.find({"key_": key, "hostid": tpid, "application": appid}):
             return False
-        gitems.append({"itemid": zapi.Item.find({"key_": key, "hostid": tpid, "application": appid})[0]["itemid"], "color": color[len(gitems)]})
+        gitems.append({"itemid": zapi.Item.find({"key_": key, "hostid": tpid, "application": appid})
+                       [0]["itemid"], "color": color[len(gitems)]})
 
     if not zapi.Graph.find({"name": name}):
         zapi.Graph.create({"name": name, "width": width, "height": height,
-                "graphtype": graphtype, "ymax_type": ymax_type, "yaxismax": yaxismax,
-                "ymin_type": ymin_type, "yaxismin": yaxismin,
-                "gitems": gitems})
+                           "graphtype": graphtype, "ymax_type": ymax_type, "yaxismax": yaxismax,
+                           "ymin_type": ymin_type, "yaxismin": yaxismin,
+                           "gitems": gitems})
     else:
         graphid = zapi.Graph.find({"name": name})[0]["graphid"]
         zapi.Graph.update({"graphid": graphid, "width": width, "height": height,
-                "graphtype": graphtype, "ymax_type": ymax_type, "yaxismax": yaxismax,
-                "ymin_type": ymin_type, "yaxismin": yaxismin,
-                "gitems": gitems})
+                           "graphtype": graphtype, "ymax_type": ymax_type, "yaxismax": yaxismax,
+                           "ymin_type": ymin_type, "yaxismin": yaxismin,
+                           "gitems": gitems})
 
     if not zapi.Graph.find({"name": name}):
         return False
@@ -318,7 +314,8 @@ def graph(name, width, height, application, keys, graphtype=0, ymax_type=0, yaxi
         ret['comment'] = 'Graph {0} set to create'.format(name)
         return ret
 
-    ret['result'] = _graph(name, width, height, application, application, keys, graphtype, ymax_type, yaxismax, ymin_type, yaxismin)
+    ret['result'] = _graph(name, width, height, application, application, keys,
+                           graphtype, ymax_type, yaxismax, ymin_type, yaxismin)
     ret['comment'] = 'Create Graph {0}'.format(name)
 
     return ret
@@ -327,11 +324,11 @@ def graph(name, width, height, application, keys, graphtype=0, ymax_type=0, yaxi
 def _usergroup(name, debug_mode=0, gui_access=0, status=0):
     if not zapi.Usergroup.find({"name": name}):
         zapi.Usergroup.create({"name": name, "debug_mode": debug_mode,
-                "gui_access": gui_access, "users_status": status})
+                               "gui_access": gui_access, "users_status": status})
     else:
         ugid = zapi.Usergroup.find({"name": name})[0]["usrgrpid"]
         zapi.Usergroup.update({"usrgrpid": ugid, "debug_mode": debug_mode,
-                "gui_access": gui_access, "users_status": status})
+                               "gui_access": gui_access, "users_status": status})
 
     if not zapi.Usergroup.find({"name": name}):
         return False
@@ -360,13 +357,15 @@ def _user(name, lastname, firstname, passwd, usergroups, sendto, usertype="3", m
     for usergroup in usergroups:
         _usergroup(usergroup)
     ugs = zapi.Usergroup.find({"name": usergroups})
-    ugids = map(lambda x: {'usrgrpid': x['usrgrpid']}, ugs)
+    ugids = [{'usrgrpid': x['usrgrpid']} for x in ugs]
 
     if not zapi.User.find({"alias": name}):
-        zapi.User.create({"alias": name, "name": lastname, "surname": firstname, "passwd": passwd, "type": usertype, "usrgrps": ugids})
+        zapi.User.create({"alias": name, "name": lastname, "surname": firstname,
+                          "passwd": passwd, "type": usertype, "usrgrps": ugids})
     else:
         uid = zapi.User.find({"alias": name})[0]["userid"]
-        zapi.User.update({"userid": uid, "name": lastname, "surname": firstname, "passwd": passwd, "type": usertype, "usrgrps": ugids})
+        zapi.User.update({"userid": uid, "name": lastname, "surname": firstname,
+                          "passwd": passwd, "type": usertype, "usrgrps": ugids})
 
     _mediatype(mediatype, "0")
     _mediatype("Send Cloud", "1", "sendcloud")
@@ -403,7 +402,7 @@ def _trigger(name, expression, priority=1, status=0):
     else:
         triggerid = zapi.Trigger.find({"description": name})[0]["triggerid"]
         zapi.Trigger.update({"triggerid": triggerid,
-                "expression": expression, "priority": priority, "status": status})
+                             "expression": expression, "priority": priority, "status": status})
 
     if not zapi.Trigger.find({"description": name}):
         return False
@@ -435,7 +434,7 @@ def _script(name, command, execute_on=1):
     else:
         scriptid = zapi.Script.find({"name": name})[0]["scriptid"]
         zapi.Script.update({"scriptid": scriptid,
-                "command": command, "execute_on": execute_on})
+                            "command": command, "execute_on": execute_on})
 
     if not zapi.Script.find({"name": name}):
         return False
@@ -467,19 +466,19 @@ def _mediatype(name, mtype, script=""):
     if not zapi.Mediatype.find({"description": name}):
         if int(mtype) == 0:
             zapi.Mediatype.create({"description": name, "type": mtype,
-                    "smtp_email": "zabbix@localhost", "smtp_helo": "localhost",
-                    "smtp_server": "localhost"})
+                                   "smtp_email": "zabbix@localhost", "smtp_helo": "localhost",
+                                   "smtp_server": "localhost"})
         else:
             zapi.Mediatype.create({"description": name, "type": mtype, "exec_path": script})
     else:
         mediatypeid = zapi.Mediatype.find({"description": name})[0]["mediatypeid"]
         if int(mtype) == 0:
             zapi.Mediatype.update({"mediatypeid": mediatypeid, "type": mtype,
-                    "smtp_email": "zabbix@localhost", "smtp_helo": "localhost",
-                    "smtp_server": "localhost"})
+                                   "smtp_email": "zabbix@localhost", "smtp_helo": "localhost",
+                                   "smtp_server": "localhost"})
         else:
             zapi.Mediatype.update({"mediatypeid": mediatypeid,
-                    "type": mtype, "exec_path": script})
+                                   "type": mtype, "exec_path": script})
 
     if not zapi.Mediatype.find({"description": name}):
         return False
@@ -500,10 +499,10 @@ def _media(user, mediatype, sendto, active=0, period="1-7,00:00-24:00", severity
 
     if not zapi.Usermedia.find({"userid": uid, "mediatypeid": mtid}):
         zapi.User.addmedia({"users": [{"userid": uid}],
-            "medias": {"mediatypeid": mtid, "sendto": sendto, "active": active, "period": period, "severity": severity}})
+                            "medias": {"mediatypeid": mtid, "sendto": sendto, "active": active, "period": period, "severity": severity}})
     else:
         zapi.User.updatemedia({"users": [{"userid": uid}],
-            "medias": {"mediatypeid": mtid, "sendto": sendto, "active": active, "period": period, "severity": severity}})
+                               "medias": {"mediatypeid": mtid, "sendto": sendto, "active": active, "period": period, "severity": severity}})
 
     if not zapi.Usermedia.find({"mediatypeid": mtid, "userid": uid}):
         return False
@@ -512,8 +511,8 @@ def _media(user, mediatype, sendto, active=0, period="1-7,00:00-24:00", severity
 
 
 def _action(name, trigger_filter, notify_usergroup, mediatype="Send Email", status=0, esc_period=60,
-        def_shortdata="{HOST.HOST} {TRIGGER.NAME}: {TRIGGER.STATUS}",
-        def_longdata="Latest value: {{HOST.HOST}:{ITEM.KEY}.last(0)}\r\nMAX for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.max(900)}\r\nMIN for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.min(900)}\r\n\r\n{TRIGGER.URL}"):
+            def_shortdata="{HOST.HOST} {TRIGGER.NAME}: {TRIGGER.STATUS}",
+            def_longdata="Latest value: {{HOST.HOST}:{ITEM.KEY}.last(0)}\r\nMAX for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.max(900)}\r\nMIN for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.min(900)}\r\n\r\n{TRIGGER.URL}"):
     ug = zapi.Usergroup.find({"name": notify_usergroup})
     if not ug:
         return False
@@ -529,19 +528,19 @@ def _action(name, trigger_filter, notify_usergroup, mediatype="Send Email", stat
 
     if not zapi.Action.find({"name": name}):
         zapi.Action.create({"name": name, "eventsource": "0", "evaltype": "0", "status": status,
-                "esc_period": esc_period, "def_shortdata": def_shortdata, "def_longdata": def_longdata,
-                "conditions": [{"conditiontype": 3, "operator": 2, "value": trigger_filter}],
-                "operations": [{"operationtype": 0, "esc_period": 0, "esc_step_from": 1, "esc_step_to": 1,
-                                "evaltype": 0, "opmessage_grp": [{"usrgrpid": ugid}],
-                                "opmessage": {"default_msg": 1, "mediatypeid": mtid}}]})
+                            "esc_period": esc_period, "def_shortdata": def_shortdata, "def_longdata": def_longdata,
+                            "conditions": [{"conditiontype": 3, "operator": 2, "value": trigger_filter}],
+                            "operations": [{"operationtype": 0, "esc_period": 0, "esc_step_from": 1, "esc_step_to": 1,
+                                            "evaltype": 0, "opmessage_grp": [{"usrgrpid": ugid}],
+                                            "opmessage": {"default_msg": 1, "mediatypeid": mtid}}]})
     else:
         actionid = zapi.Action.find({"name": name})[0]["actionid"]
         zapi.Action.update({"actionid": actionid, "eventsource": "0", "evaltype": "0", "status": status,
-                "esc_period": esc_period, "def_shortdata": def_shortdata, "def_longdata": def_longdata,
-                "conditions": [{"conditiontype": 3, "operator": 2, "value": trigger_filter}],
-                "operations": [{"operationtype": 0, "esc_period": 0, "esc_step_from": 1, "esc_step_to": 1,
-                                "evaltype": 0, "opmessage_grp": [{"usrgrpid": ugid}],
-                                "opmessage": {"default_msg": 1, "mediatypeid": mtid}}]})
+                            "esc_period": esc_period, "def_shortdata": def_shortdata, "def_longdata": def_longdata,
+                            "conditions": [{"conditiontype": 3, "operator": 2, "value": trigger_filter}],
+                            "operations": [{"operationtype": 0, "esc_period": 0, "esc_step_from": 1, "esc_step_to": 1,
+                                            "evaltype": 0, "opmessage_grp": [{"usrgrpid": ugid}],
+                                            "opmessage": {"default_msg": 1, "mediatypeid": mtid}}]})
 
     if not zapi.Action.find({"name": name}):
         return False
@@ -550,8 +549,8 @@ def _action(name, trigger_filter, notify_usergroup, mediatype="Send Email", stat
 
 
 def action(name, trigger_filter, notify_usergroup, mediatype="Send Email", status=0, esc_period=60,
-        def_shortdata="{HOST.HOST} {TRIGGER.NAME}: {TRIGGER.STATUS}",
-        def_longdata="Latest value: {{HOST.HOST}:{ITEM.KEY}.last(0)}\r\nMAX for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.max(900)}\r\nMIN for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.min(900)}\r\n\r\n{TRIGGER.URL}"):
+           def_shortdata="{HOST.HOST} {TRIGGER.NAME}: {TRIGGER.STATUS}",
+           def_longdata="Latest value: {{HOST.HOST}:{ITEM.KEY}.last(0)}\r\nMAX for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.max(900)}\r\nMIN for 15 minutes: {{HOST.HOST}:{ITEM.KEY}.min(900)}\r\n\r\n{TRIGGER.URL}"):
     ret = {'name': name,
            'changes': {},
            'result': True,
@@ -562,7 +561,8 @@ def action(name, trigger_filter, notify_usergroup, mediatype="Send Email", statu
         ret['comment'] = 'Action {0} set to create'.format(name)
         return ret
 
-    ret['result'] = _action(name, trigger_filter, notify_usergroup, mediatype, status, esc_period, def_shortdata, def_longdata)
+    ret['result'] = _action(name, trigger_filter, notify_usergroup, mediatype,
+                            status, esc_period, def_shortdata, def_longdata)
     ret['comment'] = 'Create Action {0}'.format(name)
 
     return ret

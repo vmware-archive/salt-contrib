@@ -55,7 +55,7 @@ def list_(name=None):
     try:
         watchers = _send_message("list", name=name)
     except CallError as ce:
-            return ce.message
+        return ce.message
     return watchers.get("watchers") or watchers.get("pids")
 
 
@@ -266,7 +266,7 @@ def signal(name, signum, pid=None, childpid=None, children=False,
 def _send_message(command, **properties):
     # check if circusct.endpoint is in minion config
     endpoint = __salt__['config.get']('circusctl.endpoint') or \
-                DEFAULT_ENDPOINT_DEALER
+        DEFAULT_ENDPOINT_DEALER
     # sending keys with None values in the message to circus will result
     # an error. removing them from properties
     props = dict((k, v) for k, v in properties.iteritems() if v)

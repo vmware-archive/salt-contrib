@@ -61,6 +61,7 @@ try:
         See yum.rpmtrans.NoOutputCallBack in the yum package for base
         implementation.
         '''
+
         def __init__(self):
             yum.rpmtrans.RPMBaseCallback.__init__(self)
             self.messages = {}

@@ -1,4 +1,6 @@
-"""Salt module that lets you invoke Ansible modules.
+# -*- coding: utf-8 -*-
+"""
+Salt module that lets you invoke Ansible modules.
 
 Requires Ansible installed on minion servers. (ie, the command:
 "python -c 'import ansible'" should be successful)
@@ -60,8 +62,8 @@ def __init__(opts):
                   "an Ansible modules directory in your minion config.")
         raise
     mods = filter(lambda name:
-                MOD_NAME_PATTERN.match(name) and name not in VIRTUAL_MODS,
-                mods)
+                  MOD_NAME_PATTERN.match(name) and name not in VIRTUAL_MODS,
+                  mods)
     for i, name in enumerate(mods):
         state = name.translate(MOD_NAME_TRANS_TABLE)
         STATE_NAMES[state] = name
@@ -93,8 +95,8 @@ def run(modpath, argline, argdict=None, raise_exc=False):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         with open(modpath) as modfile:
             tmp.write(modfile.read()
-                .replace(ans_common.REPLACER, ans_common.MODULE_COMMON)
-                .replace(ans_common.REPLACER_ARGS, repr(argline))
+                      .replace(ans_common.REPLACER, ans_common.MODULE_COMMON)
+                      .replace(ans_common.REPLACER_ARGS, repr(argline))
                       )
         tmp.flush()
         os.chmod(tmp.name, 0700)

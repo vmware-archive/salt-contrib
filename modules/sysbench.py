@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 The 'sysbench' module is used to analyse the
 performance of the minions, right from the master!
@@ -53,13 +54,13 @@ def _parser(result):
 
     # returning the data as dictionary
     return {
-           'total time            ': total_time,
-           'total execution time  ': total_execution,
-           'minimum response time ': min_response_time,
-           'maximum response time ': max_response_time,
-           'average response time ': avg_response_time,
-           '95 percentile         ': per_response_time
-           }
+        'total time            ': total_time,
+        'total execution time  ': total_execution,
+        'minimum response time ': min_response_time,
+        'maximum response time ': max_response_time,
+        'average response time ': avg_response_time,
+        '95 percentile         ': per_response_time
+    }
 
 
 def cpu():

@@ -9,9 +9,6 @@ Module for interacting with Cloudflare's API
                    and cloudflare:apikey
 '''
 
-import logging
-import salt.utils
-
 try:
     from pyflare import Pyflare
     import ipaddress

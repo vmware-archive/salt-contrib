@@ -1867,7 +1867,7 @@ def _run_wrapper(status, container, func, cmd, *args, **kwargs):
     try:
         ret = __salt__[func](full_cmd, *args, **kwargs)
         if ((isinstance(ret, dict) and ('retcode' in ret) and (ret['retcode'] != 0))
-           or (func == 'cmd.retcode' and ret != 0)):
+                or (func == 'cmd.retcode' and ret != 0)):
             _invalid(status, id_=container, out=ret, comment=comment)
         else:
             _valid(status, id_=container, out=ret, comment=comment)
@@ -2177,7 +2177,7 @@ def _script(status,
                 'Parameter \'env\' has been detected in the argument list.  This '
                 'parameter is no longer used and has been replaced by \'saltenv\' '
                 'as of Salt 2016.11.0.  This warning will be removed in Salt Oxygen.'
-                )
+            )
             kwargs.pop('env')
 
         path = salt.utils.files.mkstemp(dir=tpath)

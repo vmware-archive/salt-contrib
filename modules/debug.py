@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 
 import itertools
@@ -6,12 +7,6 @@ import os
 import tempfile
 
 import salt.ext.six as six
-
-try:
-    import grp
-    import pwd
-except ImportError:
-    pass
 
 # salty libs
 import salt.utils
@@ -24,13 +19,13 @@ import salt.utils.url
 log = logging.getLogger(__name__)
 
 HASHES = [
-            ['sha512', 128],
-            ['sha384', 96],
-            ['sha256', 64],
-            ['sha224', 56],
-            ['sha1', 40],
-            ['md5', 32],
-         ]
+    ['sha512', 128],
+    ['sha384', 96],
+    ['sha256', 64],
+    ['sha224', 56],
+    ['sha1', 40],
+    ['md5', 32],
+]
 
 
 def __virtual__():
@@ -50,7 +45,7 @@ def _get_bkroot():
 def __clean_tmp(sfn):
     if sfn.startswith(tempfile.gettempdir()):
         all_roots = itertools.chain.from_iterable(
-                six.itervalues(__opts__['file_roots']))
+            six.itervalues(__opts__['file_roots']))
         in_roots = any(sfn.startswith(root) for root in all_roots)
         if os.path.exists(sfn) and not in_roots:
             os.remove(sfn)
@@ -91,15 +86,15 @@ def render(
         if context:
             context_dict.update(context)
         data = salt.utils.templates.TEMPLATE_REGISTRY[template](
-           sfn,
-           source=source,
-           saltenv=saltenv,
-           context=context_dict,
-           salt=__salt__,
-           pillar=__pillar__,
-           grains=__grains__,
-           opts=__opts__,
-           **kwargs)
+            sfn,
+            source=source,
+            saltenv=saltenv,
+            context=context_dict,
+            salt=__salt__,
+            pillar=__pillar__,
+            grains=__grains__,
+            opts=__opts__,
+            **kwargs)
     else:
         return sfn, {}, ('Specified template format {0} is not supported').format(template)
 

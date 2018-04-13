@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# -*- coding: utf-8 -*-
 '''
 Get varyous php fpm statistic
 '''
@@ -106,20 +106,20 @@ def _make_fcgi_request(config, section, request_path):
                 fcgi = fcgi_client.FCGIApp(port=listen, host='127.0.0.1')
 
         env = {
-           'SCRIPT_FILENAME': request_path,
-           'QUERY_STRING': '',
-           'REQUEST_METHOD': 'GET',
-           'SCRIPT_NAME': request_path,
-           'REQUEST_URI': request_path,
-           'GATEWAY_INTERFACE': 'CGI/1.1',
-           'SERVER_SOFTWARE': 'ztc',
-           'REDIRECT_STATUS': '200',
-           'CONTENT_TYPE': '',
-           'CONTENT_LENGTH': '0',
-           # 'DOCUMENT_URI': url,
-           'DOCUMENT_ROOT': '/',
-           'DOCUMENT_ROOT': '/var/www/'
-           }
+            'SCRIPT_FILENAME': request_path,
+            'QUERY_STRING': '',
+            'REQUEST_METHOD': 'GET',
+            'SCRIPT_NAME': request_path,
+            'REQUEST_URI': request_path,
+            'GATEWAY_INTERFACE': 'CGI/1.1',
+            'SERVER_SOFTWARE': 'ztc',
+            'REDIRECT_STATUS': '200',
+            'CONTENT_TYPE': '',
+            'CONTENT_LENGTH': '0',
+            # 'DOCUMENT_URI': url,
+            'DOCUMENT_ROOT': '/',
+            'DOCUMENT_ROOT': '/var/www/'
+        }
         ret = fcgi(env)
         return ret
     except Exception as e:

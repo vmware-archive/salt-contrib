@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Drizzle is a MySQL fork optimized for Net and Cloud performance.
 This module provides Drizzle compatibility to Salt execution

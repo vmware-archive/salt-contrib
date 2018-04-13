@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Support for Circus: process and socket manager.
 

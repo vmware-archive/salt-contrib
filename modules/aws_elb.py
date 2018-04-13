@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import logging
 import os
@@ -11,8 +11,8 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 AWS_CREDENTIALS = {
-  "access_key": None,
-  "secret_key": None,
+    "access_key": None,
+    "secret_key": None,
 }
 
 
