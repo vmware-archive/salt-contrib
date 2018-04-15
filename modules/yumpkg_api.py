@@ -30,6 +30,7 @@ account when configuring your syslog daemon.
 # API-compatible with pkg states. Use at your own risk.
 
 # Import python libs
+from __future__ import absolute_import
 import copy
 import fnmatch
 import logging
@@ -44,6 +45,7 @@ from salt.modules.yumpkg import (
     _parse_repo_file, list_repos, mod_repo, get_repo, del_repo,
     expand_repo_def, __ARCHES
 )
+from salt.ext import six
 
 # Import third party libs
 try:
@@ -433,7 +435,7 @@ def list_repo_pkgs(*args, **kwargs):
     except AttributeError:
         # Search in all enabled repos
         repos = tuple(
-            x for x, y in list_repos().iteritems()
+            x for x, y in six.iteritems(list_repos())
             if str(y.get('enabled', '1')) == '1'
         )
 

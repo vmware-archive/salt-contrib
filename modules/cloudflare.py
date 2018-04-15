@@ -9,6 +9,7 @@ Module for interacting with Cloudflare's API
                    and cloudflare:apikey
 '''
 
+from __future__ import absolute_import
 try:
     from pyflare import Pyflare
     import ipaddress

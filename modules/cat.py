@@ -61,7 +61,7 @@ But these will fail:
  limitations under the License.
 
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import os
 import fnmatch
@@ -89,7 +89,7 @@ def directory(name, recurse=False, indent=0, file_filter='*', dir_filter='*'):
         if fnmatch.fnmatch(root_base, dir_filter):
             for fn in files:
                 if fnmatch.fnmatch(fn, file_filter):
-                    for ln in file(os.path.join(root, fn), indent=indent):
+                    for ln in open(os.path.join(root, fn), indent=indent):
                         yield ln
         if not recurse:
             break

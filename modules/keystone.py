@@ -20,6 +20,7 @@ Module for handling openstack keystone calls.
 '''
 
 # Import third party libs
+from __future__ import absolute_import
 HAS_KEYSTONE = False
 try:
     from keystoneclient.v2_0 import client

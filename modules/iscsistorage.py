@@ -15,6 +15,7 @@ storage pools manged by libvirt.
 
 '''
 
+from __future__ import absolute_import
 import libvirt
 
 

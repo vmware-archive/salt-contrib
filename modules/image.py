@@ -3,6 +3,7 @@
 Parse EXIF data from images using exiv2
 '''
 
+from __future__ import absolute_import
 import salt.utils
 
 

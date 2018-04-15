@@ -19,8 +19,12 @@ Configuration file can also be included such as::
 '''
 
 # Importing the required libraries
+from __future__ import absolute_import
 import re
 import salt.utils
+from salt.ext import six
+from salt.ext.six.moves import range
+from salt.ext.six.moves import zip
 
 try:
     import MySQLdb
@@ -153,7 +157,7 @@ def schemas():
 
     # Retriving the list of schemas
     cursor.execute('SHOW SCHEMAS')
-    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
+    for iter, count in zip(list(range(cursor.rowcount)), list(range(1, cursor.rowcount+1))):
         schema = cursor.fetchone()
         ret_val[count] = schema[0]
 
@@ -252,7 +256,7 @@ def tables(schema):
     except MySQLdb.OperationalError:
         return 'Unknown Schema'
 
-    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
+    for iter, count in zip(list(range(cursor.rowcount)), list(range(1, cursor.rowcount+1))):
         table = cursor.fetchone()
         ret_val[count] = table[0]
 
@@ -279,9 +283,9 @@ def table_find(table_to_find):
 
     # Finding the schema
     schema = schemas()
-    for schema_iter in schema.iterkeys():
+    for schema_iter in six.iterkeys(schema):
         table = tables(schema[schema_iter])
-        for table_iter in table.iterkeys():
+        for table_iter in six.iterkeys(table):
             if table[table_iter] == table_to_find:
                 ret_val[count] = schema[schema_iter]
                 count = count+1
@@ -310,7 +314,7 @@ def plugins():
     # Fetching the plugins
     query = 'SELECT PLUGIN_NAME FROM DATA_DICTIONARY.PLUGINS WHERE IS_ACTIVE LIKE "YES"'
     cursor.execute(query)
-    for iter, count in zip(range(cursor.rowcount), range(1, cursor.rowcount+1)):
+    for iter, count in zip(list(range(cursor.rowcount)), list(range(1, cursor.rowcount+1))):
         table = cursor.fetchone()
         ret_val[count] = table[0]
 
