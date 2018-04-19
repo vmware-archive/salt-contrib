@@ -3,6 +3,7 @@
 Salt module to manage openvz hosts through vzctl and vzlist.
 '''
 
+from __future__ import absolute_import
 import salt.utils
 
 __outputter__ = {
@@ -175,7 +176,7 @@ def _checkCtid(ctid):
     try:
         ctid = int(ctid)
         return True, None
-    except:
+    except ValueError:
         return False, "Error: ctid is not a number."
 
 

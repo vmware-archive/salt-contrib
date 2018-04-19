@@ -4,6 +4,7 @@ Support for nzbget
 '''
 
 # Import salt libs
+from __future__ import absolute_import
 import salt.utils
 
 __func_alias__ = {

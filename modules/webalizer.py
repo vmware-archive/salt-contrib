@@ -13,6 +13,7 @@ for updating webalizer and will use it with cron to enable automatic
 updates.
 '''
 
+from __future__ import absolute_import
 from subprocess import Popen, PIPE
 import os
 import re
@@ -96,7 +97,7 @@ def configure(domain, logfile, period='hourly'):
         lf = re.compile('^LogFile .*$', re.MULTILINE)
 
         # Modify the configuration
-        with open(wconf, 'r+') as f:
+        with salt.utils.fopen(wconf, 'r+') as f:
             config = f.read()
             config = hn.sub('HostName {0}'.format(domain), config)
             config = lf.sub('LogFile {0}'.format(logfile), config)
@@ -106,9 +107,9 @@ def configure(domain, logfile, period='hourly'):
 
         # Generate an appropriate update script, store in /usr/local/bin
         update = webalizer_update.format(wconf)
-        with open(webalizer_scr_path, 'w') as f:
+        with salt.utils.fopen(webalizer_scr_path, 'w') as f:
             f.write(update)
-            os.chmod(webalizer_scr_path, 0700)
+            os.chmod(webalizer_scr_path, 0o700)
 
         # Set up cron
         if period == 'hourly':

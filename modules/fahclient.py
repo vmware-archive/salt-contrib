@@ -3,6 +3,7 @@
 Support for FAHClient
 '''
 
+from __future__ import absolute_import
 import os
 import salt.utils
 

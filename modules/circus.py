@@ -7,6 +7,7 @@ Support for Circus: process and socket manager.
 :platform:   all
 """
 
+from __future__ import absolute_import
 import salt.utils
 
 

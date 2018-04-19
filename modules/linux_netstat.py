@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from salt.ext.six.moves import range
 __virtualname__ = 'netconfig'
 
 

@@ -30,6 +30,7 @@ Be sure to set the correct permissions on the file and configure
 your web server accordingly.
 '''
 
+from __future__ import absolute_import
 from subprocess import Popen, PIPE
 import os
 

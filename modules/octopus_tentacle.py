@@ -8,7 +8,7 @@ Module for managing Octopus Deploy Tentacle service settings on Windows servers.
 
 # Import python libs
 from __future__ import absolute_import
-from distutils.version import LooseVersion  # pylint: disable=import-error,no-name-in-module
+from salt.utils.versions import LooseVersion
 import ast
 import json
 import logging
