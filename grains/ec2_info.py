@@ -115,7 +115,7 @@ def _get_ec2_user_data():
     # _call_aws returns None for all non '200' reponses,
     # catching that here would rule out AWS resource
     if response.status == 200:
-        response_data = response.read()
+        response_data = response.read().decode('utf-8')
         try:
             return json.loads(response_data)
         except ValueError:
