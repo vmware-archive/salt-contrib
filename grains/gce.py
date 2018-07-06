@@ -10,8 +10,19 @@ try:
     from http.client import HTTPConnection
 except ImportError:
     from salt.ext.six.moves.http_client import HTTPConnection
+from socket import gaierror
 import json
 import re
+
+
+def _metadata_request(path):
+    http = HTTPConnection('metadata')
+    http.request('GET',
+                 path,
+                 ' ',
+                 {'X-Google-Metadata-Request': 'True'})
+    rsp = http.getresponse().read()
+    return rsp
 
 
 def gce_ext_ip():
@@ -19,13 +30,13 @@ def gce_ext_ip():
     Fetch the public IP address for this instance from Google's metadata
     servers.
     """
-    http = HTTPConnection('metadata')
-    http.request('GET',
-                 '/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip',
-                 ' ',
-                 {'X-Google-Metadata-Request': 'True'})
-    rsp = http.getresponse()
-    return {'pub_fqdn_ipv4': rsp.read()}
+    try:
+        rsp = _metadata_request(
+            '/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip'
+        )
+        return {'pub_fqdn_ipv4': rsp}
+    except gaierror:
+        return {}
 
 
 def gce_tags():
@@ -35,25 +46,21 @@ def gce_tags():
     It fills in tags and roles in the dictionary to allow interoperation with
     formulas that key off of the roles grain.
     """
-    http = HTTPConnection('metadata')
-    http.request('GET',
-                 '/computeMetadata/v1/instance/tags',
-                 ' ',
-                 {'X-Google-Metadata-Request': 'True'})
-    rsp = http.getresponse()
-    tags = json.loads(rsp.read())
-    return {'tags': tags, 'roles': tags}
+    try:
+        rsp = _metadata_request('/computeMetadata/v1/instance/tags')
+        tags = json.loads(rsp)
+        return {'tags': tags, 'roles': tags}
+    except gaierror:
+        return {}
 
 
 def gce_zone():
     """
     Fetch the instance's zone.
     """
-    http = HTTPConnection('metadata')
-    http.request('GET',
-                 'computeMetadata/v1/instance/zone',
-                 ' ',
-                 {'X-Google-Metadata-Request': 'True'})
-    rsp = http.getresponse()
-    zone = re.search('/([^/]+)$', rsp.read()).groups()[0]
-    return {'zone': zone}
+    try:
+        rsp = _metadata_request('computeMetadata/v1/instance/zone')
+        zone = re.search('/([^/]+)$', rsp).groups()[0]
+        return {'zone': zone}
+    except gaierror:
+        return {}
