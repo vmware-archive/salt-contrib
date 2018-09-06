@@ -43,6 +43,8 @@ def _get_ec2_hostinfo(path=""):
             line = line.split("=")[0] + "/"
         if path == "instance-id/":
             return {'instance-id': line}
+        if len(line) == 0:
+            continue
         if line[-1] != "/":
             call_response = _call_aws("/latest/meta-data/{0}".format(path + line))
             call_response_data = call_response.read().decode('utf-8')
