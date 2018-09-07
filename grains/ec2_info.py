@@ -43,30 +43,33 @@ def _get_ec2_hostinfo(path=""):
             line = line.split("=")[0] + "/"
         if path == "instance-id/":
             return {'instance-id': line}
-        if line[-1] != "/":
-            call_response = _call_aws("/latest/meta-data/{0}".format(path + line))
-            call_response_data = call_response.read().decode('utf-8')
-            # avoid setting empty grain
-            if call_response_data == '':
-                d[line] = None
-            elif call_response_data is not None:
-                line = _dash_to_snake_case(line)
-                try:
-                    data = json.loads(call_response_data)
-                    if isinstance(data, dict):
-                        data = _snake_caseify_dict(data)
-                    d[line] = data
-                except ValueError:
-                    if "\n" in call_response_data:
-                        d[line] = []
-                        for dline in call_response_data.split("\n"):
-                            d[line].append(dline)
-                    else:
-                        d[line] = call_response_data
+        try:
+            if line[-1] != "/":
+                call_response = _call_aws("/latest/meta-data/{0}".format(path + line))
+                call_response_data = call_response.read().decode('utf-8')
+                # avoid setting empty grain
+                if call_response_data == '':
+                    d[line] = None
+                elif call_response_data is not None:
+                    line = _dash_to_snake_case(line)
+                    try:
+                        data = json.loads(call_response_data)
+                        if isinstance(data, dict):
+                            data = _snake_caseify_dict(data)
+                        d[line] = data
+                    except ValueError:
+                        if "\n" in call_response_data:
+                            d[line] = []
+                            for dline in call_response_data.split("\n"):
+                                d[line].append(dline)
+                        else:
+                            d[line] = call_response_data
+                else:
+                    return line
             else:
-                return line
-        else:
-            d[_dash_to_snake_case(line[:-1])] = _get_ec2_hostinfo(path + line)
+                d[_dash_to_snake_case(line[:-1])] = _get_ec2_hostinfo(path + line)
+        except IndexError:
+            pass
     return d
 
 
