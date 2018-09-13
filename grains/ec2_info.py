@@ -39,6 +39,8 @@ def _get_ec2_hostinfo(path=""):
     resp_data = resp.read().decode('utf-8').strip()
     d = {}
     for line in resp_data.split("\n"):
+        if line == "":
+            continue
         if path == "public-keys/":
             line = line.split("=")[0] + "/"
         if path == "instance-id/":
