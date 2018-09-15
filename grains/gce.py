@@ -21,46 +21,21 @@ def _metadata_request(path):
                  path,
                  ' ',
                  {'X-Google-Metadata-Request': 'True'})
-    rsp = http.getresponse().read()
+    rsp = http.getresponse().read().decode('utf-8')
     return rsp
 
-
-def gce_ext_ip():
-    """
-    Fetch the public IP address for this instance from Google's metadata
-    servers.
-    """
+def gce_instance_metadata():
     try:
-        rsp = _metadata_request(
-            '/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip'
-        )
-        return {'pub_fqdn_ipv4': rsp}
+        rsp = _metadata_request('/computeMetadata/v1/instance/?recursive=true')
+        metadata = json.loads(rsp)
+        return {'gce_instance_metadata': metadata}
     except gaierror:
         return {}
 
-
-def gce_tags():
-    """
-    Fetch the instance's tags from Google's metadata servers.
-
-    It fills in tags and roles in the dictionary to allow interoperation with
-    formulas that key off of the roles grain.
-    """
+def gce_project_metadata():
     try:
-        rsp = _metadata_request('/computeMetadata/v1/instance/tags')
-        tags = json.loads(rsp)
-        return {'tags': tags, 'roles': tags}
-    except gaierror:
-        return {}
-
-
-def gce_zone():
-    """
-    Fetch the instance's zone.
-    """
-    try:
-        rsp = _metadata_request('computeMetadata/v1/instance/zone')
-        zone = re.search('/([^/]+)$', rsp).groups()[0]
-        return {'zone': zone}
+        rsp = _metadata_request('/computeMetadata/v1/project/?recursive=true')
+        metadata = json.loads(rsp)
+        return {'gce_project_metadata': metadata}
     except gaierror:
         return {}
