@@ -103,6 +103,8 @@ def _get_ec2_additional():
         data = _snake_caseify_dict(data)
         data.update({'instance_identity': {'document': response_data}})
         return data
+    elif response.status == 404:
+        return {}
     else:
         raise BadStatusLine("Could not read EC2 metadata")
 
