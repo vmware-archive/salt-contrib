@@ -8,6 +8,7 @@ from __future__ import absolute_import
 import logging
 import socket
 import json
+import os
 try:
     from http.client import HTTPConnection, BadStatusLine
 except ImportError:
@@ -67,6 +68,7 @@ def _get_ec2_hostinfo(path=""):
                 return line
         else:
             d[_dash_to_snake_case(line[:-1])] = _get_ec2_hostinfo(path + line)
+
     return d
 
 
@@ -142,6 +144,32 @@ def _get_instance_identity():
 
     return result
 
+def _get_ec2_is_vpc():
+    """
+    Determine if this instance is in a VPC or not
+    """
+
+    resp = _call_aws('/latest/meta-data/mac')
+    mac = resp.read().decode('utf-8')
+
+    resp = _call_aws('/latest/meta-data/network/interfaces/macs/' + mac + '/vpc-id')
+
+    if resp.status == 200:
+        return True
+    elif resp.status == 404:
+        return False
+    else:
+        raise BadStatusLine("Could not determine if instance is in VPC")
+
+def _get_ec2_ebs_is_nvme():
+    """
+    Determine if this instance mounts disks as nvme
+    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
+    """
+    cmd = "lsblk | awk '{print $1}' | grep nvme"
+    x = os.system(cmd)
+
+    return x == 0
 
 def ec2_info():
     """
@@ -152,6 +180,8 @@ def ec2_info():
         grains.update({'user-data': _get_ec2_user_data()})
         grains.update(_get_ec2_hostinfo())
         grains['instance_identity'].update(_get_instance_identity())
+        grains['is_vpc'] = _get_ec2_is_vpc()
+        grains['is_nvme_disk'] = _get_ec2_ebs_is_nvme()
         return {'ec2': grains}
 
     except BadStatusLine as error:
