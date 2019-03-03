@@ -167,9 +167,8 @@ def _get_ec2_ebs_is_nvme():
     https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
     """
     cmd = "lsblk | awk '{print $1}' | grep nvme"
-    x = os.system(cmd)
-
-    return x == 0
+    
+    return os.system(cmd) == 0
 
 def ec2_info():
     """
