@@ -39,7 +39,7 @@ def ext_ip():
     for url in check_ips:
         try:
             with contextlib.closing(urllib2.urlopen(url, timeout=3)) as req:
-                ip_ = req.read().strip()
+                ip_ = req.read().strip().decode('utf-8')
                 if not _ipv4_addr(ip_):
                     continue
             return {'external_ip': ip_}
