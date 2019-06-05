@@ -166,7 +166,7 @@ def _get_ec2_ebs_is_nvme():
     Determine if this instance mounts disks as nvme
     https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
     """
-    cmd = "lsblk | awk '{print $1}' | grep nvme"
+    cmd = "lsblk | awk '{print $1}' | grep -q nvme"
     
     return os.system(cmd) == 0
 
