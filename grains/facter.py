@@ -21,7 +21,7 @@ def _check_facter():
     '''
     Checks if facter is installed.
     '''
-    salt.utils.check_or_die('facter')
+    salt.utils.path.check_or_die('facter')
 
 
 def facter():
