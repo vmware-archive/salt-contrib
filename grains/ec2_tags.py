@@ -6,7 +6,7 @@ ec2_tags.py - exports all EC2 tags in an 'ec2_tags' grain and splits 'Role' tag
 To use it:
 
   1. Place ec2_tags.py in <salt_root>/_grains/
-  2. Make sure boto version >= 2.8.0
+  2. Make sure boto3 and python3.6 or greater is installed on minions
   3. There are four ways of supplying AWS credentials used to fetch instance tags:
 
     i. Define them in AWS_CREDENTIALS below
@@ -44,15 +44,14 @@ Author: Emil Stenqvist <emsten@gmail.com>
 Licensed under Apache License (https://raw.github.com/saltstack/salt/develop/LICENSE)
 
 (Inspired by https://github.com/dginther/ec2-tags-salt-grain)
+(modified on 2020-12-01 by fred damstra to use boto3)
 """
-from __future__ import absolute_import
-
+import boto3
 import os
 import logging
-from salt.utils.versions import StrictVersion
 
-import boto.ec2
-import boto.utils
+import urllib.request
+
 
 log = logging.getLogger(__name__)
 
@@ -62,14 +61,30 @@ AWS_CREDENTIALS = {
 }
 
 
-def _get_instance_info():
-    identity = boto.utils.get_instance_identity()['document']
-    return identity['instanceId'], identity['region']
+def _get_instance_id():
+    instance_id = urllib.request.urlopen('http://169.254.169.254/latest/meta-data/instance-id').read().decode()
+    log.debug(f'instance id = {instance_id}')
+    return instance_id
+
+
+def _get_instance_region():
+    availability_zone = urllib.request.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone').read().decode()
+    log.debug(f'availability zone = { availability_zone }')
+    region = availability_zone[:-1] # Remove the last character. Does this work everywhere?
+    return region
 
 
 def _on_ec2():
-    m = boto.utils.get_instance_metadata(timeout=0.1, num_retries=1)
-    return bool(m)
+    meta = 'http://169.254.169.254/latest/meta-data/ami-id'
+    try:
+        response = urllib.request.urlopen(meta).read().decode()
+        log.debug(f'_on_ec2 response={response}')
+        if 'ami' in response:
+            return True
+        else:
+            return False
+    except Exception as nometa:
+        return False
 
 
 def _get_credentials():
@@ -92,40 +107,24 @@ def _get_credentials():
 
 
 def ec2_tags():
-    boto_version = StrictVersion(boto.__version__)
-    required_boto_version = StrictVersion('2.8.0')
-    if boto_version < required_boto_version:
-        log.error("Installed boto version %s < %s, can't find ec2_tags",
-                  boto_version, required_boto_version)
-        return None
-
     if not _on_ec2():
         log.info("Not an EC2 instance, skipping")
         return None
 
-    instance_id, region = _get_instance_info()
     credentials = _get_credentials()
+    instance_id = _get_instance_id()
+    region = _get_instance_region()
 
     # Connect to EC2 and parse the Roles tags for this instance
-    try:
-        conn = boto.ec2.connect_to_region(
-            region,
-            aws_access_key_id=credentials['access_key'],
-            aws_secret_access_key=credentials['secret_key'],
-        )
-    except Exception as e:
-        log.error("Could not get AWS connection: %s", e)
-        return None
+    client = boto3.client('ec2', region_name=region)
+    response = client.describe_tags( Filters = [
+      { 'Name': 'resource-id', 'Values': [ instance_id ] },
+      { 'Name': 'resource-type', 'Values': [ 'instance' ] },
+    ])
 
     ec2_tags = {}
-    try:
-        tags = conn.get_all_tags(filters={'resource-type': 'instance',
-                                          'resource-id': instance_id})
-        for tag in tags:
-            ec2_tags[tag.name] = tag.value
-    except Exception as e:
-        log.error("Couldn't retrieve instance tags: %s", e)
-        return None
+    for tag in response['Tags']:
+        ec2_tags[tag['Key']] = tag['Value']
 
     ret = dict(ec2_tags=ec2_tags)
 
